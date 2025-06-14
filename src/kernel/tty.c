@@ -72,6 +72,19 @@ void terminal_writestring(const char* data)
 	}
 	
 }
+void terminal_newline()
+{
+	for (int i = 0; i < terminal_column; i++) {
+		terminal_write(" ", strlen(" "));
+	}
+}
+void terminal_backspace()
+{
+	if (terminal_column > 0) {
+		terminal_putentryat((char)' ', terminal_color, terminal_column - 1, terminal_row );
+		terminal_column--;
+	}
+}
 
 void terminal_scroll(int line) {
 	int* loop;

@@ -17,6 +17,7 @@
 #define KERNEL_CODE_SEGMENT_OFFSET 0x08
 
 #define ENTER_KEY_CODE 0x1C
+#define BS_KEY_CODE 0xE
 
 extern unsigned char keyboard_map[128];
 extern void keyboard_handler(void);
@@ -115,6 +116,10 @@ void keyboard_handler_main(void)
 			return;
 
 		if(keycode == ENTER_KEY_CODE) {
+			terminal_newline();
+			return;
+		} else if (keycode == BS_KEY_CODE) {
+			terminal_backspace();
 			return;
 		} else {
 			terminal_putchar(keyboard_map[(unsigned char) keycode]);
