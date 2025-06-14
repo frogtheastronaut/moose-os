@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include "tty.c"
 
+#define VGA_WIDTH   80
+#define VGA_HEIGHT  25
 void terminal_initialize(void);
 void terminal_putchar(char c);
 void terminal_write(const char* data, size_t size);

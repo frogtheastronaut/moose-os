@@ -1,4 +1,6 @@
 #include "tty.h"
+#include "IDT.h"
+
 void kernel_main(void) 
 {
 	/* Initialize terminal interface */
@@ -6,4 +8,7 @@ void kernel_main(void)
 	/* Newline support is left as an exercise. */
 	terminal_writestring("Hello, kernel World!");
 	terminal_writestring("Hello, kernel World!");
+	idt_init();
+	kb_init();
+	while(1);
 }
