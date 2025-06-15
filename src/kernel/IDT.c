@@ -1,8 +1,4 @@
-/*
-* Copyright (C) 2014  Arjun Sreedharan
-* License: GPL version 2 or higher http://www.gnu.org/licenses/gpl.html
-*/
-#include "keyboard.h"
+#include "include/keyboard.h"
 
 /* there are 25 lines each of 80 columns; each element takes 2 bytes */
 #define VGA_WIDTH   80
@@ -25,7 +21,7 @@ extern char read_port(unsigned short port);
 extern void write_port(unsigned short port, unsigned char data);
 extern void load_idt(unsigned long *idt_ptr);
 
-/* current cursor location */
+
 unsigned int current_loc = 0;
 /* video memory begins at address 0xb8000 */
 char *vidptr = (char*)0xb8000;

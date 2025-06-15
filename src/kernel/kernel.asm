@@ -1,6 +1,4 @@
 ;; Kernel assembly
-
-
 bits 32
 section .text
         ;multiboot

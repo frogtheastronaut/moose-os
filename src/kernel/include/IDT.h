@@ -1,4 +1,4 @@
-#include "IDT.c"
+#include "../IDT.c"
 
 void idt_init(void);
 void kb_init(void);

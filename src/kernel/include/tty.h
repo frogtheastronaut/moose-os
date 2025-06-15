@@ -2,7 +2,7 @@
 #define _KERNEL_TTY_H
 
 #include <stddef.h>
-#include "tty.c"
+#include "../tty.c"
 
 extern size_t terminal_row;
 extern size_t terminal_column;
