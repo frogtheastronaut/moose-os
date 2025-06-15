@@ -12,3 +12,7 @@ qemu-run:
 	qemu-system-i386 -kernel os
 clean:
 	rm kasm.o kc.o os
+
+# # This is for testing the malloc
+# malloc-ls:
+# 	clang -O0 -g -W -Wall -Wextra -dynamiclib kernel/malloc/malloc.c -o malloc.dylib

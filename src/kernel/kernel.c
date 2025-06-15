@@ -5,8 +5,8 @@ void kernel_main(void)
 {
 	/* Initialize terminal interface */
 	terminal_initialize();
-	terminal_writestring("Hello, kernel World!");
-	terminal_writestring("Hello, kernel World!");
+	terminal_writestring("Welcome to SimpleMKernel");
+	terminal_writestring("Copyright 2025 Ethan Zhang");
 	idt_init();
 	kb_init();
 	while(1);
