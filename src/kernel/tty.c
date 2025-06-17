@@ -17,6 +17,7 @@ size_t terminal_row;
 size_t terminal_column;
 uint8_t terminal_color;
 uint16_t* terminal_buffer = (uint16_t*)VGA_MEMORY;
+int no_delete = 2;
 
 size_t strlen(const char* str) 
 {
@@ -25,8 +26,6 @@ size_t strlen(const char* str)
 		len++;
 	return len;
 }
-
-
 void terminal_initialize(void) 
 {
 	terminal_row = 0;
@@ -68,11 +67,13 @@ void terminal_write(const char* data, size_t size)
 		terminal_putchar(data[i]);
 }
 
-void terminal_writestring(const char* data) 
+void terminal_writestring(const char* data, bool newline) 
 {
 	terminal_write(data, strlen(data));
-	for (int i = 0; i < VGA_WIDTH - strlen(data); i++) {
-		terminal_write(" ", strlen(" "));
+	if (newline == true) {
+		for (int i = 0; i < VGA_WIDTH - strlen(data); i++) {
+			terminal_write(" ", strlen(" "));
+		}
 	}
 	
 }
@@ -84,7 +85,7 @@ void terminal_newline()
 }
 void terminal_backspace()
 {
-	if (terminal_column > 0) {
+	if (terminal_column > no_delete) {
 		terminal_putentryat((char)' ', terminal_color, terminal_column - 1, terminal_row );
 		terminal_column--;
 	}

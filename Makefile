@@ -18,3 +18,6 @@ build:
 clean:
 	# In case the automatic cleaning breaks
 	rm kasm.o kc.o
+dbuild:
+	# Delete build
+	rm bin/simplem

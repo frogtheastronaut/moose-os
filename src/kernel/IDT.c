@@ -3,7 +3,8 @@
 	Copyright 2025 Ethan Zhang
 */
 
-#include "include/keyboard.h"
+#include "include/keyhandler.h"
+
 
 #define VGA_WIDTH   80
 #define VGA_HEIGHT  25
@@ -16,16 +17,10 @@
 #define INTERRUPT_GATE 0x8e
 #define KERNEL_CODE_SEGMENT_OFFSET 0x08
 
-#define ENTER_KEY_CODE 0x1C
-#define BS_KEY_CODE 0xE
-
-extern unsigned char keyboard_map[128];
 extern void keyboard_handler(void);
 extern char read_port(unsigned short port);
 extern void write_port(unsigned short port, unsigned char data);
 extern void load_idt(unsigned long *idt_ptr);
-
-
 unsigned int current_loc = 0;
 /* video memory begins at address 0xb8000 */
 char *vidptr = (char*)0xb8000;
@@ -46,6 +41,7 @@ void idt_init(void)
 	unsigned long keyboard_address;
 	unsigned long idt_address;
 	unsigned long idt_ptr[2];
+	caps = false;
 
 	/* populate IDT entry of keyboard's interrupt */
 	keyboard_address = (unsigned long)keyboard_handler;
@@ -112,20 +108,6 @@ void keyboard_handler_main(void)
 	/* Lowest bit of status will be set if buffer is not empty */
 	if (status & 0x01) {
 		keycode = read_port(KEYBOARD_DATA_PORT);
-		if(keycode < 0)
-			return;
-
-		if(keycode == ENTER_KEY_CODE) {
-			terminal_newline();
-			return;
-		} else if (keycode == BS_KEY_CODE) {
-			terminal_backspace();
-			return;
-		} else {
-			terminal_putchar(keyboard_map[(unsigned char) keycode]);
-		}
-
-		// vidptr[current_loc++] = keyboard_map[(unsigned char) keycode];
-		// vidptr[current_loc++] = 0x07;
+		processKey(keyboard_map_normal[(unsigned char) keycode], keycode);
 	}
 }

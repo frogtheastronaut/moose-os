@@ -11,7 +11,9 @@
 			"stddef.h": "c",
 			"idt.h": "c",
 			"stdint.h": "c",
-			"stdio.h": "c"
+			"stdio.h": "c",
+			"shell.h": "c",
+			"keyboard.h": "c"
 		}
 	}
 }
