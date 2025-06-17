@@ -1,6 +1,10 @@
+/*
+	SimpleM
+	Copyright 2025 Ethan Zhang
+*/
+
 #include "include/keyboard.h"
 
-/* there are 25 lines each of 80 columns; each element takes 2 bytes */
 #define VGA_WIDTH   80
 #define VGA_HEIGHT  25
 #define BYTES_FOR_EACH_ELEMENT 2

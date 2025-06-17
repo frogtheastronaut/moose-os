@@ -1,45 +1,57 @@
-;; Kernel assembly
-bits 32
-section .text
-        ;multiboot
-        align 4
-        dd 0x1BADB002            ;magic
-        dd 0x00                  ;flags
-        dd - (0x1BADB002 + 0x00) ;checksum
+; SimpleM Kernel
+; Copyright 2025 Ethan Zhang, all rights reserved.
 
+bits 32
+; Multiboot spec
+section .text
+        align 4
+        dd 0x1BADB002         
+        dd 0x00               
+        dd - (0x1BADB002 + 0x00) 
+
+; Globals
 global start
 global start
 global keyboard_handler
 global read_port
 global write_port
 global load_idt
-extern kernel_main	        ; kernel_main from kernel.c
+
+; Externals, defined externally
+extern kernel_main	       
 extern keyboard_handler_main
 
 start:
-  cli 			;block interrupts
-  mov esp, stack_space	;set stack pointer
-  call kernel_main
-  hlt		 	;halt the CPU
+  cli 			      
+  mov esp, stack_space	
+  call kernel_main      ; Kernel_main from kernel/kernel.c
+  hlt		 	   
 
+; IO PORTS - READ PORT
 read_port:
 	mov edx, [esp + 4]
 	in al, dx	
 	ret
 
+; IO PORTS - WRITE PORT
 write_port:
 	mov   edx, [esp + 4]    
 	mov   al, [esp + 4 + 4]  
 	out   dx, al  
 	ret
+
+; Interrupt Descriptor Table loader
 load_idt:
 	mov edx, [esp + 4]
 	lidt [edx]
 	sti
 	ret
+
+; Keyboard Handler
 keyboard_handler:                 
-	call    keyboard_handler_main
+	call    keyboard_handler_main ; keyboard_handler_main from kernel/IDT.c
 	iretd
+; BSS
 section .bss
-resb 8192		;8KB for stack
+resb 8192	
 stack_space:

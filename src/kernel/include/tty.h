@@ -1,3 +1,7 @@
+/*
+	SimpleM
+	Copyright 2025 Ethan Zhang
+*/
 #ifndef _KERNEL_TTY_H
 #define _KERNEL_TTY_H
 

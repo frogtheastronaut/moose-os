@@ -1,3 +1,7 @@
+/*
+	SimpleM
+	Copyright 2025 Ethan Zhang
+*/
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

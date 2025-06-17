@@ -1,3 +1,7 @@
+/*
+	SimpleM
+	Copyright 2025 Ethan Zhang
+*/
 #ifndef I386_VGA_H
 #define I386_VGA_H
 

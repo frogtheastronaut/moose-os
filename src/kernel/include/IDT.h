@@ -1,3 +1,7 @@
+/*
+	SimpleM
+	Copyright 2025 Ethan Zhang
+*/
 #include "../IDT.c"
 
 void idt_init(void);
