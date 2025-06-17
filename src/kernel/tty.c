@@ -17,7 +17,7 @@ size_t terminal_row;
 size_t terminal_column;
 uint8_t terminal_color;
 uint16_t* terminal_buffer = (uint16_t*)VGA_MEMORY;
-int no_delete = 2;
+int no_delete = 0; // debug only
 
 size_t strlen(const char* str) 
 {
@@ -88,24 +88,5 @@ void terminal_backspace()
 	if (terminal_column > no_delete) {
 		terminal_putentryat((char)' ', terminal_color, terminal_column - 1, terminal_row );
 		terminal_column--;
-	}
-}
-
-void terminal_scroll(int line) {
-	int* loop;
-	char c;
-
-	for(*loop = line * (VGA_WIDTH * 2) + 0xB8000; *loop < VGA_WIDTH * 2; loop++) {
-		c = *loop;
-		*(loop - (VGA_WIDTH * 2)) = c;
-	}
-}
-
-void terminal_delete_last_line() {
-	int x, *ptr;
-
-	for(x = 0; x < VGA_WIDTH * 2; x++) {
-		*ptr = 0xB8000 + (VGA_WIDTH * 2) * (VGA_HEIGHT - 1) + x;
-		*ptr = 0;
 	}
 }
