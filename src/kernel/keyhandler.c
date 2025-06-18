@@ -29,7 +29,6 @@ void debug(unsigned char key, char keycode) {
 		} else {
 			terminal_putchar(keyboard_map_caps[(unsigned char) keycode]);
 		}
-		
 	}
 }
 
@@ -39,6 +38,6 @@ void processKey(unsigned char key, char keycode) {
 	// As a result, we forward it to the OS. Farewell!
 
 	// As a debug, we can always print the key to the kernel.
-	// debug(key, keycode);
+	debug(key, keycode);
 }
 

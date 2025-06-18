@@ -2,10 +2,9 @@
 	SimpleM
 	Copyright 2025 Ethan Zhang
 */
-
 #include "include/tty.h"
 #include "include/IDT.h"
-
+#include "../filesys/file.h"
 /*
 
 Simple code to run a simple kernel. 
@@ -18,5 +17,7 @@ void kernel_main(void)
 	//terminal_writestring("Welcome to the SimpleM kernel", true);
 	idt_init();
 	kb_init();
+    demo();
 	while(1);
+
 }
