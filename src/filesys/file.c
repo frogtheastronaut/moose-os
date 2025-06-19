@@ -158,6 +158,24 @@ int filesys_rmdir(const char* name) {
     }
     return -1; // Not found or not a directory
 }
+void filesys_pwd() {
+    char path[256] = "";
+    char temp[256];
+    FileSystemNode* node = cwd;
+
+    while (node != NULL && node->parent != NULL) {
+        // Prepend "/name" to the path
+        msnprintf(temp, sizeof(temp), "/%s%s", node->name, path);
+        copyStr(path, temp);
+        node = node->parent;
+    }
+
+    if (path[0] == '\0') {
+        copyStr(path, "/"); // Path is root
+    }
+
+    terminal_writestring(path, true);
+}
 
 
 // Demo
@@ -166,10 +184,12 @@ void demo() {
     filesys_mkdir("src");
     filesys_mkfile("hello.txt", "Hello, world!");
     filesys_ls();
+    filesys_pwd();
 
     //printf("\nChanging into 'docs'\n");
     terminal_writestring("Changing into 'docs'", true);
     filesys_cd("docs");
+    filesys_pwd();
     filesys_mkfile("info.txt", "Docs folder file.");
     filesys_ls();
 
@@ -181,6 +201,7 @@ void demo() {
     filesys_rmdir("src");
     filesys_rm("hello.txt");
     filesys_ls();
+    
 
     //printf("\nOpening hello.txt:\n");
     terminal_writestring("Opening hello.txt:", true);
