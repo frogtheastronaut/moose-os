@@ -17,7 +17,8 @@ void kernel_main(void)
 	//terminal_writestring("Welcome to the SimpleM kernel", true);
 	idt_init();
 	kb_init();
-    demo();
+    filesys_init();
+    demo(); // from file.c
 	while(1);
 
 }

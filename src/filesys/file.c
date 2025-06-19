@@ -1,16 +1,11 @@
 //#include <stdio.h>
 #include "../kernel/include/tty.h"
+#include "../lib/lib.h"
 
 #define MAX_NAME_LEN 16
 #define MAX_CONTENT 64
 #define MAX_CHILDREN 8
 #define MAX_NODES 64
-
-typedef char *va_list;
-#define _INTSIZEOF(n)    ( (sizeof(n) + sizeof(int) - 1) & ~(sizeof(int) - 1) )
-#define va_start(ap,v)   ( ap = (va_list)&v + _INTSIZEOF(v) )
-#define va_arg(ap,t)     ( *(t *)((ap += _INTSIZEOF(t)) - _INTSIZEOF(t)) )
-#define va_end(ap)       ( ap = (va_list)0 )
 
 typedef enum {
     FILE_NODE,
@@ -42,64 +37,6 @@ char buffer[256];
 FileSystemNode* root;
 FileSystemNode* cwd;
 
-// Basic string copy
-void copyStr(char* dest, const char* src) {
-    int i = 0;
-    while (src[i] && i < MAX_NAME_LEN - 1) {
-        dest[i] = src[i];
-        i++;
-    }
-    dest[i] = '\0';
-}
-
-// Basic string compare
-int strEqual(const char* a, const char* b) {
-    int i = 0;
-    while (a[i] && b[i]) {
-        if (a[i] != b[i]) return 0;
-        i++;
-    }
-    return a[i] == b[i];
-}
-int msnprintf(char *buffer, int size, const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-
-    int written = 0;
-    char *buf_ptr = buffer;
-    const char *fmt_ptr = format;
-
-    while (*fmt_ptr) {
-        if (*fmt_ptr == '%' && *(fmt_ptr + 1) == 's') {
-            const char *str = va_arg(args, const char *);
-            while (*str) {
-                if (written + 1 < size) {
-                    *buf_ptr++ = *str;
-                }
-                written++;
-                str++;
-            }
-            fmt_ptr += 2;
-        } else if (*fmt_ptr == '%' && *(fmt_ptr + 1) == '%') {
-            if (written + 1 < size) {
-                *buf_ptr++ = '%';
-            }
-            written++;
-            fmt_ptr += 2;
-        } else {
-            if (written + 1 < size) {
-                *buf_ptr++ = *fmt_ptr;
-            }
-            written++;
-            fmt_ptr++;
-        }
-    }
-    if (size > 0) {
-        *buf_ptr = '\0';
-    }
-    va_end(args);
-    return written;
-}
 
 // Allocate node
 FileSystemNode* allocNode() {
@@ -107,8 +44,8 @@ FileSystemNode* allocNode() {
     return &nodePool[nodeCount++];
 }
 
-// Initialize filesystem
-void initFileSystem() {
+// Initialise
+void filesys_init() {
     root = allocNode();
     if (!root) return;
     copyStr(root->name, "/");
@@ -118,8 +55,8 @@ void initFileSystem() {
     cwd = root;
 }
 
-// Create folder
-int createFolder(const char* name) {
+// mkdir
+int filesys_mkdir(const char* name) {
     if (cwd->folder.childCount >= MAX_CHILDREN) return -1;
     FileSystemNode* node = allocNode();
     if (!node) return -1;
@@ -132,7 +69,7 @@ int createFolder(const char* name) {
 }
 
 // Create file
-int createFile(const char* name, const char* content) {
+int filesys_mkfile(const char* name, const char* content) {
     if (cwd->folder.childCount >= MAX_CHILDREN) return -1;
     FileSystemNode* node = allocNode();
     if (!node) return -1;
@@ -144,8 +81,8 @@ int createFile(const char* name, const char* content) {
     return 0;
 }
 
-// List directory
-void listDirectory() {
+// LS
+void filesys_ls() {
     //printf("Contents of %s:\n", cwd->name);
     msnprintf(buffer, sizeof(buffer), "Contents of %s:", cwd->name);
     terminal_writestring(buffer, true);
@@ -156,8 +93,8 @@ void listDirectory() {
     }
 }
 
-// Change directory
-int changeDirectory(const char* name) {
+// CD
+int filesys_cd(const char* name) {
     if (strEqual(name, "..")) {
         if (cwd->parent != NULL) cwd = cwd->parent;
         return 0;
@@ -173,13 +110,13 @@ int changeDirectory(const char* name) {
     return -1; // Not found
 }
 
-// Show file content
-void showFile(const char* name) {
+// Open file
+void filesys_cat(const char* name) {
     for (int i = 0; i < cwd->folder.childCount; i++) {
         FileSystemNode* child = cwd->folder.children[i];
         if (child->type == FILE_NODE && strEqual(child->name, name)) {
             //printf("File %s content: %s\n", name, child->file.content);
-            msnprintf(buffer, sizeof(buffer), "File %s content: %s", name, child->file.content);
+            msnprintf(buffer, sizeof(buffer), "%s", child->file.content);
             terminal_writestring(buffer, true);
             return;
         }
@@ -187,29 +124,67 @@ void showFile(const char* name) {
     //printf("File not found.\n");
     terminal_writestring("Error: File not found.", true);
 }
+int filesys_rm(const char* name) {
+    for (int i = 0; i < cwd->folder.childCount; i++) {
+        FileSystemNode* child = cwd->folder.children[i];
+        if (child->type == FILE_NODE && strEqual(child->name, name)) {
+            // Shift remaining children left
+            for (int j = i; j < cwd->folder.childCount - 1; j++) {
+                cwd->folder.children[j] = cwd->folder.children[j + 1];
+            }
+            cwd->folder.childCount--;
+            terminal_writestring("File removed successfully.", true);
+            return 0;
+        }
+    }
+    return -1; // Not found or not a file
+}
+int filesys_rmdir(const char* name) {
+    for (int i = 0; i < cwd->folder.childCount; i++) {
+        FileSystemNode* child = cwd->folder.children[i];
+        if (child->type == FOLDER_NODE && strEqual(child->name, name)) {
+            if (child->folder.childCount > 0) {
+                terminal_writestring("Error: Folder is not empty", true);
+                return -2; // Directory not empty
+            }
+            // Shift remaining children left
+            for (int j = i; j < cwd->folder.childCount - 1; j++) {
+                cwd->folder.children[j] = cwd->folder.children[j + 1];
+            }
+            cwd->folder.childCount--;
+            terminal_writestring("Directory removed successfully.", true);
+            return 0;
+        }
+    }
+    return -1; // Not found or not a directory
+}
+
 
 // Demo
 void demo() {
-    initFileSystem();
-    createFolder("docs");
-    createFolder("src");
-    createFile("hello.txt", "Hello, world!");
-    listDirectory();
+    filesys_mkdir("docs");
+    filesys_mkdir("src");
+    filesys_mkfile("hello.txt", "Hello, world!");
+    filesys_ls();
 
     //printf("\nChanging into 'docs'\n");
     terminal_writestring("Changing into 'docs'", true);
-    changeDirectory("docs");
-    createFile("info.txt", "Docs folder file.");
-    listDirectory();
+    filesys_cd("docs");
+    filesys_mkfile("info.txt", "Docs folder file.");
+    filesys_ls();
 
     //printf("\nGoing back to root\n");
     terminal_writestring("Going back to root", true);
-    changeDirectory("..");
-    listDirectory();
+    filesys_cd("..");
+    filesys_ls();
+    terminal_writestring("Removing files", true);
+    filesys_rmdir("src");
+    filesys_rm("hello.txt");
+    filesys_ls();
 
     //printf("\nOpening hello.txt:\n");
     terminal_writestring("Opening hello.txt:", true);
-    showFile("hello.txt");
+    filesys_cat("hello.txt");
 
     return;
 }
