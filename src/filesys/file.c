@@ -55,9 +55,23 @@ void filesys_init() {
     cwd = root;
 }
 
+// Helper: Check for duplicate name in current directory
+bool nameExistsInCwd(const char* name, NodeType type) {
+    for (int i = 0; i < cwd->folder.childCount; i++) {
+        FileSystemNode* child = cwd->folder.children[i];
+        if (child->type == type && strEqual(child->name, name)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // mkdir
 int filesys_mkdir(const char* name) {
+    if (!name || strlen(name) == 0 || strlen(name) >= MAX_NAME_LEN) return -2;
     if (cwd->folder.childCount >= MAX_CHILDREN) return -1;
+    if (nameExistsInCwd(name, FOLDER_NODE)) return -3; // Duplicate folder name
+
     FileSystemNode* node = allocNode();
     if (!node) return -1;
     copyStr(node->name, name);
@@ -70,22 +84,34 @@ int filesys_mkdir(const char* name) {
 
 // Create file
 int filesys_mkfile(const char* name, const char* content) {
+    if (!name || strlen(name) == 0 || strlen(name) >= MAX_NAME_LEN) return -2;
+    if (!content || strlen(content) >= MAX_CONTENT) return -3;
     if (cwd->folder.childCount >= MAX_CHILDREN) return -1;
+    if (nameExistsInCwd(name, FILE_NODE)) return -4; // Duplicate file name
+
     FileSystemNode* node = allocNode();
     if (!node) return -1;
     copyStr(node->name, name);
     node->type = FILE_NODE;
     node->parent = cwd;
-    copyStr(node->file.content, content);
+    // Use copyStr for content, but you may want to make a version for MAX_CONTENT
+    int i = 0;
+    while (content[i] && i < MAX_CONTENT - 1) {
+        node->file.content[i] = content[i];
+        i++;
+    }
+    node->file.content[i] = '\0';
     cwd->folder.children[cwd->folder.childCount++] = node;
     return 0;
 }
 
 // LS
 void filesys_ls() {
-    //printf("Contents of %s:\n", cwd->name);
     msnprintf(buffer, sizeof(buffer), "Contents of %s:", cwd->name);
     terminal_writestring(buffer, true);
+    if (cwd->folder.childCount == 0) {
+        terminal_writestring(" (empty)", true);
+    }
     for (int i = 0; i < cwd->folder.childCount; i++) {
         FileSystemNode* child = cwd->folder.children[i];
         msnprintf(buffer, sizeof(buffer), " [%s] %s", child->type == FOLDER_NODE ? "DIR" : "FILE", child->name);
@@ -107,6 +133,7 @@ int filesys_cd(const char* name) {
             return 0;
         }
     }
+    terminal_writestring("Error: Directory not found.", true);
     return -1; // Not found
 }
 
@@ -115,13 +142,11 @@ void filesys_cat(const char* name) {
     for (int i = 0; i < cwd->folder.childCount; i++) {
         FileSystemNode* child = cwd->folder.children[i];
         if (child->type == FILE_NODE && strEqual(child->name, name)) {
-            //printf("File %s content: %s\n", name, child->file.content);
             msnprintf(buffer, sizeof(buffer), "%s", child->file.content);
             terminal_writestring(buffer, true);
             return;
         }
     }
-    //printf("File not found.\n");
     terminal_writestring("Error: File not found.", true);
 }
 int filesys_rm(const char* name) {
@@ -158,7 +183,7 @@ int filesys_rmdir(const char* name) {
     }
     return -1; // Not found or not a directory
 }
-void filesys_pwd() {
+void filesys_pwd(const bool newline) {
     char path[256] = "";
     char temp[256];
     FileSystemNode* node = cwd;
@@ -174,38 +199,23 @@ void filesys_pwd() {
         copyStr(path, "/"); // Path is root
     }
 
-    terminal_writestring(path, true);
+    terminal_writestring(path, newline);
 }
+size_t filesys_pwdlen() {
+    char path[256] = "";
+    char temp[256];
+    FileSystemNode* node = cwd;
 
+    while (node != NULL && node->parent != NULL) {
+        // Prepend "/name" to the path
+        msnprintf(temp, sizeof(temp), "/%s%s", node->name, path);
+        copyStr(path, temp);
+        node = node->parent;
+    }
 
-// Demo
-void demo() {
-    filesys_mkdir("docs");
-    filesys_mkdir("src");
-    filesys_mkfile("hello.txt", "Hello, world!");
-    filesys_ls();
-    filesys_pwd();
+    if (path[0] == '\0') {
+        copyStr(path, "/"); // Path is root
+    }
 
-    //printf("\nChanging into 'docs'\n");
-    terminal_writestring("Changing into 'docs'", true);
-    filesys_cd("docs");
-    filesys_pwd();
-    filesys_mkfile("info.txt", "Docs folder file.");
-    filesys_ls();
-
-    //printf("\nGoing back to root\n");
-    terminal_writestring("Going back to root", true);
-    filesys_cd("..");
-    filesys_ls();
-    terminal_writestring("Removing files", true);
-    filesys_rmdir("src");
-    filesys_rm("hello.txt");
-    filesys_ls();
-    
-
-    //printf("\nOpening hello.txt:\n");
-    terminal_writestring("Opening hello.txt:", true);
-    filesys_cat("hello.txt");
-
-    return;
+    return strlen(path); // Return length of path
 }

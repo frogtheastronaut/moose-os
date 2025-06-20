@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "include/vga.h"
+#include "../lib/lib.h"
 
 #define VGA_WIDTH   80
 #define VGA_HEIGHT  25
@@ -17,15 +18,8 @@ size_t terminal_row;
 size_t terminal_column;
 uint8_t terminal_color;
 uint16_t* terminal_buffer = (uint16_t*)VGA_MEMORY;
-int no_delete = 0; // debug only
+int no_delete = 0; 
 
-size_t strlen(const char* str) 
-{
-	size_t len = 0;
-	while (str[len])
-		len++;
-	return len;
-}
 void terminal_initialize(void) 
 {
 	terminal_row = 0;

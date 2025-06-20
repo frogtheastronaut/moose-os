@@ -63,3 +63,54 @@ int msnprintf(char *buffer, int size, const char *format, ...) {
     va_end(args);
     return written;
 }
+
+size_t strlen(const char* str) 
+{
+	size_t len = 0;
+	while (str[len])
+		len++;
+	return len;
+}
+
+#include <stdio.h>
+
+
+#define MAX_PARTS 10
+#define MAX_PART_LEN 32
+int split_string(const char *input, char delimiter, char output[MAX_PARTS][MAX_PART_LEN]) {
+    int part = 0;    // Index for output array
+    int i = 0;       // Index in input string
+    int j = 0;       // Index in current output part
+
+    while (input[i] != '\0') {
+        if (input[i] == delimiter) {
+            output[part][j] = '\0'; // Null-terminate the current string
+            part++;
+            if (part >= MAX_PARTS) break;
+            j = 0;
+        } else {
+            if (j < MAX_PART_LEN - 1) {
+                output[part][j] = input[i];
+                j++;
+            }
+        }
+        i++;
+    }
+
+    output[part][j] = '\0'; // Null-terminate the last part
+    return part + 1; // Return number of parts found
+}
+
+// // Example usage
+// int main() {
+//     const char *text = "cat-dog-bird-fish";
+//     char results[MAX_PARTS][MAX_PART_LEN];
+//     int count = split_string(text, '-', results);
+
+//     for (int i = 0; i < count; i++) {
+//         printf("Part %d: %s\n", i, results[i]);
+//     }
+
+//     return 0;
+// }
+

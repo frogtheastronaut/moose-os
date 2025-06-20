@@ -15,7 +15,8 @@
 			"shell.h": "c",
 			"keyboard.h": "c",
 			"tty.h": "c",
-			"file.h": "c"
+			"file.h": "c",
+			"complex": "c"
 		}
 	}
 }
