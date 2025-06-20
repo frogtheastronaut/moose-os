@@ -96,6 +96,8 @@ void shell_process_command(char *command) {
         terminal_writestring(buffer, true);
         msnprintf(buffer, sizeof(buffer), "You are running %s (%s).", SYS, VERSION);
         terminal_writestring(buffer, true);
+    } else if (strEqual(parts[0], "clear")) {
+        terminal_initialize();
     } else {
         terminal_writestring("Error: UNKNOWN COMMAND", true);
     }
