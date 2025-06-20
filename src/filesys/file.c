@@ -2,10 +2,10 @@
 #include "../kernel/include/tty.h"
 #include "../lib/lib.h"
 
-#define MAX_NAME_LEN 16
-#define MAX_CONTENT 64
-#define MAX_CHILDREN 8
-#define MAX_NODES 64
+#define MAX_NAME_LEN 128
+#define MAX_CONTENT 4096
+#define MAX_CHILDREN 4096
+#define MAX_NODES 4096
 
 typedef enum {
     FILE_NODE,
