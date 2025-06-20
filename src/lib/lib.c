@@ -101,16 +101,20 @@ int split_string(const char *input, char delimiter, char output[MAX_PARTS][MAX_P
     return part + 1; // Return number of parts found
 }
 
-// // Example usage
-// int main() {
-//     const char *text = "cat-dog-bird-fish";
-//     char results[MAX_PARTS][MAX_PART_LEN];
-//     int count = split_string(text, '-', results);
-
-//     for (int i = 0; i < count; i++) {
-//         printf("Part %d: %s\n", i, results[i]);
-//     }
-
-//     return 0;
-// }
+void int_to_str(int value, char* str) {
+    char tmp[16];
+    int i = 0, j = 0;
+    bool neg = false;
+    if (value == 0) {
+        str[0] = '0'; str[1] = '\0'; return;
+    }
+    if (value < 0) { neg = true; value = -value; }
+    while (value > 0) {
+        tmp[i++] = (value % 10) + '0';
+        value /= 10;
+    }
+    if (neg) tmp[i++] = '-';
+    while (i > 0) str[j++] = tmp[--i];
+    str[j] = '\0';
+}
 

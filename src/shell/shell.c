@@ -99,4 +99,6 @@ void shell_process_command(char *command) {
     } else {
         terminal_writestring("Error: UNKNOWN COMMAND", true);
     }
+    // int_to_str(terminal_row, buffer);
+    // terminal_writestring(buffer, true);
 }
