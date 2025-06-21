@@ -2,7 +2,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-// Don't include stdlb since the names will conflict?
 
 // sbrk some extra space every time we need it.
 // This does no bookkeeping and therefore has no ability to free, realloc, etc.
