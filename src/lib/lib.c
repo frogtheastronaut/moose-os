@@ -1,3 +1,4 @@
+#include <stdio.h>
 #define MAX_NAME_LEN 128
 typedef char *va_list;
 #define _INTSIZEOF(n)    ( (sizeof(n) + sizeof(int) - 1) & ~(sizeof(int) - 1) )
@@ -72,7 +73,7 @@ size_t strlen(const char* str)
 	return len;
 }
 
-#include <stdio.h>
+
 
 
 #define MAX_PARTS 10
@@ -100,21 +101,3 @@ int split_string(const char *input, char delimiter, char output[MAX_PARTS][MAX_P
     output[part][j] = '\0'; // Null-terminate the last part
     return part + 1; // Return number of parts found
 }
-
-void int_to_str(int value, char* str) {
-    char tmp[16];
-    int i = 0, j = 0;
-    bool neg = false;
-    if (value == 0) {
-        str[0] = '0'; str[1] = '\0'; return;
-    }
-    if (value < 0) { neg = true; value = -value; }
-    while (value > 0) {
-        tmp[i++] = (value % 10) + '0';
-        value /= 10;
-    }
-    if (neg) tmp[i++] = '-';
-    while (i > 0) str[j++] = tmp[--i];
-    str[j] = '\0';
-}
-

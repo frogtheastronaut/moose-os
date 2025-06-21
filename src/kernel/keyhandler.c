@@ -44,8 +44,11 @@ void processKey(unsigned char key, char keycode) {
 		return;
 	} else if (keycode == BS_KEY_CODE) {
 		terminal_backspace();
-		arg[arg_pos - 1] = '\0'; // Null-terminate the string
 		arg_pos--;
+		if (arg_pos < 0) {
+			arg_pos = 0;
+		}
+		arg[arg_pos] = '\0';
 		return;
 	} else if (keycode == CAPS_KEY_CODE) {
 		if (caps == true)  {

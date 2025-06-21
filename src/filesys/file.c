@@ -219,3 +219,22 @@ size_t filesys_pwdlen() {
 
     return strlen(path); // Return length of path
 }
+
+int filesys_editfile(const char* name, const char* new_content) {
+    for (int i = 0; i < cwd->folder.childCount; i++) {
+        FileSystemNode* child = cwd->folder.children[i];
+        if (child->type == FILE_NODE && strEqual(child->name, name)) {
+            // Replace content
+            int j = 0;
+            while (new_content[j] && j < MAX_CONTENT - 1) {
+                child->file.content[j] = new_content[j];
+                j++;
+            }
+            child->file.content[j] = '\0';
+            terminal_writestring("File content updated.", true);
+            return 0;
+        }
+    }
+    terminal_writestring("Error: File not found.", true);
+    return -1;
+}

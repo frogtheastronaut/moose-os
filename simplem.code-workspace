@@ -1,7 +1,7 @@
 {
 	"folders": [
 		{
-			"path": "."
+			"path": "../simpleM"
 		}
 	],
 	"settings": {
@@ -16,7 +16,8 @@
 			"keyboard.h": "c",
 			"tty.h": "c",
 			"file.h": "c",
-			"complex": "c"
+			"complex": "c",
+			"vga.h": "c"
 		}
 	}
 }

@@ -98,9 +98,22 @@ void shell_process_command(char *command) {
         terminal_writestring(buffer, true);
     } else if (strEqual(parts[0], "clear")) {
         terminal_initialize();
+    } else if (strEqual(parts[0], "echo")) {
+        if (count < 2) {
+            terminal_writestring("Error: ECHO NEEDS ARGUMENTS", true);
+        } else {
+            for (int i = 1; i < count; i++) {
+                terminal_writestring(parts[i], false);
+                if (i < count - 1) {
+                    terminal_writestring(" ", false);
+                }
+            }
+            terminal_newline();
+        }
     } else {
         terminal_writestring("Error: UNKNOWN COMMAND", true);
     }
+    //terminal_writestring(command, true);
     // int_to_str(terminal_row, buffer);
     // terminal_writestring(buffer, true);
 }
