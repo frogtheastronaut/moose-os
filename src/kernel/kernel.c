@@ -13,15 +13,20 @@ Simple code to run a simple kernel.
 */
 void kernel_main(void) 
 {
-	/* Initialize terminal interface */
-	terminal_initialize();
-	terminal_writestring("Welcome to the MooseOS kernel", true);
-	idt_init();
-	kb_init();
+    /* Initialize terminal interface */
+    terminal_initialize();
+    terminal_writestring("Welcome to the MooseOS kernel", true);
+    idt_init();
+    kb_init();
     filesys_init();
-    //demo(); // from file.c
-	shell_prompt(); // from shell.c
-	//gui_demo();
-	while(1);
-
+    
+    shell_prompt(); // Show initial shell prompt
+    
+    // Show GUI demo with key-based exit
+    gui_demo();
+    
+    // After exiting GUI, your terminal will be restored
+    shell_prompt();
+    
+    while(1);
 }

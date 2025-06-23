@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "../kernel/include/vga.h"
+#include "fontdef.h"
 
 // Screen buffer in VGA mode 13h (320x200, 256 colors)
 static uint8_t* vga_buffer = (uint8_t*)0xA0000;
@@ -279,31 +280,157 @@ void gui_init() {
 }
 
 /**
- * Demo function to show all box drawing capabilities
+ * Draws a character at the specified position using proportional spacing
+ * 
+ * @param x X-coordinate of top-left corner
+ * @param y Y-coordinate of top-left corner
+ * @param c Character to draw
+ * @param color Font color
  */
-// void gui_demo() {
-//     gui_init();
-//     // Clear screen
-//     gui_clear_screen(VGA_COLOR_BLUE);
+void gui_draw_char(int x, int y, char c, uint8_t color) {
+    // Get the font data
+    const uint8_t *glyph = system_font[(unsigned char)c];
     
-//     // Draw a simple outline
-//     gui_draw_rect_outline(10, 10, 100, 80, VGA_COLOR_WHITE);
+    // Get the character width
+    int char_width = char_widths[(unsigned char)c];
     
-//     // Draw a filled rectangle
-//     gui_draw_rect(120, 10, 100, 80, VGA_COLOR_GREEN);
+    // Calculate any offset for narrow characters (center them in their cell)
+    int offset = 0;
+    if (char_width < 8) {
+        offset = (8 - char_width) / 2;
+    }
     
-//     // Draw a 3D box
-//     gui_draw_3d_box(10, 100, 100, 80, 
-//                    VGA_COLOR_LIGHT_GREY,
-//                    VGA_COLOR_WHITE, 
-//                    VGA_COLOR_DARK_GREY);
+    // Draw each pixel of the character
+    for (int row = 0; row < 8; row++) {
+        uint8_t row_data = glyph[row];
+        
+        for (int col = 0; col < char_width; col++) {
+            // Check if this pixel should be drawn
+            if (row_data & (0x80 >> (col + offset))) {
+                gui_set_pixel(x + col, y + row, color);
+            }
+        }
+    }
+}
+
+/**
+ * Draws text at the specified position with improved spacing
+ * 
+ * @param x X-coordinate of top-left corner
+ * @param y Y-coordinate of top-left corner
+ * @param text Text to draw
+ * @param color Font color
+ */
+void gui_draw_text(int x, int y, const char* text, uint8_t color) {
+    int current_x = x;
     
-//     // Draw a window box
-//     gui_draw_window_box(120, 100, 100, 80,
-//                        VGA_COLOR_BLACK,
-//                        VGA_COLOR_WHITE,
-//                        VGA_COLOR_LIGHT_GREY);
+    for (int i = 0; text[i] != '\0'; i++) {
+        unsigned char c = (unsigned char)text[i];
+        
+        // Handle special characters
+        if (c == '\n') {
+            current_x = x;
+            y += 9;  // Slightly more line spacing (was 8)
+            continue;
+        }
+        
+        // Draw the character
+        gui_draw_char(current_x, y, c, color);
+        
+        // Move to the next character position using the width table
+        current_x += char_widths[c] + 1;  // Add 1 pixel spacing between characters
+        
+        // Wrap text if it exceeds screen width
+        if (current_x >= SCREEN_WIDTH - 8) {
+            current_x = x;
+            y += 9;  // Slightly more line spacing
+        }
+    }
+}
+
+/**
+ * Calculates the pixel width of a text string
+ * 
+ * @param text The text string
+ * @return Width in pixels
+ */
+int gui_text_width(const char* text) {
+    int width = 0;
+    
+    for (int i = 0; text[i] != '\0'; i++) {
+        unsigned char c = (unsigned char)text[i];
+        width += char_widths[c] + 1;  // Add 1 pixel spacing between characters
+    }
+    
+    // Remove the extra spacing after the last character
+    if (width > 0) width--;
+    
+    return width;
+}
+
+/**
+ * Draws text centered within a rectangular area with improved spacing
+ * 
+ * @param x Left position of rectangle
+ * @param y Top position of rectangle
+ * @param width Width of rectangle
+ * @param height Height of rectangle
+ * @param text Text to draw
+ * @param color Font color
+ */
+void gui_draw_centered_text(int x, int y, int width, int height, const char* text, uint8_t color) {
+    // Calculate text width using our new function
+    int text_width = gui_text_width(text);
+    
+    // Calculate centered position
+    int text_x = x + (width - text_width) / 2;
+    int text_y = y + (height - 8) / 2;
+    
+    // Draw the text
+    gui_draw_text(text_x, text_y, text, color);
+}
+/**
+ * Updated demo function with text capabilities
+ */
+void gui_demo() {
+    gui_init();
+    // Clear screen
+    gui_clear_screen(VGA_COLOR_BLUE);
+    
+    // Draw a simple outline with label
+    gui_draw_rect_outline(10, 10, 100, 80, VGA_COLOR_WHITE);
+    gui_draw_text(15, 15, "Outline Box", VGA_COLOR_WHITE);
+    
+    // Draw a filled rectangle with label
+    gui_draw_rect(120, 10, 100, 80, VGA_COLOR_GREEN);
+    gui_draw_text(125, 15, "Filled Box", VGA_COLOR_BLACK);
+    
+    // Draw a 3D box with centered text
+    gui_draw_3d_box(10, 100, 100, 80, 
+                   VGA_COLOR_LIGHT_GREY,
+                   VGA_COLOR_WHITE, 
+                   VGA_COLOR_DARK_GREY);
+    gui_draw_centered_text(10, 100, 100, 80, "3D Box", VGA_COLOR_BLACK);
+    
+    // Draw a window box with title
+    gui_draw_window_box(120, 100, 100, 80,
+                       VGA_COLOR_BLACK,
+                       VGA_COLOR_WHITE,
+                       VGA_COLOR_LIGHT_GREY);
                        
-//     // Add a title bar to the window
-//     gui_draw_title_bar(120, 100, 100, 12, VGA_COLOR_BLUE);
-// }
+    // Add a title bar to the window
+    gui_draw_title_bar(120, 100, 100, 12, VGA_COLOR_BLUE);
+    gui_draw_text(135, 102, "Window", VGA_COLOR_WHITE);
+    
+    // Add multiline text in the window content area
+    gui_draw_text(125, 120, "Hello!", VGA_COLOR_BLACK);
+    
+    // Add a sample button at the bottom
+    gui_draw_3d_box(145, 160, 50, 16,
+                   VGA_COLOR_LIGHT_GREY,
+                   VGA_COLOR_WHITE,
+                   VGA_COLOR_DARK_GREY);
+    gui_draw_centered_text(145, 160, 50, 16, "OK", VGA_COLOR_BLACK);
+}
+
+
