@@ -15,13 +15,13 @@ void kernel_main(void)
 {
 	/* Initialize terminal interface */
 	terminal_initialize();
-	terminal_writestring("Welcome to the SimpleM kernel", true);
+	terminal_writestring("Welcome to the MooseOS kernel", true);
 	idt_init();
 	kb_init();
     filesys_init();
     //demo(); // from file.c
 	shell_prompt(); // from shell.c
-	test_draw_rect();
+	//gui_demo();
 	while(1);
 
 }

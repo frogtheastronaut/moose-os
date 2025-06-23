@@ -4,7 +4,7 @@
 
 // For splitting strings
 #define VERSION "0.0.5"
-#define SYS "simpleMOS"
+#define SYS "MOOSEOS"
 char name[32] = "root";
 char buffer[256];
 char* shell_cmds[] = {};
