@@ -4,7 +4,6 @@
 */
 #include "include/tty.h"
 #include "include/IDT.h"
-#include "../shell/shell.h"
 #include "../gui/gui.h"
 /*
 
@@ -19,14 +18,22 @@ void kernel_main(void)
     idt_init();
     kb_init();
     filesys_init();
+    filesys_mkdir("hello");
+     filesys_mkdir("hello1");
+      filesys_mkdir("hello2");
+       filesys_mkdir("hello3");
+        filesys_mkdir("hello4");
+    filesys_mkfile("hello.txt", "bonjour");
+    filesys_cd("hello");
+    filesys_mkfile("hello2.txt", "bonjour2");
     
-    shell_prompt(); // Show initial shell prompt
+    //shell_prompt(); // Show initial shell prompt
     
     // Show GUI demo with key-based exit
-    gui_demo();
+    gui_draw_filesplorer();
     
     // After exiting GUI, your terminal will be restored
-    shell_prompt();
+    //shell_prompt();
     
     while(1);
 }

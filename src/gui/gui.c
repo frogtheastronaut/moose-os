@@ -1,6 +1,11 @@
 #include <stdint.h>
+#include <stddef.h>
 #include "../kernel/include/vga.h"
+#include "images.h"
 #include "fontdef.h"
+#include "../kernel/include/keydef.h"
+#include "../filesys/file.h"
+#include "../kernel/include/keyboard.h" // Make sure this includes the key code definitions
 
 // Screen buffer in VGA mode 13h (320x200, 256 colors)
 static uint8_t* vga_buffer = (uint8_t*)0xA0000;
@@ -8,6 +13,10 @@ static uint8_t* vga_buffer = (uint8_t*)0xA0000;
 // Screen dimensions
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 200
+
+// Add these global variables to track selection state
+int current_selection = 0;  // Index of currently selected item
+bool explorer_active = false;  // Is the file explorer active?
 
 /**
  * Sets a single pixel at the specified coordinates
@@ -389,48 +398,308 @@ void gui_draw_centered_text(int x, int y, int width, int height, const char* tex
     // Draw the text
     gui_draw_text(text_x, text_y, text, color);
 }
+
 /**
- * Updated demo function with text capabilities
+ * Draw a bitmap icon with background color
+ * 
+ * @param x X-coordinate for top-left corner
+ * @param y Y-coordinate for top-left corner
+ * @param icon The bitmap icon data
+ * @param width The icon width
+ * @param height The icon height
+ * @param bg_color Background color to use instead of transparency
  */
-void gui_demo() {
+void gui_draw_icon(int x, int y, const uint8_t icon[][16], int width, int height, uint8_t bg_color) {
+    for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
+            uint8_t pixel = icon[row][col];
+            uint8_t color;
+            
+            if (pixel == 0) {
+                // Use background color instead of transparency
+                color = bg_color;
+            } else {
+                color = icon_color_map[pixel];
+            }
+            
+            gui_set_pixel(x + col, y + row, color);
+        }
+    }
+}
+
+/**
+ * Draw a file or folder icon with highlight support - FIXED VERSION
+ */
+void gui_draw_file_item(int x, int y, const char* name, int is_dir, int is_selected) {
+    // Calculate text dimensions FIRST
+    int name_width = gui_text_width(name);
+    // Center the text under the icon, but with a max width of 64px
+    int text_x = x + (16 - name_width) / 2;
+    if (text_x < x - 24) text_x = x - 24; // Don't let text go too far left
+    
+    // If selected, draw a highlight rectangle behind the text ONLY (not the icon)
+    if (is_selected) {
+        // Draw blue highlight box behind the name
+        int text_box_width = name_width + 4; // Add padding
+        int text_box_height = 10; // Text height + padding
+        gui_draw_rect(text_x - 2, y + 17, text_box_width, text_box_height, VGA_COLOR_BLUE);
+        
+        // Draw a border around the text box for better visibility
+        gui_draw_rect_outline(text_x - 2, y + 17, text_box_width, text_box_height, VGA_COLOR_WHITE);
+    }
+    
+    // Draw the appropriate icon (ALWAYS unselected)
+    if (is_dir) {
+        gui_draw_icon(x, y, folder_icon, 16, 16, VGA_COLOR_LIGHT_GREY);
+    } else {
+        gui_draw_icon(x, y, file_icon, 16, 16, VGA_COLOR_LIGHT_GREY);
+    }
+    
+    // Use white text if selected, black otherwise
+    uint8_t text_color = is_selected ? VGA_COLOR_WHITE : VGA_COLOR_BLACK;
+    
+    // Draw the name
+    gui_draw_text(text_x, y + 18, name, text_color);
+}
+
+/**
+ * Updated file explorer function that shows current selection
+ */
+void gui_draw_filesplorer() {
     gui_init();
-    // Clear screen
-    gui_clear_screen(VGA_COLOR_BLUE);
+    // Clear screen with a nice background color
+    gui_clear_screen(VGA_COLOR_LIGHT_GREY);
     
-    // Draw a simple outline with label
-    gui_draw_rect_outline(10, 10, 100, 80, VGA_COLOR_WHITE);
-    gui_draw_text(15, 15, "Outline Box", VGA_COLOR_WHITE);
-    
-    // Draw a filled rectangle with label
-    gui_draw_rect(120, 10, 100, 80, VGA_COLOR_GREEN);
-    gui_draw_text(125, 15, "Filled Box", VGA_COLOR_BLACK);
-    
-    // Draw a 3D box with centered text
-    gui_draw_3d_box(10, 100, 100, 80, 
-                   VGA_COLOR_LIGHT_GREY,
-                   VGA_COLOR_WHITE, 
-                   VGA_COLOR_DARK_GREY);
-    gui_draw_centered_text(10, 100, 100, 80, "3D Box", VGA_COLOR_BLACK);
-    
-    // Draw a window box with title
-    gui_draw_window_box(120, 100, 100, 80,
+    // Draw a file explorer window
+    gui_draw_window_box(10, 10, 300, 180, 
                        VGA_COLOR_BLACK,
                        VGA_COLOR_WHITE,
                        VGA_COLOR_LIGHT_GREY);
                        
     // Add a title bar to the window
-    gui_draw_title_bar(120, 100, 100, 12, VGA_COLOR_BLUE);
-    gui_draw_text(135, 102, "Window", VGA_COLOR_WHITE);
+    gui_draw_title_bar(10, 10, 300, 15, VGA_COLOR_BLUE);
+    char path_text[64] = "File Explorer - ";
+    gui_draw_text(15, 13, path_text, VGA_COLOR_WHITE);
     
-    // Add multiline text in the window content area
-    gui_draw_text(125, 120, "Hello!", VGA_COLOR_BLACK);
+    // Display current directory path
+    if (cwd == root) {
+        // We're at root directory
+        gui_draw_text(15 + gui_text_width(path_text), 13, "/", VGA_COLOR_WHITE);
+    } else {
+        // We're in a subdirectory - build path from bottom up
+        char full_path[128] = "";
+        char temp[128] = "";
+        FileSystemNode* node = cwd;
+        
+        // Traverse up the directory tree
+        while (node != NULL && node != root) {
+            // Prepend "/name" to the path
+            if (full_path[0] == '\0') {
+                // First iteration, just use the name
+                copyStr(full_path, node->name);
+            } else {
+                // Subsequent iterations, prepend with slash
+                copyStr(temp, "/");
+                strcat(temp, node->name);
+                strcat(temp, "/");
+                strcat(temp, full_path);
+                copyStr(full_path, temp);
+            }
+            node = node->parent;
+        }
+        
+        // Add leading slash for absolute path
+        copyStr(temp, "/");
+        strcat(temp, full_path);
+        copyStr(full_path, temp);
+        
+        // Draw the path
+        gui_draw_text(15 + gui_text_width(path_text), 13, full_path, VGA_COLOR_WHITE);
+    }
     
-    // Add a sample button at the bottom
-    gui_draw_3d_box(145, 160, 50, 16,
-                   VGA_COLOR_LIGHT_GREY,
-                   VGA_COLOR_WHITE,
-                   VGA_COLOR_DARK_GREY);
-    gui_draw_centered_text(145, 160, 50, 16, "OK", VGA_COLOR_BLACK);
+    // Draw files and folders from the actual filesystem
+    int x_pos = 30;
+    int y_pos = 40;
+    int count = 0;
+    
+    // Draw parent directory if not at root
+    if (cwd != root) {
+        // Use the is_selected parameter
+        gui_draw_file_item(x_pos, y_pos, "..", 1, current_selection == 0);
+        x_pos += 70;
+        count++;
+        
+        // Start a new row if needed
+        if (count % 4 == 0) {
+            x_pos = 30;
+            y_pos += 40;
+        }
+    }
+    
+    // Draw actual files and folders
+    for (int i = 0; i < cwd->folder.childCount && count < 12; i++) {
+        FileSystemNode* child = cwd->folder.children[i];
+        
+        // Determine if this item is selected
+        int selection_index = count;
+        if (cwd != root) selection_index += 1;  // Account for ".." entry
+        
+        // Use the is_selected parameter
+        gui_draw_file_item(x_pos, y_pos, child->name, 
+                        (child->type == FOLDER_NODE), 
+                        current_selection == selection_index);
+        
+        x_pos += 70; // Move to the next position
+        count++;
+        
+        // Start a new row if needed
+        if (count % 4 == 0) {
+            x_pos = 30;
+            y_pos += 40;
+        }
+    }
+    
+    // Add a status bar at the bottom
+    gui_draw_rect(10, 175, 300, 15, VGA_COLOR_DARK_GREY);
+    
+    // Display number of items
+    char count_str[16]; // Buffer for the count
+    int_to_str(cwd->folder.childCount, count_str, sizeof(count_str));
+    
+    char status_text[32] = "";
+    copyStr(status_text, count_str);
+    
+    // Append " items" to the count
+    if (cwd->folder.childCount == 1) {
+        strcat(status_text, " item");
+    } else {
+        strcat(status_text, " items");
+    }
+    
+    gui_draw_text(15, 178, status_text, VGA_COLOR_WHITE);
+    
+    // Display keyboard controls in status bar
+    //gui_draw_text(210, 178, "ARROWS:Move ENTER:Open", VGA_COLOR_WHITE);
+    
+    // Set explorer as active
+    explorer_active = true;
 }
 
+/**
+ * Process keyboard input for file explorer with improved selection handling
+ */
+void gui_handle_explorer_key(unsigned char key, char scancode) {
+    if (!explorer_active) return;
+    
+    int items_per_row = 4;
+    int total_items = cwd->folder.childCount;
+    if (cwd != root) total_items++; // Account for ".." folder
+    
+    // Track previous selection to know what to redraw
+    int previous_selection = current_selection;
+    
+    // Process key input (now using constants from keyboard.h)
+    switch (scancode) {
+        case ARROW_UP_KEY:
+            if (current_selection >= items_per_row) {
+                current_selection -= items_per_row;
+            }
+            break;
+            
+        case ARROW_DOWN_KEY:
+            if (current_selection + items_per_row < total_items) {
+                current_selection += items_per_row;
+            }
+            break;
+            
+        case ARROW_LEFT_KEY:
+            if (current_selection % items_per_row > 0) {
+                current_selection--;
+            }
+            break;
+            
+        case ARROW_RIGHT_KEY:
+            if (current_selection % items_per_row < items_per_row - 1 && 
+                current_selection + 1 < total_items) {
+                current_selection++;
+            }
+            break;
+        case ENTER_KEY_CODE:
+            // Navigate to folder or open file
+            if (cwd != root && current_selection == 0) {
+                // Go to parent directory
+                filesys_cd("..");
+                current_selection = 0;
+                gui_draw_filesplorer(); // Redraw the whole UI
+                return;
+            } else {
+                // Determine actual index in children array
+                int actual_index = current_selection;
+                if (cwd != root) actual_index -= 1; // Account for ".." entry
+                
+                if (actual_index >= 0 && actual_index < cwd->folder.childCount) {
+                    FileSystemNode* child = cwd->folder.children[actual_index];
+                    if (child->type == FOLDER_NODE) {
+                        // Navigate to folder
+                        filesys_cd(child->name);
+                        current_selection = 0;
+                        gui_draw_filesplorer(); // Redraw the whole UI
+                        return;
+                    } else {
+                        // For files, you could show a file preview or properties
+                        // For now, we'll just highlight it
+                    }
+                }
+            }
+            break;
+    }
+    
+    // Only update if selection changed
+    if (previous_selection != current_selection) {
+        // Calculate grid positions
+        int prev_row = previous_selection / items_per_row;
+        int prev_col = previous_selection % items_per_row;
+        int new_row = current_selection / items_per_row;
+        int new_col = current_selection % items_per_row;
+        
+        // Calculate pixel positions
+        int prev_x = 30 + prev_col * 70;
+        int prev_y = 40 + prev_row * 40;
+        int new_x = 30 + new_col * 70;
+        int new_y = 40 + new_row * 40;
+        
+        // IMPROVED APPROACH: Clear and redraw entire grid cells for both old and new selections
+        
+        // Clear entire grid cells - use WIDER rectangles to ensure all text highlights are removed
+        // This makes sure even long filenames have their highlights completely cleared
+        gui_draw_rect(prev_x - 30, prev_y + 17, 70, 10, VGA_COLOR_LIGHT_GREY);
+        gui_draw_rect(new_x - 30, new_y + 17, 70, 10, VGA_COLOR_LIGHT_GREY);
+        
+        // Redraw previous item with no selection
+        if (previous_selection == 0 && cwd != root) {
+            gui_draw_file_item(prev_x, prev_y, "..", 1, 0);
+        } else {
+            int idx = previous_selection;
+            if (cwd != root) idx--;
+            
+            if (idx >= 0 && idx < cwd->folder.childCount) {
+                FileSystemNode* child = cwd->folder.children[idx];
+                gui_draw_file_item(prev_x, prev_y, child->name, (child->type == FOLDER_NODE), 0);
+            }
+        }
+        
+        // Draw new item with selection
+        if (current_selection == 0 && cwd != root) {
+            gui_draw_file_item(new_x, new_y, "..", 1, 1);
+        } else {
+            int idx = current_selection;
+            if (cwd != root) idx--;
+            
+            if (idx >= 0 && idx < cwd->folder.childCount) {
+                FileSystemNode* child = cwd->folder.children[idx];
+                gui_draw_file_item(new_x, new_y, child->name, (child->type == FOLDER_NODE), 1);
+            }
+        }
+    }
+}
 

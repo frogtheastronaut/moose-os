@@ -101,3 +101,88 @@ int split_string(const char *input, char delimiter, char output[MAX_PARTS][MAX_P
     output[part][j] = '\0'; // Null-terminate the last part
     return part + 1; // Return number of parts found
 }
+
+/**
+ * Simple integer to string conversion function
+ * 
+ * @param num The integer to convert
+ * @param buffer The output buffer
+ * @param buffer_size Size of the buffer
+ * @return The length of the resulting string
+ */
+int int_to_str(int num, char* buffer, int buffer_size) {
+    // Handle edge cases
+    if (buffer_size <= 1) {
+        if (buffer_size == 1) buffer[0] = '\0';
+        return 0;
+    }
+    
+    // Handle negative numbers
+    int is_negative = 0;
+    if (num < 0) {
+        is_negative = 1;
+        num = -num;
+    }
+    
+    // Find end of buffer for reverse writing
+    int i = 0;
+    
+    // Handle special case of 0
+    if (num == 0) {
+        buffer[i++] = '0';
+    } else {
+        // Convert digits
+        while (num > 0 && i < buffer_size - 1) {
+            buffer[i++] = '0' + (num % 10);
+            num /= 10;
+        }
+    }
+    
+    // Add negative sign if needed
+    if (is_negative && i < buffer_size - 1) {
+        buffer[i++] = '-';
+    }
+    
+    // Null-terminate the string
+    buffer[i] = '\0';
+    
+    // Reverse the string
+    int start = 0;
+    int end = i - 1;
+    while (start < end) {
+        char temp = buffer[start];
+        buffer[start] = buffer[end];
+        buffer[end] = temp;
+        start++;
+        end--;
+    }
+    
+    return i;
+}
+
+/**
+ * Concatenates source string to destination string
+ * 
+ * @param dest The destination string
+ * @param src The source string to append to dest
+ * @return Pointer to the destination string
+ */
+char* strcat(char* dest, const char* src) {
+    // Find the end of the destination string
+    int dest_len = 0;
+    while (dest[dest_len] != '\0') {
+        dest_len++;
+    }
+    
+    // Copy the source string to the end of the destination string
+    int i = 0;
+    while (src[i] != '\0') {
+        dest[dest_len + i] = src[i];
+        i++;
+    }
+    
+    // Null-terminate the concatenated string
+    dest[dest_len + i] = '\0';
+    
+    return dest;
+}
