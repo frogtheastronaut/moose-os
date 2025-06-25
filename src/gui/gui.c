@@ -34,6 +34,12 @@ char dialog_input[MAX_DIALOG_INPUT_LEN + 1] = "";
 int dialog_input_pos = 0;
 int dialog_type = 0; // 0 = directory creation, 1 = file creation
 
+// Add these variables to the top of gui.c with your other globals
+int path_scroll_offset = 0;
+uint32_t last_scroll_time = 0;
+#define SCROLL_DELAY 15  // Ticks between scroll updates
+#define PATH_MAX_WIDTH 160 // Maximum width for path display in pixels
+
 /**
  * Sets a single pixel at the specified coordinates
  * 
@@ -477,7 +483,42 @@ void gui_draw_file_item(int x, int y, const char* name, int is_dir, int is_selec
     // Draw the name
     gui_draw_text(text_x, y + 18, name, text_color);
 }
-
+/**
+ * Draw scrolling text that animates if too long for the available space
+ */
+void gui_draw_scrolling_text(int x, int y, const char* text, int max_width, uint8_t color, uint8_t bg_color) {
+    // Get the text width
+    int text_width = gui_text_width(text);
+    
+    // If text fits, just draw it normally
+    if (text_width <= max_width) {
+        gui_draw_text(x, y, text, color);
+        return;
+    }
+    
+    // Text is too long - need to truncate the left side
+    // Create a clipping box for the text
+    gui_draw_rect(x, y, max_width, 10, bg_color);
+    
+    // Find the starting point in the original string
+    int text_len = strlen(text);
+    int i = 0;
+    int current_width = text_width;
+    
+    // Skip characters from the start until we're within the max width
+    // We leave space for "..." at the beginning
+    int ellipsis_width = gui_text_width("...");
+    while (i < text_len && current_width > max_width - ellipsis_width) {
+        current_width -= (char_widths[(unsigned char)text[i]] + 1);
+        i++;
+    }
+    
+    // Draw the ellipsis to indicate truncation
+    gui_draw_text(x, y, "...", color);
+    
+    // Draw the truncated text starting from position i
+    gui_draw_text(x + ellipsis_width, y, &text[i], color);
+}
 /**
  * Updated file explorer function that shows current selection
  */
@@ -498,16 +539,16 @@ void gui_draw_filesplorer() {
     gui_draw_text(15, 13, path_text, VGA_COLOR_WHITE);
     
     // Display current directory path
+    char full_path[128] = "";
     if (cwd == root) {
         // We're at root directory
-        gui_draw_text(15 + gui_text_width(path_text), 13, "/", VGA_COLOR_WHITE);
+        copyStr(full_path, "/");
     } else {
         // We're in a subdirectory - build path from bottom up
-        char full_path[128] = "";
         FileSystemNode* node = cwd;
         
         // Start with current directory
-        strcat(full_path, node->name);
+        copyStr(full_path, node->name);
         node = node->parent;
         
         // Traverse up the directory tree
@@ -526,10 +567,12 @@ void gui_draw_filesplorer() {
         char temp[128] = "/";
         strcat(temp, full_path);
         copyStr(full_path, temp);
-        
-        // Draw the path
-        gui_draw_text(15 + gui_text_width(path_text), 13, full_path, VGA_COLOR_WHITE);
     }
+    
+    // Draw the path with scrolling if needed
+    int path_x = 15 + gui_text_width(path_text);
+    int available_width = 300 - path_x - 10; // Width available for path display
+    gui_draw_scrolling_text(path_x, 13, full_path, available_width, VGA_COLOR_WHITE, VGA_COLOR_BLUE);
     
     // Draw files and folders from the actual filesystem
     int x_pos = 30;
@@ -846,6 +889,45 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
             dialog_input_pos = 0;
             gui_draw_dialog("Create File", "Enter file name:");
             return true;
+
+        case BS_KEY_CODE:
+            // Delete the currently selected item (except ".." which can't be deleted)
+            if (cwd != root && current_selection == 0) {
+                // Can't delete the ".." entry
+                return true;
+            } else {
+                // Determine actual index in children array
+                int actual_index = current_selection;
+                if (cwd != root) actual_index -= 1;  // Account for ".." entry
+                
+                if (actual_index >= 0 && actual_index < cwd->folder.childCount) {
+                    FileSystemNode* child = cwd->folder.children[actual_index];
+                    
+                    if (child->type == FOLDER_NODE) {
+                        // Delete folder
+                        filesys_rmdir(child->name);
+                    } else {
+                        // Delete file
+                        filesys_rm(child->name);
+                    }
+                    
+                    // If there are still items left after deletion, ensure selection is within bounds
+                    if (cwd->folder.childCount > 0) {
+                        // If we deleted the last item, move selection to the previous item
+                        if (current_selection >= cwd->folder.childCount + (cwd != root ? 1 : 0)) {
+                            current_selection--;
+                        }
+                    } else {
+                        // No items left, reset selection to 0
+                        current_selection = 0;
+                    }
+                    
+                    // Redraw the file explorer to reflect the changes
+                    gui_draw_filesplorer();
+                    return true;
+                }
+            }
+            break;
             
         default:
             // Not a key we handle
@@ -856,10 +938,9 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
     if (previous_selection != current_selection) {
         gui_draw_filesplorer(); // Redraw the whole UI
         
-        return true;  // We handled the key
+        return true; 
+
     }
-    
-    return true;  // Key was processed
 }
 
 
