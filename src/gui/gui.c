@@ -26,7 +26,7 @@ uint32_t get_ticks(void) {
 int current_selection = 0;  // Index of currently selected item
 
 // Maximum length for input string in dialog
-#define MAX_DIALOG_INPUT_LEN 8
+#define MAX_DIALOG_INPUT_LEN 128
 extern bool dialog_active;
 extern bool explorer_active;
 // Dialog variables
@@ -450,38 +450,80 @@ void gui_draw_icon(int x, int y, const uint8_t icon[][16], int width, int height
 }
 
 /**
- * Draw a file or folder icon with highlight support - FIXED VERSION
+ * Draw a file or folder icon with better vertical alignment
  */
 void gui_draw_file_item(int x, int y, const char* name, int is_dir, int is_selected) {
-    // Calculate text dimensions FIRST
-    int name_width = gui_text_width(name);
-    // Center the text under the icon, but with a max width of 64px
-    int text_x = x + (16 - name_width) / 2;
-    if (text_x < x - 24) text_x = x - 24; // Don't let text go too far left
+    // Define the item dimensions and spacing
+    int item_width = 60;
+    int item_height = 40;
+    int icon_width = 16;
+    int icon_height = 16;
     
-    // If selected, draw a highlight rectangle behind the text ONLY (not the icon)
+    // Calculate center position
+    int center_x = x + item_width/2;
+    
+    // If selected, draw a highlight rectangle around the entire item
     if (is_selected) {
-        // Draw blue highlight box behind the name
-        int text_box_width = name_width + 4; // Add padding
-        int text_box_height = 10; // Text height + padding
-        gui_draw_rect(text_x - 2, y + 17, text_box_width, text_box_height, VGA_COLOR_BLUE);
-        
-        // Draw a border around the text box for better visibility
-        gui_draw_rect_outline(text_x - 2, y + 17, text_box_width, text_box_height, VGA_COLOR_WHITE);
+        // Draw blue highlight box behind everything
+        gui_draw_rect(x, y, item_width, item_height, VGA_COLOR_BLUE);
     }
     
-    // Draw the appropriate icon (ALWAYS unselected)
+    // Calculate icon position (centered horizontally)
+    int icon_x = center_x - (icon_width/2);
+    int icon_y = y + 4;  // Fixed distance from the top
+    
+    // Draw the appropriate icon
     if (is_dir) {
-        gui_draw_icon(x, y, folder_icon, 16, 16, VGA_COLOR_LIGHT_GREY);
+        gui_draw_icon(icon_x, icon_y, folder_icon, icon_width, icon_height, 
+                     is_selected ? VGA_COLOR_BLUE : VGA_COLOR_LIGHT_GREY);
     } else {
-        gui_draw_icon(x, y, file_icon, 16, 16, VGA_COLOR_LIGHT_GREY);
+        gui_draw_icon(icon_x, icon_y, file_icon, icon_width, icon_height, 
+                     is_selected ? VGA_COLOR_BLUE : VGA_COLOR_LIGHT_GREY);
     }
     
     // Use white text if selected, black otherwise
     uint8_t text_color = is_selected ? VGA_COLOR_WHITE : VGA_COLOR_BLACK;
+    uint8_t bg_color = is_selected ? VGA_COLOR_BLUE : VGA_COLOR_LIGHT_GREY;
     
-    // Draw the name
-    gui_draw_text(text_x, y + 18, name, text_color);
+    // Calculate text position (2 pixels below the icon)
+    int text_y = icon_y + icon_height + 2;
+    
+    // Draw the name with truncation if needed
+    int name_width = gui_text_width(name);
+    int max_name_width = item_width - 4; // Max width, leaving 2px padding on each side
+    
+    if (name_width <= max_name_width) {
+        // Name fits, center it horizontally
+        int text_x = center_x - (name_width / 2);
+        gui_draw_text(text_x, text_y, name, text_color);
+    } else {
+        // Name is too long, truncate with ellipsis
+        char truncated[64];
+        int i = 0;
+        int current_width = 0;
+        
+        // Copy characters until we're about to exceed max width
+        while (name[i] != '\0' && 
+               current_width + char_widths[(unsigned char)name[i]] < max_name_width - gui_text_width("..")) {
+            truncated[i] = name[i];
+            current_width += char_widths[(unsigned char)name[i]] + 1;
+            i++;
+        }
+        
+        // Add ellipsis and terminate string
+        truncated[i] = '.';
+        truncated[i+1] = '.';
+        truncated[i+2] = '\0';
+        
+        // Center the truncated text
+        int text_x = center_x - (current_width + gui_text_width("..")) / 2;
+        
+        // Draw background rect to cover any previous text
+        gui_draw_rect(text_x - 1, text_y, max_name_width + 2, 10, bg_color);
+        
+        // Draw the truncated text
+        gui_draw_text(text_x, text_y, truncated, text_color);
+    }
 }
 /**
  * Draw scrolling text that animates if too long for the available space
@@ -720,19 +762,52 @@ void gui_draw_dialog(const char* title, const char* prompt) {
     gui_draw_text(x + 10, y + 25, prompt, VGA_COLOR_BLACK);
 
     // Draw input box
-    gui_draw_rect(x + 10, y + 40, width - 20, 14, VGA_COLOR_WHITE);
-    gui_draw_rect_outline(x + 10, y + 40, width - 20, 14, VGA_COLOR_BLACK);
+    int input_box_width = width - 20;
+    gui_draw_rect(x + 10, y + 40, input_box_width, 14, VGA_COLOR_WHITE);
+    gui_draw_rect_outline(x + 10, y + 40, input_box_width, 14, VGA_COLOR_BLACK);
     
-    // Draw input text
-    gui_draw_text(x + 12, y + 42, dialog_input, VGA_COLOR_BLACK);
+    // Calculate if text needs scrolling
+    int text_width = gui_text_width(dialog_input);
+    int max_visible_width = input_box_width - 4;  // Leave room for cursor
     
-    // Draw cursor
-    if ((get_ticks() / 10) % 2 == 0) { // Blinking cursor
-        int cursor_x = x + 12 + gui_text_width(dialog_input);
-        gui_draw_vline(cursor_x, y + 42, y + 42 + 8, VGA_COLOR_BLACK);
+    if (text_width <= max_visible_width) {
+        // Text fits, draw it normally
+        gui_draw_text(x + 12, y + 42, dialog_input, VGA_COLOR_BLACK);
+        
+        // Draw cursor
+        if ((get_ticks() / 10) % 2 == 0) { 
+            int cursor_x = x + 12 + text_width;
+            gui_draw_vline(cursor_x, y + 42, y + 42 + 8, VGA_COLOR_BLACK);
+        }
+    } else {
+        // Text doesn't fit, scroll it so the cursor is visible
+        int offset = text_width - max_visible_width;
+        
+        // Create a substring starting from the offset
+        char visible_text[MAX_DIALOG_INPUT_LEN + 1];
+        int visible_start = 0;
+        
+        // Find the starting character that will make the cursor visible
+        int current_width = 0;
+        for (int i = 0; dialog_input[i] != '\0'; i++) {
+            current_width += char_widths[(unsigned char)dialog_input[i]] + 1;
+            if (current_width > offset) {
+                visible_start = i;
+                break;
+            }
+        }
+        
+        // Draw the text starting from visible_start
+        gui_draw_text(x + 12, y + 42, &dialog_input[visible_start], VGA_COLOR_BLACK);
+        
+        // Draw cursor at the end
+        if ((get_ticks() / 10) % 2 == 0) {
+            int cursor_x = x + 12 + (text_width - offset);
+            gui_draw_vline(cursor_x, y + 42, y + 42 + 8, VGA_COLOR_BLACK);
+        }
     }
     
-    // Draw keyboard shortcut text at the bottom instead of buttons
+    // Draw keyboard shortcut text at the bottom
     gui_draw_text(x + 10, y + 62, "ENTER: OK", VGA_COLOR_DARK_GREY);
     gui_draw_text(x + width - 70, y + 62, "ESC: Cancel", VGA_COLOR_DARK_GREY);
 }
@@ -777,7 +852,7 @@ bool gui_handle_dialog_key(unsigned char key, char scancode) {
     }
     
     // Use the character key that was already converted in keyhandler.c
-    if (key >= 32 && key <= 126 && dialog_input_pos < MAX_DIALOG_INPUT_LEN) {
+    if (key >= 32 && dialog_input_pos < MAX_DIALOG_INPUT_LEN) {
         dialog_input[dialog_input_pos] = key;
         dialog_input_pos++;
         dialog_input[dialog_input_pos] = '\0';
