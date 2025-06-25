@@ -24,7 +24,6 @@ void kernel_main(void)
        filesys_mkdir("hello3");
         filesys_mkdir("hello4");
     filesys_mkfile("hello.txt", "bonjour");
-    filesys_cd("hello");
     filesys_mkfile("hello2.txt", "bonjour2");
     
     //shell_prompt(); // Show initial shell prompt

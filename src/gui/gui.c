@@ -6,7 +6,6 @@
 #include "../kernel/include/keydef.h"
 #include "../filesys/file.h"
 #include "../kernel/include/keyboard.h" // Make sure this includes the key code definitions
-
 // Screen buffer in VGA mode 13h (320x200, 256 colors)
 static uint8_t* vga_buffer = (uint8_t*)0xA0000;
 
@@ -14,9 +13,26 @@ static uint8_t* vga_buffer = (uint8_t*)0xA0000;
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 200
 
+uint32_t ticks = 0;
+
+void timer_handler() {
+    ticks++;
+}
+
+uint32_t get_ticks(void) {
+    return ticks;
+}
 // Add these global variables to track selection state
 int current_selection = 0;  // Index of currently selected item
-bool explorer_active = false;  // Is the file explorer active?
+
+// Maximum length for input string in dialog
+#define MAX_DIALOG_INPUT_LEN 8
+extern bool dialog_active;
+extern bool explorer_active;
+// Dialog variables
+char dialog_input[MAX_DIALOG_INPUT_LEN + 1] = "";
+int dialog_input_pos = 0;
+int dialog_type = 0; // 0 = directory creation, 1 = file creation
 
 /**
  * Sets a single pixel at the specified coordinates
@@ -475,7 +491,7 @@ void gui_draw_filesplorer() {
                        VGA_COLOR_BLACK,
                        VGA_COLOR_WHITE,
                        VGA_COLOR_LIGHT_GREY);
-                       
+    
     // Add a title bar to the window
     gui_draw_title_bar(10, 10, 300, 15, VGA_COLOR_BLUE);
     char path_text[64] = "File Explorer - ";
@@ -488,28 +504,26 @@ void gui_draw_filesplorer() {
     } else {
         // We're in a subdirectory - build path from bottom up
         char full_path[128] = "";
-        char temp[128] = "";
         FileSystemNode* node = cwd;
+        
+        // Start with current directory
+        strcat(full_path, node->name);
+        node = node->parent;
         
         // Traverse up the directory tree
         while (node != NULL && node != root) {
-            // Prepend "/name" to the path
-            if (full_path[0] == '\0') {
-                // First iteration, just use the name
-                copyStr(full_path, node->name);
-            } else {
-                // Subsequent iterations, prepend with slash
-                copyStr(temp, "/");
-                strcat(temp, node->name);
-                strcat(temp, "/");
-                strcat(temp, full_path);
-                copyStr(full_path, temp);
-            }
+            // Prepend parent directory with slash
+            char temp[128] = "";
+            copyStr(temp, node->name);
+            strcat(temp, "/");
+            strcat(temp, full_path);
+            copyStr(full_path, temp);
+            
             node = node->parent;
         }
         
         // Add leading slash for absolute path
-        copyStr(temp, "/");
+        char temp[128] = "/";
         strcat(temp, full_path);
         copyStr(full_path, temp);
         
@@ -520,29 +534,33 @@ void gui_draw_filesplorer() {
     // Draw files and folders from the actual filesystem
     int x_pos = 30;
     int y_pos = 40;
-    int count = 0;
+    int displayed_count = 0;  // This tracks the display position
     
     // Draw parent directory if not at root
     if (cwd != root) {
-        // Use the is_selected parameter
+        // Use the is_selected parameter - this item is at visual position 0
         gui_draw_file_item(x_pos, y_pos, "..", 1, current_selection == 0);
         x_pos += 70;
-        count++;
+        displayed_count++;
         
         // Start a new row if needed
-        if (count % 4 == 0) {
+        if (displayed_count % 4 == 0) {
             x_pos = 30;
             y_pos += 40;
         }
     }
     
     // Draw actual files and folders
-    for (int i = 0; i < cwd->folder.childCount && count < 12; i++) {
+    for (int i = 0; i < cwd->folder.childCount && displayed_count < 12; i++) {
         FileSystemNode* child = cwd->folder.children[i];
         
-        // Determine if this item is selected
-        int selection_index = count;
-        if (cwd != root) selection_index += 1;  // Account for ".." entry
+        // Calculate selection index properly:
+        // If in root: selection index = the file index
+        // If in subfolder: selection index = file index + 1 (for ".." entry)
+        int selection_index = i;
+        if (cwd != root) {
+            selection_index = i + 1;  // Account for ".." entry
+        }
         
         // Use the is_selected parameter
         gui_draw_file_item(x_pos, y_pos, child->name, 
@@ -550,10 +568,10 @@ void gui_draw_filesplorer() {
                         current_selection == selection_index);
         
         x_pos += 70; // Move to the next position
-        count++;
+        displayed_count++;
         
         // Start a new row if needed
-        if (count % 4 == 0) {
+        if (displayed_count % 4 == 0) {
             x_pos = 30;
             y_pos += 40;
         }
@@ -584,12 +602,170 @@ void gui_draw_filesplorer() {
     // Set explorer as active
     explorer_active = true;
 }
+/**
+ * Create new directory or file based on dialog input
+ */
+void dialog_create_item() {
+    if (dialog_input[0] != '\0') {
+        // Store the current number of items before we create the new one
+        int previous_item_count = cwd->folder.childCount;
+        
+        if (dialog_type == 0) {
+            // Create directory
+            filesys_mkdir(dialog_input);
+        } else {
+            // Create file
+            filesys_mkfile(dialog_input, "");
+        }
+        
+        // If a new item was actually created, the count will have increased
+        if (cwd->folder.childCount > previous_item_count) {
+            // Calculate the selection index for the newly created item
+            // The newly created item is always the last item in the children array
+            if (cwd != root) {
+                // In a subdirectory: The new item's index is childCount - 1 (last item)
+                // But we need to add 1 for the ".." entry at the beginning
+                current_selection = (cwd->folder.childCount - 1) + 1;
+            } else {
+                // In root, no ".." entry, so last item index is just childCount - 1
+                current_selection = cwd->folder.childCount - 1;
+            }
+            
+            // Make sure selection doesn't exceed the visible items limit (12)
+            int max_visible = 12;
+            if (cwd != root) {
+                // If we're in a subdirectory, account for ".." taking one slot
+                max_visible = 11;
+            }
+            
+            // If we exceed the visible count, just select the first item
+            if (current_selection >= max_visible) {
+                current_selection = 0;
+            }
+        } else {
+            // No new item was created (maybe due to duplicate name)
+            // Just reset selection to the first item
+            current_selection = 0;
+        }
+        
+        // Redraw the file explorer to show the new item
+        gui_draw_filesplorer();
+    }
+}
+/**
+ * Draws a simple dialog box 
+ */
+void gui_draw_dialog(const char* title, const char* prompt) {
+    // Dialog dimensions
+    int width = 200;
+    int height = 80;
+    int x = (SCREEN_WIDTH - width) / 2;
+    int y = (SCREEN_HEIGHT - height) / 2;
+    
+    // Draw dialog box with shadow
+    gui_draw_rect(x + 4, y + 4, width, height, VGA_COLOR_DARK_GREY); // Shadow
+    gui_draw_window_box(x, y, width, height,
+                      VGA_COLOR_BLACK,
+                      VGA_COLOR_WHITE,
+                      VGA_COLOR_LIGHT_GREY);
+    
+    // Draw title bar
+    gui_draw_title_bar(x, y, width, 15, VGA_COLOR_BLUE);
+    gui_draw_text(x + 10, y + 4, title, VGA_COLOR_WHITE);
+    
+    // Draw prompt
+    gui_draw_text(x + 10, y + 25, prompt, VGA_COLOR_BLACK);
+
+    // Draw input box
+    gui_draw_rect(x + 10, y + 40, width - 20, 14, VGA_COLOR_WHITE);
+    gui_draw_rect_outline(x + 10, y + 40, width - 20, 14, VGA_COLOR_BLACK);
+    
+    // Draw input text
+    gui_draw_text(x + 12, y + 42, dialog_input, VGA_COLOR_BLACK);
+    
+    // Draw cursor
+    if ((get_ticks() / 10) % 2 == 0) { // Blinking cursor
+        int cursor_x = x + 12 + gui_text_width(dialog_input);
+        gui_draw_vline(cursor_x, y + 42, y + 42 + 8, VGA_COLOR_BLACK);
+    }
+    
+    // Draw keyboard shortcut text at the bottom instead of buttons
+    gui_draw_text(x + 10, y + 62, "ENTER: OK", VGA_COLOR_DARK_GREY);
+    gui_draw_text(x + width - 70, y + 62, "ESC: Cancel", VGA_COLOR_DARK_GREY);
+}
+/**
+ * Handle keyboard input for the dialog box
+ */
+bool gui_handle_dialog_key(unsigned char key, char scancode) {
+    if (!dialog_active) return false;
+    
+    // Handle special keys
+    if (scancode == ENTER_KEY_CODE) {
+        // User pressed Enter - create the item
+        dialog_active = false;
+        dialog_create_item();
+        dialog_input[0] = '\0';
+        dialog_input_pos = 0;
+        gui_draw_filesplorer();  // Redraw explorer after item creation
+        return true;
+    } 
+    else if (scancode == ESC_KEY_CODE) {
+        // User pressed Escape - cancel
+        dialog_active = false;
+        dialog_input[0] = '\0';
+        dialog_input_pos = 0;
+        gui_draw_filesplorer();
+        return true;
+    }
+    else if (scancode == BS_KEY_CODE) {
+        // Backspace - delete last character
+        if (dialog_input_pos > 0) {
+            dialog_input_pos--;
+            dialog_input[dialog_input_pos] = '\0';
+            
+            // Redraw the dialog
+            if (dialog_type == 0) {
+                gui_draw_dialog("Create Directory", "Enter directory name:");
+            } else {
+                gui_draw_dialog("Create File", "Enter file name:");
+            }
+        }
+        return true;
+    }
+    
+    // Use the character key that was already converted in keyhandler.c
+    if (key >= 32 && key <= 126 && dialog_input_pos < MAX_DIALOG_INPUT_LEN) {
+        dialog_input[dialog_input_pos] = key;
+        dialog_input_pos++;
+        dialog_input[dialog_input_pos] = '\0';
+        
+        // Redraw the dialog
+        if (dialog_type == 0) {
+            gui_draw_dialog("Create Directory", "Enter directory name:");
+        } else {
+            gui_draw_dialog("Create File", "Enter file name:");
+        }
+        
+        return true;
+    }
+    
+    return true; // Consume all keys when dialog is active
+}
+
+
 
 /**
- * Process keyboard input for file explorer with improved selection handling
+ * Process keyboard input for file explorer
+ * 
+ * @return true if the key was handled, false otherwise
  */
-void gui_handle_explorer_key(unsigned char key, char scancode) {
-    if (!explorer_active) return;
+bool gui_handle_explorer_key(unsigned char key, char scancode) {
+    // If dialog is active, let the dialog handle the key
+    if (dialog_active) {
+        return gui_handle_dialog_key(key, scancode);
+    }
+    
+    if (!explorer_active) return false;
     
     int items_per_row = 4;
     int total_items = cwd->folder.childCount;
@@ -598,7 +774,7 @@ void gui_handle_explorer_key(unsigned char key, char scancode) {
     // Track previous selection to know what to redraw
     int previous_selection = current_selection;
     
-    // Process key input (now using constants from keyboard.h)
+    // Process key input
     switch (scancode) {
         case ARROW_UP_KEY:
             if (current_selection >= items_per_row) {
@@ -624,6 +800,7 @@ void gui_handle_explorer_key(unsigned char key, char scancode) {
                 current_selection++;
             }
             break;
+            
         case ENTER_KEY_CODE:
             // Navigate to folder or open file
             if (cwd != root && current_selection == 0) {
@@ -631,11 +808,11 @@ void gui_handle_explorer_key(unsigned char key, char scancode) {
                 filesys_cd("..");
                 current_selection = 0;
                 gui_draw_filesplorer(); // Redraw the whole UI
-                return;
+                return true;
             } else {
                 // Determine actual index in children array
                 int actual_index = current_selection;
-                if (cwd != root) actual_index -= 1; // Account for ".." entry
+                if (cwd != root) actual_index -= 1;  // Account for ".." entry
                 
                 if (actual_index >= 0 && actual_index < cwd->folder.childCount) {
                     FileSystemNode* child = cwd->folder.children[actual_index];
@@ -644,62 +821,47 @@ void gui_handle_explorer_key(unsigned char key, char scancode) {
                         filesys_cd(child->name);
                         current_selection = 0;
                         gui_draw_filesplorer(); // Redraw the whole UI
-                        return;
-                    } else {
-                        // For files, you could show a file preview or properties
-                        // For now, we'll just highlight it
+                        return true;
                     }
+                    // For files, just keep them highlighted
+                    return true;
                 }
             }
             break;
+            
+        case 0x20: // 'D' key scancode should be 0x20 in your keyboard map
+            // Show directory creation dialog
+            dialog_active = true;
+            dialog_type = 0; // Directory
+            dialog_input[0] = '\0';
+            dialog_input_pos = 0;
+            gui_draw_dialog("Create Directory", "Enter directory name:");
+            return true;
+
+        case 0x21: // 'F' key scancode should be 0x21 in your keyboard map
+            // Show file creation dialog
+            dialog_active = true;
+            dialog_type = 1; // File
+            dialog_input[0] = '\0';
+            dialog_input_pos = 0;
+            gui_draw_dialog("Create File", "Enter file name:");
+            return true;
+            
+        default:
+            // Not a key we handle
+            return false;
     }
     
-    // Only update if selection changed
+    // If we get here, we changed the selection
     if (previous_selection != current_selection) {
-        // Calculate grid positions
-        int prev_row = previous_selection / items_per_row;
-        int prev_col = previous_selection % items_per_row;
-        int new_row = current_selection / items_per_row;
-        int new_col = current_selection % items_per_row;
+        gui_draw_filesplorer(); // Redraw the whole UI
         
-        // Calculate pixel positions
-        int prev_x = 30 + prev_col * 70;
-        int prev_y = 40 + prev_row * 40;
-        int new_x = 30 + new_col * 70;
-        int new_y = 40 + new_row * 40;
-        
-        // IMPROVED APPROACH: Clear and redraw entire grid cells for both old and new selections
-        
-        // Clear entire grid cells - use WIDER rectangles to ensure all text highlights are removed
-        // This makes sure even long filenames have their highlights completely cleared
-        gui_draw_rect(prev_x - 30, prev_y + 17, 70, 10, VGA_COLOR_LIGHT_GREY);
-        gui_draw_rect(new_x - 30, new_y + 17, 70, 10, VGA_COLOR_LIGHT_GREY);
-        
-        // Redraw previous item with no selection
-        if (previous_selection == 0 && cwd != root) {
-            gui_draw_file_item(prev_x, prev_y, "..", 1, 0);
-        } else {
-            int idx = previous_selection;
-            if (cwd != root) idx--;
-            
-            if (idx >= 0 && idx < cwd->folder.childCount) {
-                FileSystemNode* child = cwd->folder.children[idx];
-                gui_draw_file_item(prev_x, prev_y, child->name, (child->type == FOLDER_NODE), 0);
-            }
-        }
-        
-        // Draw new item with selection
-        if (current_selection == 0 && cwd != root) {
-            gui_draw_file_item(new_x, new_y, "..", 1, 1);
-        } else {
-            int idx = current_selection;
-            if (cwd != root) idx--;
-            
-            if (idx >= 0 && idx < cwd->folder.childCount) {
-                FileSystemNode* child = cwd->folder.children[idx];
-                gui_draw_file_item(new_x, new_y, child->name, (child->type == FOLDER_NODE), 1);
-            }
-        }
+        return true;  // We handled the key
     }
+    
+    return true;  // Key was processed
 }
+
+
+
 
