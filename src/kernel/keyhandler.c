@@ -3,6 +3,16 @@
 #include "../gui/gui.h"
 #include <stdbool.h>
 
+// External variables from GUI
+extern bool dialog_active;
+extern bool explorer_active;
+extern bool editor_active;
+
+// External functions from GUI
+extern bool gui_handle_dialog_key(unsigned char key, char scancode);
+extern bool gui_handle_explorer_key(unsigned char key, char scancode);
+extern bool gui_handle_editor_key(unsigned char key, char scancode);
+
 // Keyboard scan codes
 #define ENTER_KEY_CODE 0x1C
 #define BS_KEY_CODE 0xE
@@ -89,7 +99,13 @@ void processKey(unsigned char key, char scancode) {
     // Convert scancode to ASCII if it's a typable character
     char character = get_char_from_scancode(scancode, shift);
         
-    if (explorer_active) {
+    // Check if text editor is active first
+    if (editor_active) {
+        if (gui_handle_editor_key(character, scancode)) {
+            return;
+        }
+    }
+    else if (explorer_active) {
         // If dialog is active, pass both the scancode and the converted character
         if (dialog_active) {
             gui_handle_dialog_key(character, scancode);

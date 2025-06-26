@@ -6,9 +6,11 @@
 #include "../kernel/include/keydef.h"
 #include "../filesys/file.h"
 #include "../kernel/include/keyboard.h" // Make sure this includes the key code definitions
+#include "../lib/lib.h" // For string utilities
 // Screen buffer in VGA mode 13h (320x200, 256 colors)
 static uint8_t* vga_buffer = (uint8_t*)0xA0000;
-
+// Removed horizontal scrolling variables since they are no longer needed
+#define EDITOR_MAX_CHARS_PER_LINE 35 // Maximum characters visible per line
 // Screen dimensions
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 200
@@ -39,6 +41,24 @@ int path_scroll_offset = 0;
 uint32_t last_scroll_time = 0;
 #define SCROLL_DELAY 15  // Ticks between scroll updates
 #define PATH_MAX_WIDTH 160 // Maximum width for path display in pixels
+
+// Text editor state variables
+bool editor_active = false;
+char editor_content[MAX_CONTENT] = "";
+char editor_filename[MAX_NAME_LEN] = "";
+int editor_cursor_pos = 0;
+int editor_scroll_line = 0; // First visible line
+int editor_cursor_line = 0; // Current cursor line
+int editor_cursor_col = 0;  // Current cursor column
+bool editor_modified = false; // Track if content has been modified
+
+// Text editor constants
+#define EDITOR_LINES_VISIBLE 15  // Number of lines visible in editor
+#define EDITOR_LINE_HEIGHT 12    // Height of each line in pixels
+#define EDITOR_CHAR_WIDTH 8      // Width of each character
+#define EDITOR_START_X 15        // Left margin
+#define EDITOR_START_Y 40        // Top margin
+#define EDITOR_WIDTH 290         // Editor content width
 
 /**
  * Sets a single pixel at the specified coordinates
@@ -870,6 +890,248 @@ bool gui_handle_dialog_key(unsigned char key, char scancode) {
     return true; // Consume all keys when dialog is active
 }
 
+/**
+ * Helper function to get file content by name
+ */
+char* get_file_content(const char* filename) {
+    for (int i = 0; i < cwd->folder.childCount; i++) {
+        FileSystemNode* child = cwd->folder.children[i];
+        if (child->type == FILE_NODE && strEqual(child->name, filename)) {
+            return child->file.content;
+        }
+    }
+    return NULL;
+}
+
+/**
+ * Helper function to count lines in text
+ */
+int count_lines(const char* text) {
+    int lines = 1;
+    for (int i = 0; text[i]; i++) {
+        if (text[i] == '\n') {
+            lines++;
+        }
+    }
+    return lines;
+}
+
+/**
+ * Get start of specific line in text
+ */
+const char* get_line_start(const char* text, int line_num) {
+    if (line_num == 0) return text;
+    
+    int current_line = 0;
+    for (int i = 0; text[i]; i++) {
+        if (text[i] == '\n') {
+            current_line++;
+            if (current_line == line_num) {
+                return &text[i + 1];
+            }
+        }
+    }
+    return text; // Return start if line not found
+}
+
+/**
+ * Get length of specific line (excluding newline)
+ */
+int get_line_length(const char* line_start) {
+    int length = 0;
+    while (line_start[length] && line_start[length] != '\n') {
+        length++;
+    }
+    return length;
+}
+
+/**
+ * Convert cursor position to line and column
+ */
+void cursor_pos_to_line_col(int pos, int* line, int* col) {
+    *line = 0;
+    *col = 0;
+    
+    for (int i = 0; i < pos && editor_content[i]; i++) {
+        if (editor_content[i] == '\n') {
+            (*line)++;
+            *col = 0;
+        } else {
+            (*col)++;
+        }
+    }
+}
+
+/**
+ * Convert line and column to cursor position
+ */
+int line_col_to_cursor_pos(int line, int col) {
+    int pos = 0;
+    int current_line = 0;
+    
+    // Move to the start of the target line
+    while (current_line < line && editor_content[pos]) {
+        if (editor_content[pos] == '\n') {
+            current_line++;
+        }
+        pos++;
+    }
+    
+    // Move to the target column
+    int current_col = 0;
+    while (current_col < col && editor_content[pos] && editor_content[pos] != '\n') {
+        pos++;
+        current_col++;
+    }
+    
+    return pos;
+}
+
+
+/**
+ * Draws the text editor interface
+ */
+void gui_draw_text_editor() {
+    // Clear screen
+    gui_draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, VGA_COLOR_LIGHT_GREY);
+    
+    // Draw title bar
+    gui_draw_title_bar(0, 0, SCREEN_WIDTH, 15, VGA_COLOR_BLUE);
+    
+    // Draw "Text Editor - " label
+    char label[] = "Text Editor - ";
+    gui_draw_text(10, 6, label, VGA_COLOR_WHITE);
+    
+    // Draw filename with scrolling if it's too long
+    int label_width = gui_text_width(label);
+    int filename_x = 10 + label_width;
+    int max_filename_width = SCREEN_WIDTH - filename_x - 10; // Leave 10px margin on right
+    gui_draw_scrolling_text(filename_x, 6, editor_filename, max_filename_width, VGA_COLOR_WHITE, VGA_COLOR_BLUE);
+
+    
+    // Draw line numbers background
+    gui_draw_rect(10, 40, 25, 150, VGA_COLOR_LIGHT_GREY);
+    gui_draw_vline(35, 40, 190, VGA_COLOR_DARK_GREY);
+    
+    // Draw text content
+    int y_pos = EDITOR_START_Y + 5;
+    int max_lines = EDITOR_LINES_VISIBLE;
+    int total_lines = count_lines(editor_content);
+    
+    // Adjust scroll if cursor is out of view
+    if (editor_cursor_line < editor_scroll_line) {
+        editor_scroll_line = editor_cursor_line;
+    } else if (editor_cursor_line >= editor_scroll_line + max_lines) {
+        editor_scroll_line = editor_cursor_line - max_lines + 1;
+    }
+    
+    // Draw visible lines
+    for (int line = 0; line < max_lines && (editor_scroll_line + line) < total_lines; line++) {
+        int actual_line = editor_scroll_line + line;
+        
+        // Draw line number
+        char line_num[8];
+        int_to_str(actual_line + 1, line_num, sizeof(line_num));
+        gui_draw_text(12, y_pos, line_num, VGA_COLOR_DARK_GREY);
+        
+        // Get line content
+        const char* line_start = get_line_start(editor_content, actual_line);
+        int line_length = get_line_length(line_start);
+        
+        // Create line buffer with wrapping
+        char line_buffer[EDITOR_MAX_CHARS_PER_LINE + 1];
+        int chars_to_draw = 0;
+        
+        // Copy characters up to the maximum line width
+        for (int i = 0; i < EDITOR_MAX_CHARS_PER_LINE && i < line_length; i++) {
+            line_buffer[chars_to_draw] = line_start[i];
+            chars_to_draw++;
+        }
+        line_buffer[chars_to_draw] = '\0';
+        
+        // Draw line content
+        gui_draw_text(EDITOR_START_X + 25, y_pos, line_buffer, VGA_COLOR_BLACK);
+        
+        // Draw cursor if on this line
+        if (actual_line == editor_cursor_line) {
+            // Calculate cursor x position based on actual character widths
+            int cursor_x = EDITOR_START_X + 25;
+            int cursor_col_to_show = editor_cursor_col;
+            
+            // If cursor is beyond visible area, don't show it (it's wrapped to next line)
+            if (cursor_col_to_show <= EDITOR_MAX_CHARS_PER_LINE) {
+                // Add up the widths of characters before the cursor position
+                for (int i = 0; i < cursor_col_to_show && i < chars_to_draw; i++) {
+                    cursor_x += char_widths[(unsigned char)line_buffer[i]] + 1; // +1 for character spacing
+                }
+                
+                if ((get_ticks() / 15) % 2 == 0) { // Blinking cursor
+                    gui_draw_vline(cursor_x, y_pos, y_pos + 10, VGA_COLOR_BLACK);
+                }
+            }
+        }
+        
+        y_pos += EDITOR_LINE_HEIGHT;
+    }
+    
+    // Draw status bar
+    gui_draw_rect(0, 190, SCREEN_WIDTH, 10, VGA_COLOR_DARK_GREY);
+    
+    // Show cursor position and scroll info
+    char status[64] = "Line: ";
+    char line_str[8], col_str[8];
+    int_to_str(editor_cursor_line + 1, line_str, sizeof(line_str));
+    int_to_str(editor_cursor_col + 1, col_str, sizeof(col_str));
+    strcat(status, line_str);
+    strcat(status, ", Col: ");
+    strcat(status, col_str);
+    
+    gui_draw_text(5, 192, status, VGA_COLOR_WHITE);
+    
+    // Show file size
+    char file_size_str[32] = "File size: ";
+    char size_str[16];
+    int_to_str(strlen(editor_content), size_str, sizeof(size_str));
+    strcat(file_size_str, size_str);
+    strcat(file_size_str, " bytes");
+    gui_draw_text(150, 192, file_size_str, VGA_COLOR_WHITE);
+}
+
+/**
+ * Opens a file in the text editor
+ */
+void gui_open_text_editor(const char* filename) {
+    // Copy filename and load content
+    copyStr(editor_filename, filename);
+    
+    // Get file content
+    char* content = get_file_content(filename);
+    if (content) {
+        // Copy content to editor buffer
+        int i = 0;
+        while (content[i] && i < MAX_CONTENT - 1) {
+            editor_content[i] = content[i];
+            i++;
+        }
+        editor_content[i] = '\0';
+    } else {
+        // File not found or empty, start with empty content
+        editor_content[0] = '\0';
+    }
+    
+    // Reset editor state
+    editor_cursor_pos = 0;
+    editor_scroll_line = 0;
+    cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
+    editor_modified = false;
+    
+    // Activate editor and deactivate explorer
+    editor_active = true;
+    explorer_active = false;
+    
+    // Draw the editor
+    gui_draw_text_editor();
+}
 
 
 /**
@@ -940,9 +1202,11 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
                         current_selection = 0;
                         gui_draw_filesplorer(); // Redraw the whole UI
                         return true;
+                    } else {
+                        // Open file in text editor
+                        gui_open_text_editor(child->name);
+                        return true;
                     }
-                    // For files, just keep them highlighted
-                    return true;
                 }
             }
             break;
@@ -1016,6 +1280,163 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
         return true; 
 
     }
+}
+/**
+ * Handle keyboard input for the text editor
+ */
+bool gui_handle_editor_key(unsigned char key, char scancode) {
+    if (!editor_active) return false;
+    
+    // Handle special keys
+    switch (scancode) {
+        case ESC_KEY_CODE:
+            // Close editor and return to file explorer
+            editor_active = false;
+            explorer_active = true;
+            gui_draw_filesplorer();
+            return true;
+            
+        case ENTER_KEY_CODE:
+            // Insert newline
+            if (strlen(editor_content) < MAX_CONTENT - 1) {
+                // Shift content to the right
+                for (int i = strlen(editor_content); i >= editor_cursor_pos; i--) {
+                    editor_content[i + 1] = editor_content[i];
+                }
+                editor_content[editor_cursor_pos] = '\n';
+                editor_cursor_pos++;
+                cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
+                editor_modified = true;
+                
+                // Auto-save
+                filesys_editfile(editor_filename, editor_content);
+                editor_modified = false; // Reset modified flag after saving
+                
+                gui_draw_text_editor();
+            }
+            return true;
+            
+        case BS_KEY_CODE:
+            // Backspace - delete character before cursor
+            if (editor_cursor_pos > 0) {
+                // Shift content to the left
+                for (int i = editor_cursor_pos; i <= strlen(editor_content); i++) {
+                    editor_content[i - 1] = editor_content[i];
+                }
+                editor_cursor_pos--;
+                cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
+                editor_modified = true;
+                
+                // Auto-save
+                filesys_editfile(editor_filename, editor_content);
+                editor_modified = false; // Reset modified flag after saving
+                
+                gui_draw_text_editor();
+            }
+            return true;
+            
+        case ARROW_UP_KEY:
+            // Move cursor up one line
+            if (editor_cursor_line > 0) {
+                editor_cursor_line--;
+                // Try to maintain column position
+                const char* line_start = get_line_start(editor_content, editor_cursor_line);
+                int line_length = get_line_length(line_start);
+                if (editor_cursor_col > line_length) {
+                    editor_cursor_col = line_length;
+                }
+                editor_cursor_pos = line_col_to_cursor_pos(editor_cursor_line, editor_cursor_col);
+                gui_draw_text_editor();
+            }
+            return true;
+            
+        case ARROW_DOWN_KEY:
+            // Move cursor down one line
+            if (editor_cursor_line < count_lines(editor_content) - 1) {
+                editor_cursor_line++;
+                // Try to maintain column position
+                const char* line_start = get_line_start(editor_content, editor_cursor_line);
+                int line_length = get_line_length(line_start);
+                if (editor_cursor_col > line_length) {
+                    editor_cursor_col = line_length;
+                }
+                editor_cursor_pos = line_col_to_cursor_pos(editor_cursor_line, editor_cursor_col);
+                gui_draw_text_editor();
+            }
+            return true;
+            
+        case ARROW_LEFT_KEY:
+            // Move cursor left
+            if (editor_cursor_pos > 0) {
+                editor_cursor_pos--;
+                cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
+                gui_draw_text_editor();
+            }
+            return true;
+            
+        case ARROW_RIGHT_KEY:
+            // Move cursor right
+            if (editor_cursor_pos < strlen(editor_content)) {
+                editor_cursor_pos++;
+                cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
+                gui_draw_text_editor();
+            }
+            return true;
+            
+        case 0x1F: // 'S' key - Show save status
+            // Since auto-save is enabled, just show a confirmation
+            return true;
+            
+        case 0x10: // 'Q' key - CTRL+Q to quit
+            // Quit (auto-save has already saved changes)
+            editor_active = false;
+            explorer_active = true;
+            gui_draw_filesplorer();
+            return true;
+            
+        default:
+            // Handle regular character input
+            if (key >= 32 && key <= 126) { // Printable ASCII characters
+                if (strlen(editor_content) < MAX_CONTENT - 1) {
+                    // Check if we're at the end of a line that's already at max length
+                    const char* line_start = get_line_start(editor_content, editor_cursor_line);
+                    int line_length = get_line_length(line_start);
+                    
+                    // If the current line is at max length and we're at the end of it, 
+                    // automatically wrap to the next line
+                    if (line_length >= EDITOR_MAX_CHARS_PER_LINE && 
+                        editor_cursor_col >= EDITOR_MAX_CHARS_PER_LINE) {
+                        
+                        // Insert a newline before adding the character
+                        for (int i = strlen(editor_content); i >= editor_cursor_pos; i--) {
+                            editor_content[i + 1] = editor_content[i];
+                        }
+                        editor_content[editor_cursor_pos] = '\n';
+                        editor_cursor_pos++;
+                        cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
+                    }
+                    
+                    // Now insert the character
+                    for (int i = strlen(editor_content); i >= editor_cursor_pos; i--) {
+                        editor_content[i + 1] = editor_content[i];
+                    }
+                    editor_content[editor_cursor_pos] = key;
+                    editor_cursor_pos++;
+                    cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
+                    editor_modified = true;
+                    
+                    // Auto-save
+                    filesys_editfile(editor_filename, editor_content);
+                    editor_modified = false; // Reset modified flag after saving
+                    
+                    gui_draw_text_editor();
+                }
+                return true;
+            }
+            break;
+    }
+    
+    return false;
 }
 
 
