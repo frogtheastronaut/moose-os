@@ -1,6 +1,7 @@
 #include "include/tty.h"
 #include "include/keyboard.h"
 #include "../gui/gui.h"
+#include "../gui/dock.h"  // Add this include
 #include <stdbool.h>
 
 // External variables from GUI
@@ -12,6 +13,7 @@ extern bool editor_active;
 extern bool gui_handle_dialog_key(unsigned char key, char scancode);
 extern bool gui_handle_explorer_key(unsigned char key, char scancode);
 extern bool gui_handle_editor_key(unsigned char key, char scancode);
+extern bool gui_handle_dock_key(unsigned char key, char scancode);  // Add this
 
 // Keyboard scan codes
 #define ENTER_KEY_CODE 0x1C
@@ -113,6 +115,12 @@ void processKey(unsigned char key, char scancode) {
         }
         // Otherwise let the explorer handle navigation keys
         else if (gui_handle_explorer_key(character, scancode)) {
+            return;
+        }
+    }
+    // Add dock handling - this should be the default when no other interface is active
+    else {
+        if (gui_handle_dock_key(character, scancode)) {
             return;
         }
     }

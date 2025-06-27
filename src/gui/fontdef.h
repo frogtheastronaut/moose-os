@@ -134,7 +134,7 @@ const uint8_t char_widths[256] = {
     [86] = 6, // V
     [87] = 7, // W
     [88] = 6, // X
-    [89] = 6, // Y
+    [89] = 8, // Y
     [90] = 6, // Z
     
     // Lowercase letters - variable widths

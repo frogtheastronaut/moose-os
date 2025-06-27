@@ -4,7 +4,9 @@
 */
 #include "include/tty.h"
 #include "include/IDT.h"
+#include "../gui/explorer.h"
 #include "../gui/gui.h"
+#include "../gui/dock.h"
 /*
 
 Simple code to run a simple kernel. 
@@ -18,21 +20,21 @@ void kernel_main(void)
     idt_init();
     kb_init();
     filesys_init();
-    filesys_mkdir("hello");
-     filesys_mkdir("hello1");
-      filesys_mkdir("hello2");
-       filesys_mkdir("hello3");
-        filesys_mkdir("hello4");
-    filesys_mkfile("hello.txt", "bonjour");
-    filesys_mkfile("hello2.txt", "bonjour2");
-    
-    //shell_prompt(); // Show initial shell prompt
+    filesys_mkdir("Documents");
+    filesys_mkdir("Desktop");
+    filesys_mkdir("Apps");
+    filesys_mkdir("Photos");
+    filesys_mkdir("Library");
+    filesys_mkfile("HELP.txt", "Hello! Welcome to MooseOS!\n"
+                           "Controls:\n"
+                           "- Use arrow keys to navigate\n"
+                            "- Press Enter to open files or folders\n"
+                           "- Press Escape to exit the file explorer\n"
+                           "You are running MooseOS version 0.1.0. \nEnjoy!\n\n"
+                           "Copyright 2025 Ethan Zhang\n");
     
     // Show GUI demo with key-based exit
-    gui_draw_filesplorer();
-    
-    // After exiting GUI, your terminal will be restored
-    //shell_prompt();
-    
+    //gui_draw_filesplorer();
+    dock_init();
     while(1);
 }
