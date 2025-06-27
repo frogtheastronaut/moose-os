@@ -348,11 +348,6 @@ bool gui_handle_dock_key(unsigned char key, char scancode) {
             launch_selected_app();
             return true;
             
-        case ESC_KEY_CODE:
-            // Shutdown system
-            handle_shutdown();
-            return true;
-            
         default:
             // Any other key redraws dock
             if (key != 0) {

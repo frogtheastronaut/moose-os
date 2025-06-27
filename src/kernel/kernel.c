@@ -28,13 +28,11 @@ void kernel_main(void)
     filesys_mkfile("HELP.txt", "Hello! Welcome to MooseOS!\n"
                            "Controls:\n"
                            "- Use arrow keys to navigate\n"
-                            "- Press Enter to open files or folders\n"
-                           "- Press Escape to exit the file explorer\n"
+                            "- Press Enter to open selection\n"
+                           "- Press Escape to exit\n"
+                           "- 'D' to make folder, 'F' to make file.\n"
                            "You are running MooseOS version 0.1.0. \nEnjoy!\n\n"
                            "Copyright 2025 Ethan Zhang\n");
-    
-    // Show GUI demo with key-based exit
-    //gui_draw_filesplorer();
     dock_init();
     while(1);
 }
