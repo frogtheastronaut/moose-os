@@ -7,6 +7,7 @@
 #include "../filesys/file.h"
 #include "../kernel/include/keyboard.h"
 #include "../lib/lib.h"
+#include "terminal.h"
 
 // =============================================================================
 // DOCK CONSTANTS AND CONFIGURATION (File Explorer Style)
@@ -55,7 +56,7 @@ extern void gui_draw_filesplorer();
 
 // Current selection state
 static int selected_app = 0;  // 0 = File Explorer, 1 = Text Editor
-static const int total_apps = 2;
+static const int total_apps = 3;  // Changed from 2 to 3
 
 // External state variables
 extern bool dialog_active;
@@ -104,8 +105,22 @@ static void draw_window_border() {
 /**
  * Draws an icon using bitmap from images.h (file explorer size)
  */
-static void draw_app_icon_bitmap(int x, int y, uint8_t bg_color, bool is_folder) {
-    const uint8_t (*icon_bitmap)[16] = is_folder ? folder_icon : file_icon;
+static void draw_app_icon_bitmap(int x, int y, uint8_t bg_color, int app_index) {
+    const uint8_t (*icon_bitmap)[16];
+    
+    // Select appropriate icon based on app type
+    switch (app_index) {
+        case 0: // File Explorer
+            icon_bitmap = folder_icon;
+            break;
+        case 2: // Terminal
+            icon_bitmap = terminal_icon;
+            break;
+        case 1: // Text Editor
+        default:
+            icon_bitmap = file_icon;
+            break;
+    }
     
     for (int row = 0; row < 16; row++) {
         for (int col = 0; col < 16; col++) {
@@ -152,9 +167,8 @@ static void draw_app_file(int app_index, const char* filename, int x, int y) {
     // Draw icon with appropriate background
     uint8_t icon_bg = is_selected ? SELECTION_COLOR : WINDOW_BACKGROUND;
     
-    // Draw appropriate icon (folder for file explorer, file for text editor)
-    bool is_folder = (app_index == 0);
-    draw_app_icon_bitmap(x, y, icon_bg, is_folder);
+    // Draw appropriate icon based on app index
+    draw_app_icon_bitmap(x, y, icon_bg, app_index);
     
     // Draw filename below icon (properly centered on icon)
     int text_x = x + (ICON_SIZE / 2) - (text_width / 2);
@@ -168,15 +182,18 @@ static void draw_app_file(int app_index, const char* filename, int x, int y) {
  * Draws all applications as files in file explorer layout
  */
 static void draw_application_files() {
-    // Calculate starting position (centered in file area)
+    // Calculate starting position
     int start_x = FILE_AREA_X + 20;
-    int start_y = FILE_AREA_Y   ;
+    int start_y = FILE_AREA_Y;
     
     // Draw File Explorer as folder
     draw_app_file(0, "File Explorer", start_x, start_y);
     
-    // Draw Text Editor as file (to the right)
+    // Draw Text Editor as file
     draw_app_file(1, "Text Editor", start_x + FILE_SPACING_X, start_y);
+    
+    // Draw Terminal as file (below the first row)
+    draw_app_file(2, "Terminal", start_x + (FILE_SPACING_X * 2), start_y);
 }
 
 /**
@@ -232,6 +249,15 @@ static void launch_selected_app() {
             dialog_input[0] = '\0';
             dialog_input_pos = 0;
             gui_draw_dialog("New File", "Enter filename:");
+            break;
+            
+        case 2:
+            // Launch Terminal
+            terminal_active = true;
+            explorer_active = false;
+            editor_active = false;
+            dialog_active = false;
+            gui_open_terminal();
             break;
             
         default:
@@ -313,7 +339,7 @@ bool gui_handle_dock_key(unsigned char key, char scancode) {
     }
     
     // Only handle dock navigation if we're the active interface and no dialog
-    if (explorer_active || editor_active) {
+    if (explorer_active || editor_active || terminal_active) {
         return false;
     }
     
@@ -339,8 +365,17 @@ bool gui_handle_dock_key(unsigned char key, char scancode) {
             break;
             
         case ARROW_UP_KEY:
+            // Move selection up
+            if (selected_app >= FILES_PER_ROW) {
+                selected_app -= FILES_PER_ROW;
+            }
+            break;
+            
         case ARROW_DOWN_KEY:
-            // For future expansion with multiple rows
+            // Move selection down
+            if (selected_app + FILES_PER_ROW < total_apps) {
+                selected_app += FILES_PER_ROW;
+            }
             break;
             
         case ENTER_KEY_CODE:

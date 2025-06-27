@@ -2,6 +2,7 @@
 #include "include/keyboard.h"
 #include "../gui/gui.h"
 #include "../gui/dock.h"  // Add this include
+#include "../gui/terminal.h"  // Add this include
 #include <stdbool.h>
 
 // External variables from GUI
@@ -14,6 +15,7 @@ extern bool gui_handle_dialog_key(unsigned char key, char scancode);
 extern bool gui_handle_explorer_key(unsigned char key, char scancode);
 extern bool gui_handle_editor_key(unsigned char key, char scancode);
 extern bool gui_handle_dock_key(unsigned char key, char scancode);  // Add this
+extern bool gui_handle_terminal_key(unsigned char key, char scancode); // Add this
 
 // Keyboard scan codes
 #define ENTER_KEY_CODE 0x1C
@@ -31,6 +33,9 @@ bool dialog_active = false;
 bool explorer_active = false;
 bool caps = false;
 bool shift = false;
+
+// Add global shift state tracking
+static bool shift_pressed = false;
 
 /**
  * Maps a keyboard scancode to an ASCII character
@@ -89,6 +94,7 @@ void processKey(unsigned char key, char scancode) {
     // Handle shift keys
     if (scancode == LSHIFT_KEY_CODE || scancode == RSHIFT_KEY_CODE) {
         shift = !shift;
+        shift_pressed = (key != 0);  // true for press, false for release
         return;
     }
     
@@ -99,10 +105,16 @@ void processKey(unsigned char key, char scancode) {
     }
     
     // Convert scancode to ASCII if it's a typable character
-    char character = get_char_from_scancode(scancode, shift);
+    char character = get_char_from_scancode(scancode, shift_pressed);
         
-    // Check if text editor is active first
-    if (editor_active) {
+    // Check terminal first (before other interfaces)
+    if (terminal_is_active()) {
+        if (gui_handle_terminal_key(character, scancode)) {  // Pass character, not key
+            return;
+        }
+    }
+    // Check if text editor is active
+    else if (editor_active) {
         if (gui_handle_editor_key(character, scancode)) {
             return;
         }
