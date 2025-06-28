@@ -20,7 +20,7 @@
 
 // Paddle 
 #define PADDLE_WIDTH 4
-#define PADDLE_HEIGHT 24
+#define PADDLE_HEIGHT 15
 #define PADDLE_SPEED 2
 
 // Ball 
@@ -96,8 +96,8 @@ static void pong_init_game() {
     // Initialize ball
     ball.x = GAME_AREA_X + GAME_AREA_WIDTH / 2;
     ball.y = GAME_AREA_Y + GAME_AREA_HEIGHT / 2;
-    ball.dx = BALL_SPEED;
-    ball.dy = BALL_SPEED;
+    ball.dx = -BALL_SPEED; // Always serve to the user (right paddle)
+    ball.dy = -BALL_SPEED;
     ball.size = BALL_SIZE;
     
     // Initialize previous positions
@@ -126,9 +126,9 @@ static void reset_ball() {
     ball.x = GAME_AREA_X + GAME_AREA_WIDTH / 2;
     ball.y = GAME_AREA_Y + GAME_AREA_HEIGHT / 2;
     
-    // Alternate ball direction
-    ball.dx = (left_score + right_score) % 2 == 0 ? BALL_SPEED : -BALL_SPEED;
-    ball.dy = BALL_SPEED;
+    // Always serve to the user (right paddle)
+    ball.dx = -BALL_SPEED;
+    ball.dy = -BALL_SPEED;
 
     // Reset AI delay counter and wait flag so AI does not move until first hit
     ai_delay_counter = 0;
@@ -329,7 +329,7 @@ static void draw_pause_message() {
 static void draw_game_over_message() {
     if (game_over) {
         const char* game_over_msg = "GAME OVER!";
-        const char* winner_msg = winner == 1 ? "LEFT PLAYER WINS!" : "RIGHT PLAYER WINS!";
+        const char* winner_msg = winner == 1 ? "YOU WIN!" : "OPPONENT WINS!";
         const char* restart_msg = "Press R to restart";
         
         int game_over_width = gui_text_width(game_over_msg);
