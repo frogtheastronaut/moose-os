@@ -4,7 +4,7 @@
 #include "../lib/lib.h"
 
 // =============================================================================
-// PONG CONSTANTS
+// CONSTANTS
 // =============================================================================
 
 #define PONG_WIDTH 300
@@ -12,18 +12,18 @@
 #define PONG_X ((SCREEN_WIDTH - PONG_WIDTH) / 2)
 #define PONG_Y ((SCREEN_HEIGHT - PONG_HEIGHT) / 2)
 
-// Game area (inside the window)
+// Game area
 #define GAME_AREA_X (PONG_X + 8)
 #define GAME_AREA_Y (PONG_Y + 28)
 #define GAME_AREA_WIDTH (PONG_WIDTH - 16)
 #define GAME_AREA_HEIGHT (PONG_HEIGHT - 36)
 
-// Paddle settings
+// Paddle 
 #define PADDLE_WIDTH 4
 #define PADDLE_HEIGHT 24
 #define PADDLE_SPEED 2
 
-// Ball settings
+// Ball 
 #define BALL_SIZE 3
 #define BALL_SPEED 1
 
@@ -36,10 +36,6 @@
 #define BALL_COLOR VGA_COLOR_WHITE
 #define SCORE_COLOR VGA_COLOR_WHITE
 
-// =============================================================================
-// GAME STATE
-// =============================================================================
-
 typedef struct {
     int x, y;
     int width, height;
@@ -51,6 +47,7 @@ typedef struct {
     int size;
 } Ball;
 
+// Variables
 static Paddle left_paddle;
 static Paddle right_paddle;
 static Ball ball;
@@ -59,13 +56,14 @@ static int right_score = 0;
 static bool pong_active = false;
 static bool game_paused = false; // Start unpaused
 static bool game_over = false;
+
 static int winner = 0; // 1 for left player, 2 for right player
 static int frame_counter = 0;
-// AI delay counter for right paddle (file-static so it can be reset)
+// AI delay counter
 static int ai_delay_counter = 0;
 static bool ai_wait_for_first_hit = true;
 
-// Previous positions for optimized drawing
+// Previous positions 
 static Ball prev_ball;
 static Paddle prev_left_paddle;
 static Paddle prev_right_paddle;
@@ -77,15 +75,10 @@ extern bool editor_active;
 extern bool terminal_active;
 extern void dock_return(void);
 
-// =============================================================================
-// GAME FUNCTIONS
-// =============================================================================
-
-// Forward declarations
 static void draw_pong_game_optimized();
 
 /**
- * Initialize game state
+ * Initialize Pong
  */
 static void pong_init_game() {
     // Initialize left paddle
@@ -112,8 +105,9 @@ static void pong_init_game() {
     prev_left_paddle = left_paddle;
     prev_right_paddle = right_paddle;
 
-    // Reset AI delay counter and wait flag so AI does not move until first hit
+    // Reset AI delay countert
     ai_delay_counter = 0;
+    // Make sure AI waits for first hit
     ai_wait_for_first_hit = true;
 
     // Reset scores
