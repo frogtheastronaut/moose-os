@@ -61,6 +61,9 @@ static bool game_paused = false; // Start unpaused
 static bool game_over = false;
 static int winner = 0; // 1 for left player, 2 for right player
 static int frame_counter = 0;
+// AI delay counter for right paddle (file-static so it can be reset)
+static int ai_delay_counter = 0;
+static bool ai_wait_for_first_hit = true;
 
 // Previous positions for optimized drawing
 static Ball prev_ball;
@@ -108,7 +111,11 @@ static void pong_init_game() {
     prev_ball = ball;
     prev_left_paddle = left_paddle;
     prev_right_paddle = right_paddle;
-    
+
+    // Reset AI delay counter and wait flag so AI does not move until first hit
+    ai_delay_counter = 0;
+    ai_wait_for_first_hit = true;
+
     // Reset scores
     left_score = 0;
     right_score = 0;
@@ -128,6 +135,10 @@ static void reset_ball() {
     // Alternate ball direction
     ball.dx = (left_score + right_score) % 2 == 0 ? BALL_SPEED : -BALL_SPEED;
     ball.dy = BALL_SPEED;
+
+    // Reset AI delay counter and wait flag so AI does not move until first hit
+    ai_delay_counter = 0;
+    ai_wait_for_first_hit = true;
 }
 
 /**
@@ -159,11 +170,13 @@ static void update_game() {
     if (check_paddle_collision(&left_paddle) && ball.dx < 0) {
         ball.dx = -ball.dx;
         ball.x = left_paddle.x + left_paddle.width; // Prevent sticking
+        ai_wait_for_first_hit = false; // AI can start moving after first hit
     }
-    
+
     if (check_paddle_collision(&right_paddle) && ball.dx > 0) {
         ball.dx = -ball.dx;
         ball.x = right_paddle.x - ball.size; // Prevent sticking
+        ai_wait_for_first_hit = false; // AI can start moving after first hit
     }
     
     // Ball out of bounds (scoring)
@@ -188,22 +201,25 @@ static void update_game() {
     // Slightly better AI for right paddle - always moves but still beatable
     int paddle_center = right_paddle.y + right_paddle.height / 2;
     int ball_center = ball.y + ball.size / 2;
-    
-    // AI always moves but with some limitations to keep it fair
-    static int ai_delay_counter = 0;
-    ai_delay_counter++;
-    
-    // AI reacts every 2nd frame (slightly better than every 3rd)
-    if (ai_delay_counter >= 2) {
-        ai_delay_counter = 0;  // Reset counter
-        
-        // Moderate dead zone and reasonable movement speed
-        if (ball_center < paddle_center - 8) {  // Reduced dead zone to 8 pixels (was 15)
-            right_paddle.y -= 1;  // Still slower than player (PADDLE_SPEED = 2)
-        } else if (ball_center > paddle_center + 8) {  // Reduced dead zone to 8 pixels (was 15)
-            right_paddle.y += 1;  // Still slower than player (PADDLE_SPEED = 2)
+
+    // AI only moves after first hit
+    if (!ai_wait_for_first_hit) {
+        ai_delay_counter++;
+
+        // AI reacts every 2nd frame (slightly better than every 3rd)
+        if (ai_delay_counter >= 2) {
+            ai_delay_counter = 0;  // Reset counter
+
+            // Moderate dead zone and reasonable movement speed
+            if (ball_center < paddle_center - 8) {  // Reduced dead zone to 8 pixels (was 15)
+                right_paddle.y -= 1;  // Still slower than player (PADDLE_SPEED = 2)
+            } else if (ball_center > paddle_center + 8) {  // Reduced dead zone to 8 pixels (was 15)
+                right_paddle.y += 1;  // Still slower than player (PADDLE_SPEED = 2)
+            }
         }
     }
+
+
     
     // Keep right paddle in bounds
     if (right_paddle.y < GAME_AREA_Y) {
