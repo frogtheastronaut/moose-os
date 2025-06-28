@@ -1,6 +1,6 @@
 #ifndef TERMINAL_H 
 #define TERMINAL_H
 
-#include "terminal.c"
+#include "../terminal.c"
 
 #endif

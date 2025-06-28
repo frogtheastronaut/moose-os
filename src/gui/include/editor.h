@@ -1,6 +1,6 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#include "editor.c"
+#include "../editor.c"
 
 #endif

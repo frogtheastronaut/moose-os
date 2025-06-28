@@ -1,6 +1,6 @@
 #ifndef EXPLROR_H
 #define EXPLROR_H
 
-#include "explorer.c"
+#include "../explorer.c"
 
 #endif

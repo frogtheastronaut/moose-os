@@ -1,14 +1,14 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "../kernel/include/vga.h"
-#include "images.h"
-//#include "fontdef.h"
+#include "include/images.h"
+//#include "include/fontdef.h"
 #include "../kernel/include/keydef.h"
 #include "../filesys/file.h"
 #include "../kernel/include/keyboard.h"
 #include "../lib/lib.h"
-#include "terminal.h"
-#include "pong.h"
+#include "include/terminal.h"
+#include "include/pong.h"
 #include "../time/rtc.h"
 
 // =============================================================================

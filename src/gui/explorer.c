@@ -1,6 +1,6 @@
-#include "gui.h"
-#include "editor.h"
-#include "dock.h"
+#include "include/gui.h"
+#include "include/editor.h"
+#include "include/dock.h"
 
 /**
  * Updated file explorer function that shows current selection

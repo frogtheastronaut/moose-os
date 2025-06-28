@@ -1,8 +1,8 @@
 #include "include/tty.h"
 #include "include/keyboard.h"
-#include "../gui/gui.h"
-#include "../gui/dock.h"  // Add this include
-#include "../gui/terminal.h"  // Add this include
+#include "../gui/include/gui.h"
+#include "../gui/include/dock.h"
+#include "../gui/include/terminal.h"
 #include <stdbool.h>
 
 // External variables from GUI

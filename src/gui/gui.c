@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "../kernel/include/vga.h"
-#include "images.h"
-#include "fontdef.h"
+#include "include/images.h"
+#include "include/fontdef.h"
 #include "../kernel/include/keydef.h"
 #include "../filesys/file.h"
 #include "../kernel/include/keyboard.h" // Make sure this includes the key code definitions

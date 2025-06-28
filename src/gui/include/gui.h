@@ -1,5 +1,5 @@
 #ifndef GUI_H
 #define GUI_H
-#include "gui.c"
+#include "../gui.c"
 
 #endif

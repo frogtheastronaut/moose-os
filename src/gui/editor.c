@@ -1,4 +1,4 @@
-#include "gui.h"
+#include "include/gui.h"
 
 /**
  * Draws the text editor interface

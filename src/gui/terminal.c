@@ -1,4 +1,4 @@
-#include "gui.h"
+#include "include/gui.h"
 #include "../kernel/include/tty.h"
 #include "../kernel/include/keyboard.h"
 #include "../kernel/include/keydef.h"

@@ -1,13 +1,13 @@
 /*
-	SimpleM
-	Copyright 2025 Ethan Zhang
+    SimpleM
+    Copyright 2025 Ethan Zhang
 */
 #include "include/tty.h"
 #include "include/IDT.h"
-#include "../gui/explorer.h"
-#include "../gui/gui.h"
-#include "../gui/dock.h"
-#include "../gui/pong.h"
+#include "../gui/include/explorer.h"
+#include "../gui/include/gui.h"
+#include "../gui/include/dock.h"
+#include "../gui/include/pong.h"
 #include "../time/rtc.h"
 /*
 

@@ -2,7 +2,7 @@
 #define IMAGES_H
 
 #include <stdint.h>
-#include "../kernel/include/vga.h"
+#include "../../kernel/include/vga.h"
 
 // Simple 16x16 folder icon bitmap - using light blue
 const uint8_t folder_icon[16][16] = {
