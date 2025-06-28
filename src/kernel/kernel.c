@@ -7,6 +7,7 @@
 #include "../gui/explorer.h"
 #include "../gui/gui.h"
 #include "../gui/dock.h"
+#include "../gui/pong.h"
 #include "../time/rtc.h"
 /*
 
@@ -42,9 +43,12 @@ void kernel_main(void)
         // Update dock time display constantly
         dock_update_time();
         
-        // Longer delay to reduce flashing and CPU usage
-        for (volatile int i = 0; i < 200000; i++) {
-            // Delay loop - update roughly every second
+        // Update Pong game if active
+        pong_update();
+        
+        // Balanced delay for good responsiveness and stable Pong
+        for (volatile int i = 0; i < 50000; i++) {
+            // Delay loop - balanced for game speed and responsiveness
         }
     }
 }

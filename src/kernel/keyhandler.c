@@ -16,6 +16,7 @@ extern bool gui_handle_explorer_key(unsigned char key, char scancode);
 extern bool gui_handle_editor_key(unsigned char key, char scancode);
 extern bool gui_handle_dock_key(unsigned char key, char scancode);  // Add this
 extern bool gui_handle_terminal_key(unsigned char key, char scancode); // Add this
+extern bool gui_handle_pong_key(unsigned char key, char scancode); // Add this
 
 // Keyboard scan codes
 #define ENTER_KEY_CODE 0x1C
@@ -110,6 +111,12 @@ void processKey(unsigned char key, char scancode) {
     // Check terminal first (before other interfaces)
     if (terminal_is_active()) {
         if (gui_handle_terminal_key(character, scancode)) {  // Pass character, not key
+            return;
+        }
+    }
+    // Check if pong is active
+    else if (pong_is_active()) {
+        if (gui_handle_pong_key(character, scancode)) {
             return;
         }
     }

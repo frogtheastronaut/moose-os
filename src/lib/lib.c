@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdint.h>
+
 #define MAX_NAME_LEN 128
 typedef char *va_list;
 #define _INTSIZEOF(n)    ( (sizeof(n) + sizeof(int) - 1) & ~(sizeof(int) - 1) )

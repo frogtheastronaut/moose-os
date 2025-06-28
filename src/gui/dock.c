@@ -8,6 +8,7 @@
 #include "../kernel/include/keyboard.h"
 #include "../lib/lib.h"
 #include "terminal.h"
+#include "pong.h"
 #include "../time/rtc.h"
 
 // =============================================================================
@@ -57,7 +58,7 @@ extern void gui_draw_filesplorer();
 
 // Current selection state
 static int selected_app = 0;  // 0 = File Explorer, 1 = Text Editor
-static const int total_apps = 3;  // Changed from 2 to 3
+static const int total_apps = 4;  // Changed from 3 to 4
 static uint32_t last_time_update = 0;  // Track last time update
 static char last_time_str[32] = "";    // Cache last time string (full format)
 
@@ -70,6 +71,7 @@ extern void gui_draw_dialog(const char* title, const char* prompt);
 extern bool explorer_active;
 extern bool editor_active;
 extern bool terminal_active;
+extern bool pong_active;
 extern uint32_t ticks;
 
 // Add these missing extern declarations for filesystem
@@ -119,6 +121,9 @@ static void draw_app_icon_bitmap(int x, int y, uint8_t bg_color, int app_index) 
             break;
         case 2: // Terminal
             icon_bitmap = terminal_icon;
+            break;
+        case 3: // Pong
+            icon_bitmap = pong_icon;
             break;
         case 1: // Text Editor
         default:
@@ -196,8 +201,11 @@ static void draw_application_files() {
     // Draw Text Editor as file
     draw_app_file(1, "Text Editor", start_x + FILE_SPACING_X, start_y);
     
-    // Draw Terminal as file (below the first row)
-    draw_app_file(2, "Terminal", start_x + (FILE_SPACING_X * 2), start_y);
+    // Draw Terminal as file (second row)
+    draw_app_file(2, "Terminal", start_x + FILE_SPACING_X * 2, start_y);
+    
+    // Draw Pong as file (second row)
+    draw_app_file(3, "Pong Game", start_x, start_y + FILE_SPACING_Y);
 }
 
 /**
@@ -368,6 +376,16 @@ static void launch_selected_app() {
             gui_open_terminal();
             break;
             
+        case 3:
+            // Launch Pong
+            pong_active = true;
+            explorer_active = false;
+            editor_active = false;
+            terminal_active = false;
+            dialog_active = false;
+            gui_open_pong();
+            break;
+            
         default:
             break;
     }
@@ -447,7 +465,7 @@ bool gui_handle_dock_key(unsigned char key, char scancode) {
     }
     
     // Only handle dock navigation if we're the active interface and no dialog
-    if (explorer_active || editor_active || terminal_active) {
+    if (explorer_active || editor_active || terminal_active || pong_active) {
         return false;
     }
     
@@ -527,7 +545,7 @@ void dock_init() {
  * Check if dock is currently active
  */
 bool dock_is_active() {
-    return (!explorer_active && !editor_active && !dialog_active && !terminal_active);
+    return (!explorer_active && !editor_active && !dialog_active && !terminal_active && !pong_active);
 }
 
 /**
@@ -536,6 +554,8 @@ bool dock_is_active() {
 void dock_return() {
     explorer_active = false;
     editor_active = false;
+    terminal_active = false;
+    pong_active = false;
     dialog_active = false;
     selected_app = 0;
     gui_draw_dock();
@@ -590,7 +610,7 @@ void dock_create_and_open_file() {
  */
 void dock_update_time() {
     // Only update if dock is active and visible
-    if (dock_is_active() && terminal_active == false && editor_active == false && dialog_active == false) {
+    if (dock_is_active() && terminal_active == false && editor_active == false && dialog_active == false && pong_active == false) {
         draw_dock_time_box();
     }
 }
