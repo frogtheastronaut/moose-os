@@ -8,6 +8,7 @@
 #include "../kernel/include/keyboard.h"
 #include "../lib/lib.h"
 #include "terminal.h"
+#include "../time/rtc.h"
 
 // =============================================================================
 // DOCK CONSTANTS AND CONFIGURATION (File Explorer Style)
@@ -57,6 +58,8 @@ extern void gui_draw_filesplorer();
 // Current selection state
 static int selected_app = 0;  // 0 = File Explorer, 1 = Text Editor
 static const int total_apps = 3;  // Changed from 2 to 3
+static uint32_t last_time_update = 0;  // Track last time update
+static char last_time_str[32] = "";    // Cache last time string (full format)
 
 // External state variables
 extern bool dialog_active;
@@ -66,6 +69,7 @@ extern int dialog_type;
 extern void gui_draw_dialog(const char* title, const char* prompt);
 extern bool explorer_active;
 extern bool editor_active;
+extern bool terminal_active;
 extern uint32_t ticks;
 
 // Add these missing extern declarations for filesystem
@@ -197,6 +201,98 @@ static void draw_application_files() {
 }
 
 /**
+ * Draw a small time display in the bottom left of the dock
+ */
+static void draw_dock_time_box() {
+    // Get current time with timezone offset applied
+    rtc_time_t current_time = rtc_get_local_time();
+    
+    // Create time string manually (HH:MM:SS DD/MM/YYYY UTC±X format - same as terminal)
+    char time_str[32];
+    time_str[0] = '0' + (current_time.hours / 10);
+    time_str[1] = '0' + (current_time.hours % 10);
+    time_str[2] = ':';
+    time_str[3] = '0' + (current_time.minutes / 10);
+    time_str[4] = '0' + (current_time.minutes % 10);
+    time_str[5] = ':';
+    time_str[6] = '0' + (current_time.seconds / 10);
+    time_str[7] = '0' + (current_time.seconds % 10);
+    time_str[8] = ' ';
+    
+    // Add date (DD/MM/YYYY format)
+    time_str[9] = '0' + (current_time.day / 10);
+    time_str[10] = '0' + (current_time.day % 10);
+    time_str[11] = '/';
+    time_str[12] = '0' + (current_time.month / 10);
+    time_str[13] = '0' + (current_time.month % 10);
+    time_str[14] = '/';
+    time_str[15] = '2';
+    time_str[16] = '0';
+    time_str[17] = '0' + (current_time.year / 10);
+    time_str[18] = '0' + (current_time.year % 10);
+    
+    // Add timezone info
+    int offset = rtc_get_timezone_offset();
+    time_str[19] = ' ';
+    time_str[20] = 'U';
+    time_str[21] = 'T';
+    time_str[22] = 'C';
+    if (offset >= 0) {
+        time_str[23] = '+';
+        if (offset < 10) {
+            time_str[24] = '0' + offset;
+            time_str[25] = '\0';
+        } else {
+            time_str[24] = '0' + (offset / 10);
+            time_str[25] = '0' + (offset % 10);
+            time_str[26] = '\0';
+        }
+    } else {
+        int abs_offset = -offset;
+        time_str[23] = '-';
+        if (abs_offset < 10) {
+            time_str[24] = '0' + abs_offset;
+            time_str[25] = '\0';
+        } else {
+            time_str[24] = '0' + (abs_offset / 10);
+            time_str[25] = '0' + (abs_offset % 10);
+            time_str[26] = '\0';
+        }
+    }
+    
+    // Check if time has changed (compare full string)
+    bool time_changed = false;
+    for (int i = 0; time_str[i] != '\0' && i < 31; i++) {
+        if (last_time_str[i] != time_str[i]) {
+            time_changed = true;
+            break;
+        }
+    }
+    
+    // Only redraw if time has actually changed
+    if (time_changed) {
+        // Status bar dimensions (bottom of dock, same style as terminal)
+        int status_bar_width = WINDOW_WIDTH - 16;
+        int status_bar_height = 15;
+        int status_bar_x = WINDOW_X + 8;
+        int status_bar_y = WINDOW_Y + WINDOW_HEIGHT - status_bar_height - 8;
+        
+        // Draw status bar background (same style as terminal)
+        gui_draw_rect(status_bar_x, status_bar_y, status_bar_width, status_bar_height, VGA_COLOR_LIGHT_GREY);
+        gui_draw_hline(status_bar_x, status_bar_x + status_bar_width - 1, status_bar_y, VGA_COLOR_DARK_GREY);
+        
+        // Draw time text (left-aligned like terminal)
+        gui_draw_text(status_bar_x + 5, status_bar_y + 3, time_str, VGA_COLOR_BLACK);
+        
+        // Cache the current string
+        for (int i = 0; i < 32; i++) {
+            last_time_str[i] = time_str[i];
+            if (time_str[i] == '\0') break;
+        }
+    }
+}
+
+/**
  * Main dock drawing function (exactly like file explorer)
  */
 static void draw_dock_window() {
@@ -208,6 +304,12 @@ static void draw_dock_window() {
     
     // Draw files inside the window
     draw_application_files();
+    
+    // Reset time cache since we're doing a full redraw
+    last_time_str[0] = '\0';
+    
+    // Draw small time display in bottom left
+    draw_dock_time_box();
 }
 
 // =============================================================================
@@ -221,8 +323,14 @@ void gui_draw_dock() {
     // Initialize VGA if needed
     gui_init();
     
+    // Reset time cache for full redraw
+    last_time_str[0] = '\0';
+    
     // Draw the complete interface
     draw_dock_window();
+    
+    // Always update time display
+    draw_dock_time_box();
     
     // Set dock as active
     dialog_active = false;
@@ -392,9 +500,12 @@ bool gui_handle_dock_key(unsigned char key, char scancode) {
             return false;
     }
     
-    // Redraw if selection changed
+    // Always redraw to update time display
     if (previous_selection != selected_app) {
-        gui_draw_dock();
+        gui_draw_dock();  // Full redraw if selection changed
+    } else {
+        // Just update time display if no selection change
+        draw_dock_time_box();
     }
     
     return true;
@@ -416,7 +527,7 @@ void dock_init() {
  * Check if dock is currently active
  */
 bool dock_is_active() {
-    return (!explorer_active && !editor_active && !dialog_active);
+    return (!explorer_active && !editor_active && !dialog_active && !terminal_active);
 }
 
 /**
@@ -472,4 +583,22 @@ void dock_create_and_open_file() {
         // No filename entered, just return to dock
         gui_draw_dock();
     }
+}
+
+/**
+ * Update dock time display (call this from main loop for constant updates)
+ */
+void dock_update_time() {
+    // Only update if dock is active and visible
+    if (dock_is_active() && terminal_active == false && editor_active == false && dialog_active == false) {
+        draw_dock_time_box();
+    }
+}
+
+/**
+ * Force redraw of time box (call when dock is redrawn)
+ */
+static void force_time_box_redraw() {
+    last_time_str[0] = '\0';
+    draw_dock_time_box();
 }

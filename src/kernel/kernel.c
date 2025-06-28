@@ -7,6 +7,7 @@
 #include "../gui/explorer.h"
 #include "../gui/gui.h"
 #include "../gui/dock.h"
+#include "../time/rtc.h"
 /*
 
 Simple code to run a simple kernel. 
@@ -34,5 +35,16 @@ void kernel_main(void)
                            "You are running MooseOS version 0.1.0. \nEnjoy!\n\n"
                            "Copyright 2025 Ethan Zhang\n");
     dock_init();
-    while(1);
+    rtc_init();
+    
+    // Main loop with continuous time updates
+    while(1) {
+        // Update dock time display constantly
+        dock_update_time();
+        
+        // Longer delay to reduce flashing and CPU usage
+        for (volatile int i = 0; i < 200000; i++) {
+            // Delay loop - update roughly every second
+        }
+    }
 }

@@ -186,3 +186,86 @@ char* strcat(char* dest, const char* src) {
     
     return dest;
 }
+
+/**
+ * Read a byte from an I/O port
+ * 
+ * @param port The port number to read from
+ * @return The byte value read from the port
+ */
+uint8_t inb(uint16_t port) {
+    uint8_t result;
+    asm volatile("inb %1, %0" : "=a"(result) : "Nd"(port));
+    return result;
+}
+
+/**
+ * Write a byte to an I/O port
+ * 
+ * @param port The port number to write to
+ * @param data The byte value to write to the port
+ */
+void outb(uint16_t port, uint8_t data) {
+    asm volatile("outb %0, %1" : : "a"(data), "Nd"(port));
+}
+
+/**
+ * Disable interrupts
+ */
+void cli(void) {
+    asm volatile("cli");
+}
+
+/**
+ * Enable interrupts
+ */
+void sti(void) {
+    asm volatile("sti");
+}
+
+/**
+ * Strip leading whitespace from a string
+ */
+static const char* strip_leading_spaces(const char* str) {
+    while (*str == ' ' || *str == '\t') {
+        str++;
+    }
+    return str;
+}
+
+/**
+ * Strip leading and trailing whitespace from a string
+ * Returns a pointer to a static buffer with the trimmed string
+ */
+const char* strip_whitespace(const char* str) {
+    static char trimmed[MAX_NAME_LEN];
+    int start = 0;
+    int end;
+    int len = strlen(str);
+    
+    // Find first non-whitespace character
+    while (start < len && (str[start] == ' ' || str[start] == '\t')) {
+        start++;
+    }
+    
+    // If string is all whitespace
+    if (start >= len) {
+        trimmed[0] = '\0';
+        return trimmed;
+    }
+    
+    // Find last non-whitespace character
+    end = len - 1;
+    while (end >= start && (str[end] == ' ' || str[end] == '\t')) {
+        end--;
+    }
+    
+    // Copy trimmed string
+    int i;
+    for (i = 0; i <= end - start; i++) {
+        trimmed[i] = str[start + i];
+    }
+    trimmed[i] = '\0';
+    
+    return trimmed;
+}

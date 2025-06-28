@@ -255,16 +255,6 @@ void gui_draw_title_bar(int x, int y, int width, int title_height, uint8_t title
     gui_draw_hline(x + 2, x + width - 3, y + title_height + 1, VGA_COLOR_BLACK);
 }
 
-// Simple I/O functions if you need to implement them
-static inline void outb(uint16_t port, uint8_t value) {
-    asm volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
-}
-
-static inline uint8_t inb(uint16_t port) {
-    uint8_t ret;
-    asm volatile ("inb %1, %0" : "=a"(ret) : "Nd"(port));
-    return ret;
-}
 
 /**
  * Initialize VGA mode 13h (320x200, 256 colors) using direct VGA register programming

@@ -4,6 +4,7 @@
 #include "../kernel/include/keydef.h"
 #include "../filesys/file.h"
 #include "../lib/lib.h"
+#include "../time/rtc.h"
 
 // Add declarations for your custom functions from lib.c
 extern void copyStr(char* dest, const char* src);
@@ -11,6 +12,7 @@ extern int strEqual(const char* a, const char* b);
 extern int msnprintf(char *buffer, int size, const char *format, ...);
 extern size_t strlen(const char* str);
 extern char* strcat(char* dest, const char* src);
+extern const char* strip_whitespace(const char* str);
 extern void dock_return(void);  // Add this line
 // =============================================================================
 // TERMINAL CONSTANTS
@@ -81,13 +83,24 @@ static void terminal_add_line(const char* text, uint8_t color) {
     if (current_line >= MAX_LINES) {
         // Scroll up - move all lines up by one
         for (int i = 0; i < MAX_LINES - 1; i++) {
-            copyStr(terminal_lines[i], terminal_lines[i + 1]);  // Use copyStr instead of strcpy
+            // Copy each character manually to ensure proper copying
+            int j = 0;
+            while (j < CHARS_PER_LINE && terminal_lines[i + 1][j] != '\0') {
+                terminal_lines[i][j] = terminal_lines[i + 1][j];
+                j++;
+            }
+            terminal_lines[i][j] = '\0';
         }
         current_line = MAX_LINES - 1;
     }
     
-    // Add new line - use copyStr instead of strncpy
-    copyStr(terminal_lines[current_line], text);
+    // Add new line - copy manually to ensure proper copying
+    int i = 0;
+    while (i < CHARS_PER_LINE && text[i] != '\0') {
+        terminal_lines[current_line][i] = text[i];
+        i++;
+    }
+    terminal_lines[current_line][i] = '\0';
     current_line++;
 }
 
@@ -122,6 +135,9 @@ static const char* get_current_dir_name() {
  * Execute a terminal command
  */
 static void execute_command(const char* cmd) {
+    // Strip leading and trailing spaces from the command
+    cmd = strip_whitespace(cmd);
+    
     // Add command to history
     char prompt_line[CHARS_PER_LINE + 1];
     msnprintf(prompt_line, sizeof(prompt_line), "%s# %s", get_current_dir_name(), cmd);  // Use msnprintf instead of snprintf
@@ -147,7 +163,7 @@ static void execute_command(const char* cmd) {
     // List files
     else if (strEqual(cmd, "ls")) {
         if (cwd->folder.childCount == 0) {
-            terminal_print("Directory is empty. Go add something!");
+            terminal_print("Directory is empty.");
         } else {
             for (int i = 0; i < cwd->folder.childCount; i++) {
                 FileSystemNode* child = cwd->folder.children[i];
@@ -263,11 +279,115 @@ static void execute_command(const char* cmd) {
     else if (strEqual(cmd, "clear")) {
         terminal_init();
     }
-    // Exit terminal
-    else if (strEqual(cmd, "exit")) {
-        terminal_active = false;
-        dock_return();
-        return;
+    // Show current time and date
+    else if (strEqual(cmd, "time")) {
+        rtc_time_t local_time = rtc_get_local_time();
+        char time_line[CHARS_PER_LINE + 1];
+        char date_line[CHARS_PER_LINE + 1];
+        
+        // Format time (HH:MM:SS) - manual formatting
+        char hour_str[3], min_str[3], sec_str[3];
+        if (local_time.hours < 10) {
+            hour_str[0] = '0';
+            hour_str[1] = '0' + local_time.hours;
+        } else {
+            hour_str[0] = '0' + (local_time.hours / 10);
+            hour_str[1] = '0' + (local_time.hours % 10);
+        }
+        hour_str[2] = '\0';
+        
+        if (local_time.minutes < 10) {
+            min_str[0] = '0';
+            min_str[1] = '0' + local_time.minutes;
+        } else {
+            min_str[0] = '0' + (local_time.minutes / 10);
+            min_str[1] = '0' + (local_time.minutes % 10);
+        }
+        min_str[2] = '\0';
+        
+        if (local_time.seconds < 10) {
+            sec_str[0] = '0';
+            sec_str[1] = '0' + local_time.seconds;
+        } else {
+            sec_str[0] = '0' + (local_time.seconds / 10);
+            sec_str[1] = '0' + (local_time.seconds % 10);
+        }
+        sec_str[2] = '\0';
+        
+        // Format date (DD/MM/YYYY) - manual formatting
+        char month_str[3], day_str[3], year_str[5];
+        if (local_time.month < 10) {
+            month_str[0] = '0';
+            month_str[1] = '0' + local_time.month;
+        } else {
+            month_str[0] = '0' + (local_time.month / 10);
+            month_str[1] = '0' + (local_time.month % 10);
+        }
+        month_str[2] = '\0';
+        
+        if (local_time.day < 10) {
+            day_str[0] = '0';
+            day_str[1] = '0' + local_time.day;
+        } else {
+            day_str[0] = '0' + (local_time.day / 10);
+            day_str[1] = '0' + (local_time.day % 10);
+        }
+        day_str[2] = '\0';
+        
+        // Format year as full 4-digit year (20XX)
+        year_str[0] = '2';
+        year_str[1] = '0';
+        if (local_time.year < 10) {
+            year_str[2] = '0';
+            year_str[3] = '0' + local_time.year;
+        } else {
+            year_str[2] = '0' + (local_time.year / 10);
+            year_str[3] = '0' + (local_time.year % 10);
+        }
+        year_str[4] = '\0';
+        
+        // Display both time and date
+        msnprintf(time_line, sizeof(time_line), "Time: %s:%s:%s", hour_str, min_str, sec_str);
+        terminal_print(time_line);
+        msnprintf(date_line, sizeof(date_line), "Date: %s/%s/%s", day_str, month_str, year_str);
+        terminal_print(date_line);
+    }
+    // Set timezone offset
+    else if (cmd[0] == 's' && cmd[1] == 'e' && cmd[2] == 't' && cmd[3] == 't' && cmd[4] == 'i' && 
+             cmd[5] == 'm' && cmd[6] == 'e' && cmd[7] == 'z' && cmd[8] == 'o' && cmd[9] == 'n' && 
+             cmd[10] == 'e' && cmd[11] == ' ') {
+        const char* offset_str = cmd + 12;
+        if (strlen(offset_str) > 0) {
+            // Simple integer parsing (supports negative numbers)
+            int offset = 0;
+            int sign = 1;
+            int i = 0;
+            
+            if (offset_str[0] == '-') {
+                sign = -1;
+                i = 1;
+            } else if (offset_str[0] == '+') {
+                i = 1;
+            }
+            
+            // Parse digits
+            while (offset_str[i] >= '0' && offset_str[i] <= '9') {
+                offset = offset * 10 + (offset_str[i] - '0');
+                i++;
+            }
+            
+            offset *= sign;
+            
+            // Validate range (-12 to +14 covers most timezones)
+            if (offset >= -12 && offset <= 14) {
+                rtc_set_timezone_offset(offset);
+                terminal_print("Timezone updated");
+            } else {
+                terminal_print_error("Invalid timezone (must be from -12 to +14)");
+            }
+        } else {
+            terminal_print_error("Usage: settimezone <hours>");
+        }
     }
     // Unknown command
     else {
@@ -303,7 +423,7 @@ static void draw_terminal_window() {
  */
 static void draw_terminal_content() {
     int y_pos = TERM_AREA_Y + 5;
-    int visible_lines = (TERM_AREA_HEIGHT - 20) / 10; // 10 pixels per line
+    int visible_lines = (TERM_AREA_HEIGHT - 35) / 10; // Leave space for status bar (reduced from 20 to 35)
     
     // Draw terminal output lines
     int start_line = (current_line > visible_lines) ? current_line - visible_lines : 0;
@@ -323,6 +443,8 @@ static void draw_terminal_content() {
     int cursor_x = TERM_AREA_X + 5 + gui_text_width(prompt);
     gui_draw_text(cursor_x, y_pos, "_", TERM_PROMPT_COLOR);
 }
+
+
 
 /**
  * Main terminal drawing function
