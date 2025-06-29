@@ -1,4 +1,4 @@
-# Makefile for SimpleM
+# Makefile for Moose OS
 # Copyright 2025 Ethan Zhang
 
 # Simple Makefile for quickly running the code

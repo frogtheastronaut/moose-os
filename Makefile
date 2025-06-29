@@ -1,6 +1,6 @@
 # Makefile for MooseOS
-# Copyright 2025 Ethan Zhang
-Arguments := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+# Copyright 2025 Ethan Zhang, all rights reserved.
+
 # Makefile for building the code
 buildrun:
 	nasm -f elf32 src/kernel/boot.asm -o kasm.o

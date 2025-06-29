@@ -1,7 +1,8 @@
 /*
-	SimpleM
-	Copyright 2025 Ethan Zhang
+    Moose Operating System & SimpleM
+    Copyright 2025 Ethan Zhang, All rights reserved.
 */
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

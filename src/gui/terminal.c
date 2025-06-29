@@ -1,3 +1,8 @@
+/*
+    Moose Operating System
+    Copyright 2025 Ethan Zhang, All rights reserved.
+*/
+
 #include "include/gui.h"
 #include "../kernel/include/tty.h"
 #include "../kernel/include/keyboard.h"
@@ -158,7 +163,6 @@ static void execute_command(const char* cmd) {
         terminal_print("touch <name> - Create file");
         terminal_print("cat <file> - Show file content");
         terminal_print("clear - Clear terminal");
-        terminal_print("exit - Exit terminal");
     }
     // List files
     else if (strEqual(cmd, "ls")) {

@@ -1,3 +1,8 @@
+/*
+    Moose Operating System
+    Copyright 2025 Ethan Zhang, All rights reserved.
+*/
+
 #include "include/tty.h"
 #include "include/keyboard.h"
 #include "../gui/include/gui.h"
@@ -115,7 +120,7 @@ void processKey(unsigned char key, char scancode) {
         }
     }
     // Check if pong is active
-    else if (pong_is_active()) {
+    else if (pong_active == true) {
         if (gui_handle_pong_key(character, scancode)) {
             return;
         }

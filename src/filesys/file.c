@@ -1,4 +1,8 @@
-//#include <stdio.h>
+/*
+    Moose Operating System
+    Copyright 2025 Ethan Zhang, All rights reserved.
+*/
+
 #include "../kernel/include/tty.h"
 #include "../lib/lib.h"
 

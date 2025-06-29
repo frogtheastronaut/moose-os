@@ -1,3 +1,8 @@
+/*
+    Moose Operating System
+    Copyright 2025 Ethan Zhang, All rights reserved.
+*/
+
 #include <stdint.h>
 #include <stddef.h>
 #include "../kernel/include/vga.h"

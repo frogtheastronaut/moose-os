@@ -1,4 +1,4 @@
-; SimpleM Kernel
+; MooseOS
 ; Copyright 2025 Ethan Zhang, all rights reserved.
 
 bits 32

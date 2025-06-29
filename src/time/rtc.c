@@ -1,3 +1,8 @@
+/*
+    Moose Operating System
+    Copyright 2025 Ethan Zhang, All rights reserved.
+*/
+
 #include <stdint.h>
 #include "../lib/lib.h"
 #define RTC_INDEX_PORT 0x70
@@ -73,6 +78,9 @@ rtc_time_t rtc_get_time(void) {
     if (!(status_b & 0x02) && (time.hours & 0x80)) {
         time.hours = ((time.hours & 0x7F) + 12) % 24;
     }
+    if (time.hours > 24) {
+        time.hours -= 24;
+    }
     
     return time;
 }
@@ -127,6 +135,9 @@ rtc_time_t rtc_get_local_time(void) {
     
     // Apply timezone offset to hours
     int adjusted_hours = (int)time.hours + timezone_offset;
+    if (adjusted_hours > 24) {
+        adjusted_hours -= 24;
+    }
     
     time.hours = (uint8_t)adjusted_hours;
     return time;

@@ -1,3 +1,8 @@
+/*
+    Moose Operating System
+    Copyright 2025 Ethan Zhang, All rights reserved.
+*/
+
 #include "include/gui.h"
 #include "../kernel/include/keyboard.h"
 #include "../kernel/include/keydef.h"
@@ -60,8 +65,7 @@ static bool game_over = false;
 static int winner = 0; // 1 for left player, 2 for right player
 static int frame_counter = 0;
 // AI delay counter
-static int ai_delay_counter = 0;
-static bool ai_wait_for_first_hit = true;
+static int ai_delay_counter = 0; // Controls AI paddle movement speed
 
 // Previous positions 
 static Ball prev_ball;
@@ -75,7 +79,7 @@ extern bool editor_active;
 extern bool terminal_active;
 extern void dock_return(void);
 
-static void draw_pong_game_optimized();
+//static void draw_pong_game_optimized();
 
 /**
  * Initialize Pong
@@ -105,10 +109,8 @@ static void pong_init_game() {
     prev_left_paddle = left_paddle;
     prev_right_paddle = right_paddle;
 
-    // Reset AI delay countert
+    // Reset AI delay counter
     ai_delay_counter = 0;
-    // Make sure AI waits for first hit
-    ai_wait_for_first_hit = true;
 
     // Reset scores
     left_score = 0;
@@ -130,9 +132,8 @@ static void reset_ball() {
     ball.dx = -BALL_SPEED;
     ball.dy = -BALL_SPEED;
 
-    // Reset AI delay counter and wait flag so AI does not move until first hit
+    // Reset AI delay counter
     ai_delay_counter = 0;
-    ai_wait_for_first_hit = true;
 }
 
 /**
@@ -164,13 +165,11 @@ static void update_game() {
     if (check_paddle_collision(&left_paddle) && ball.dx < 0) {
         ball.dx = -ball.dx;
         ball.x = left_paddle.x + left_paddle.width; // Prevent sticking
-        ai_wait_for_first_hit = false; // AI can start moving after first hit
     }
 
     if (check_paddle_collision(&right_paddle) && ball.dx > 0) {
         ball.dx = -ball.dx;
         ball.x = right_paddle.x - ball.size; // Prevent sticking
-        ai_wait_for_first_hit = false; // AI can start moving after first hit
     }
     
     // Ball out of bounds (scoring)
@@ -192,24 +191,20 @@ static void update_game() {
         }
     }
     
-    // Slightly better AI for right paddle - always moves but still beatable
+    // AI for right paddle - always moves but still beatable
     int paddle_center = right_paddle.y + right_paddle.height / 2;
     int ball_center = ball.y + ball.size / 2;
 
-    // AI only moves after first hit
-    if (!ai_wait_for_first_hit) {
-        ai_delay_counter++;
+    ai_delay_counter++;
+    // AI reacts every 2nd frame (slightly better than every 3rd)
+    if (ai_delay_counter >= 2) {
+        ai_delay_counter = 0;  // Reset counter
 
-        // AI reacts every 2nd frame (slightly better than every 3rd)
-        if (ai_delay_counter >= 2) {
-            ai_delay_counter = 0;  // Reset counter
-
-            // Moderate dead zone and reasonable movement speed
-            if (ball_center < paddle_center - 8) {  // Reduced dead zone to 8 pixels (was 15)
-                right_paddle.y -= 1;  // Still slower than player (PADDLE_SPEED = 2)
-            } else if (ball_center > paddle_center + 8) {  // Reduced dead zone to 8 pixels (was 15)
-                right_paddle.y += 1;  // Still slower than player (PADDLE_SPEED = 2)
-            }
+        // Moderate dead zone and reasonable movement speed
+        if (ball_center < paddle_center - 8) {  // Reduced dead zone to 8 pixels (was 15)
+            right_paddle.y -= 1;  // Still slower than player (PADDLE_SPEED = 2)
+        } else if (ball_center > paddle_center + 8) {  // Reduced dead zone to 8 pixels (was 15)
+            right_paddle.y += 1;  // Still slower than player (PADDLE_SPEED = 2)
         }
     }
 
@@ -352,24 +347,10 @@ static void draw_game_over_message() {
         gui_draw_text(msg_x3, msg_y3, restart_msg, VGA_COLOR_WHITE);
     }
 }
-
-/**
- * Main drawing function
- */
-static void draw_pong_game() {
-    draw_pong_window();
-    draw_center_line();
-    draw_scores();
-    draw_paddles();
-    draw_ball();
-    draw_pause_message();
-    draw_game_over_message();
-}
-
 /**
  * Optimized drawing function that only redraws the game area
  */
-static void draw_pong_game_optimized() {
+static void draw_pong_game() {
     // Clear larger areas around previous positions but stay within bounds
     int clear_x = prev_ball.x - 3;  // Increased margin
     int clear_y = prev_ball.y - 3;
@@ -492,6 +473,7 @@ static void draw_pong_game_optimized() {
  */
 void gui_draw_pong() {
     gui_init();
+    draw_pong_window();
     draw_pong_game();
     
     pong_active = true;
@@ -575,7 +557,7 @@ void pong_update() {
                 update_game();
                 
                 // Use optimized drawing to reduce screen corruption
-                draw_pong_game_optimized();
+                draw_pong_game();
             }
         } else {
             // Game is paused or over, still draw occasionally to show messages
@@ -583,30 +565,10 @@ void pong_update() {
             static_frame_counter++;
             if (static_frame_counter >= 30) {
                 static_frame_counter = 0;
-                draw_pong_game_optimized();
+                draw_pong_game();
             }
         }
     }
 }
 
-/**
- * Initialize pong app
- */
-void pong_app_init() {
-    pong_init_game();
-}
 
-/**
- * Check if pong is active
- */
-bool pong_is_active() {
-    return pong_active;
-}
-
-/**
- * Open pong application
- */
-void gui_open_pong() {
-    pong_app_init();
-    gui_draw_pong();
-}

@@ -1,3 +1,8 @@
+/*
+    Moose Operating System
+    Copyright 2025 Ethan Zhang, All rights reserved.
+*/
+
 #include <stdint.h>
 #include <stddef.h>
 #include "../kernel/include/vga.h"
@@ -383,7 +388,8 @@ static void launch_selected_app() {
             editor_active = false;
             terminal_active = false;
             dialog_active = false;
-            gui_open_pong();
+            pong_init_game();
+            gui_draw_pong();
             break;
             
         default:
@@ -391,29 +397,29 @@ static void launch_selected_app() {
     }
 }
 
-/**
- * Handles shutdown sequence
- */
-static void handle_shutdown() {
-    // Clear screen
-    gui_clear_screen(VGA_COLOR_BLACK);
+// /**
+//  * Handles shutdown sequence
+//  */
+// static void handle_shutdown() {
+//     // Clear screen
+//     gui_clear_screen(VGA_COLOR_BLACK);
     
-    // Draw shutdown message
-    const char* shutdown_msg = "MooseOS is shutting down...";
-    int msg_width = gui_text_width(shutdown_msg);
-    int msg_x = (SCREEN_WIDTH - msg_width) / 2;
-    int msg_y = (SCREEN_HEIGHT / 2) - 4;
+//     // Draw shutdown message
+//     const char* shutdown_msg = "MooseOS is shutting down...";
+//     int msg_width = gui_text_width(shutdown_msg);
+//     int msg_x = (SCREEN_WIDTH - msg_width) / 2;
+//     int msg_y = (SCREEN_HEIGHT / 2) - 4;
     
-    gui_draw_text(msg_x, msg_y, shutdown_msg, VGA_COLOR_WHITE);
+//     gui_draw_text(msg_x, msg_y, shutdown_msg, VGA_COLOR_WHITE);
     
-    // Simple delay loop
-    for (volatile int i = 0; i < 1000000; i++) {
-        // Wait
-    }
+//     // Simple delay loop
+//     for (volatile int i = 0; i < 1000000; i++) {
+//         // Wait
+//     }
     
-    // Return to dock
-    gui_draw_dock();
-}
+//     // Return to dock
+//     gui_draw_dock();
+// }
 
 // =============================================================================
 // INPUT HANDLING

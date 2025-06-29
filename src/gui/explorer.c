@@ -1,3 +1,8 @@
+/*
+    Moose Operating System
+    Copyright 2025 Ethan Zhang, All rights reserved.
+*/
+
 #include "include/gui.h"
 #include "include/editor.h"
 #include "include/dock.h"
