@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "../../kernel/include/vga.h"
 
-// Simple 16x16 folder icon bitmap - using light blue
+// folder
 const uint8_t folder_icon[16][16] = {
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -24,7 +24,7 @@ const uint8_t folder_icon[16][16] = {
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 };
 
-// File icon bitmap (16x16) with a folded corner
+// file
 const uint8_t file_icon[16][16] = {
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -44,7 +44,7 @@ const uint8_t file_icon[16][16] = {
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 };
 
-// Terminal icon bitmap (16x16) - represents a terminal window
+// terminal
 const uint8_t terminal_icon[16][16] = {
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
     {0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0},
@@ -64,7 +64,7 @@ const uint8_t terminal_icon[16][16] = {
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 };
 
-// Pong game icon (16x16) - black background, single paddles, 2x2 ball
+// pong
 const uint8_t pong_icon[16][16] = {
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
     {0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0},
@@ -84,7 +84,7 @@ const uint8_t pong_icon[16][16] = {
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 };
 
-// Maps icon values to available VGA colors
+// map
 const uint8_t icon_color_map[] = {
     VGA_COLOR_LIGHT_GREY,  // 0 = background (using light grey instead of transparent)
     VGA_COLOR_BLACK,       // 1 = outline

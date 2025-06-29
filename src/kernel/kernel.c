@@ -11,12 +11,12 @@
 #include "../time/rtc.h"
 /*
 
-Simple code to run a simple kernel. 
-
+simple code to run a simple kernel. 
+ - MooseOS guy
 */
 void kernel_main(void) 
 {
-    /* Initialize terminal interface */
+    // INIT DA TERMINALLL
     terminal_initialize();
     terminal_writestring("Welcome to the MooseOS kernel", true);
     idt_init();
@@ -27,6 +27,7 @@ void kernel_main(void)
     filesys_mkdir("Apps");
     filesys_mkdir("Photos");
     filesys_mkdir("Library");
+    // sample file
     filesys_mkfile("HELP.txt", "Hello! Welcome to MooseOS!\n"
                            "Controls:\n"
                            "- Use arrow keys to navigate\n"
@@ -38,17 +39,17 @@ void kernel_main(void)
     dock_init();
     rtc_init();
     
-    // Main loop with continuous time updates
+    // loopity loopity
     while(1) {
-        // Update dock time display constantly
+        // update dock time
         dock_update_time();
         
-        // Update Pong game if active
+        // update pong if active
         pong_update();
         
-        // Balanced delay for good responsiveness and stable Pong
+        // big lag prevention loop
         for (volatile int i = 0; i < 50000; i++) {
-            // Delay loop - balanced for game speed and responsiveness
+            // nothing here but safety
         }
     }
 }

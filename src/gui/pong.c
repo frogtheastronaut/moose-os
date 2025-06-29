@@ -8,136 +8,134 @@
 #include "../kernel/include/keydef.h"
 #include "../lib/lib.h"
 
-// =============================================================================
-// CONSTANTS
-// =============================================================================
-
+// declares
 #define PONG_WIDTH 300
 #define PONG_HEIGHT 180
 #define PONG_X ((SCREEN_WIDTH - PONG_WIDTH) / 2)
 #define PONG_Y ((SCREEN_HEIGHT - PONG_HEIGHT) / 2)
 
-// Game area
+// area
 #define GAME_AREA_X (PONG_X + 8)
 #define GAME_AREA_Y (PONG_Y + 28)
 #define GAME_AREA_WIDTH (PONG_WIDTH - 16)
 #define GAME_AREA_HEIGHT (PONG_HEIGHT - 36)
 
-// Paddle 
+// puddle
 #define PADDLE_WIDTH 4
 #define PADDLE_HEIGHT 15
 #define PADDLE_SPEED 2
 
-// Ball 
+// boll 
 #define BALL_SIZE 3
 #define BALL_SPEED 1
 
-// Game settings
+// settings
 #define WIN_SCORE 11  // First to 11 wins
 
-// Colors
+// colors
 #define PONG_BG_COLOR VGA_COLOR_BLACK
 #define PADDLE_COLOR VGA_COLOR_WHITE
 #define BALL_COLOR VGA_COLOR_WHITE
 #define SCORE_COLOR VGA_COLOR_WHITE
 
+// paddle struct
 typedef struct {
     int x, y;
     int width, height;
 } Paddle;
 
+// ball struct
 typedef struct {
     int x, y;
     int dx, dy;
     int size;
 } Ball;
 
-// Variables
+// vars from mars
 static Paddle left_paddle;
 static Paddle right_paddle;
 static Ball ball;
 static int left_score = 0;
 static int right_score = 0;
 static bool pong_active = false;
-static bool game_paused = false; // Start unpaused
+static bool game_paused = false;
 static bool game_over = false;
 
 static int winner = 0; // 1 for left player, 2 for right player
 static int frame_counter = 0;
 // AI delay counter
-static int ai_delay_counter = 0; // Controls AI paddle movement speed
+static int ai_delay_counter = 0; // controls AI paddle speed
 
-// Previous positions 
+// prev pos
 static Ball prev_ball;
 static Paddle prev_left_paddle;
 static Paddle prev_right_paddle;
 
-// External variables
+// exterm
 extern bool dialog_active;
 extern bool explorer_active;
 extern bool editor_active;
 extern bool terminal_active;
 extern void dock_return(void);
 
-//static void draw_pong_game_optimized();
 
 /**
- * Initialize Pong
+ * innit
  */
 static void pong_init_game() {
-    // Initialize left paddle
+    // left paddle
     left_paddle.x = GAME_AREA_X + 10;
     left_paddle.y = GAME_AREA_Y + (GAME_AREA_HEIGHT - PADDLE_HEIGHT) / 2;
     left_paddle.width = PADDLE_WIDTH;
     left_paddle.height = PADDLE_HEIGHT;
     
-    // Initialize right paddle
+    // right paddle
     right_paddle.x = GAME_AREA_X + GAME_AREA_WIDTH - 10 - PADDLE_WIDTH;
     right_paddle.y = GAME_AREA_Y + (GAME_AREA_HEIGHT - PADDLE_HEIGHT) / 2;
     right_paddle.width = PADDLE_WIDTH;
     right_paddle.height = PADDLE_HEIGHT;
     
-    // Initialize ball
+    // ball
     ball.x = GAME_AREA_X + GAME_AREA_WIDTH / 2;
     ball.y = GAME_AREA_Y + GAME_AREA_HEIGHT / 2;
-    ball.dx = -BALL_SPEED; // Always serve to the user (right paddle)
+    ball.dx = -BALL_SPEED; // always serve to user, agree to disagree
     ball.dy = -BALL_SPEED;
     ball.size = BALL_SIZE;
     
-    // Initialize previous positions
+    // init prev positions
     prev_ball = ball;
     prev_left_paddle = left_paddle;
     prev_right_paddle = right_paddle;
 
-    // Reset AI delay counter
+    // reset
     ai_delay_counter = 0;
 
-    // Reset scores
+    // reset
     left_score = 0;
     right_score = 0;
-    game_paused = false; // Make sure game is NOT paused
+    game_paused = false; 
     game_over = false;
     winner = 0;
     frame_counter = 0;
 }
 
 /**
- * Reset ball to center
+ * center
  */
 static void reset_ball() {
     ball.x = GAME_AREA_X + GAME_AREA_WIDTH / 2;
     ball.y = GAME_AREA_Y + GAME_AREA_HEIGHT / 2;
     
-    // Always serve to the user (right paddle)
+    // serve to ME
     ball.dx = -BALL_SPEED;
     ball.dy = -BALL_SPEED;
 
-    // Reset AI delay counter
+    // reset
     ai_delay_counter = 0;
 }
 
 /**
- * Check collision between ball and paddle
+ *  check colision
  */
 static bool check_paddle_collision(Paddle* paddle) {
     return (ball.x < paddle->x + paddle->width &&
@@ -147,21 +145,21 @@ static bool check_paddle_collision(Paddle* paddle) {
 }
 
 /**
- * Update game logic
+ * update game
  */
 static void update_game() {
     if (game_paused || game_over) return;
     
-    // Move ball
+    // Move 
     ball.x += ball.dx;
     ball.y += ball.dy;
     
-    // Ball collision with top/bottom walls
+    // ball collision with top/bottom walls
     if (ball.y <= GAME_AREA_Y || ball.y + ball.size >= GAME_AREA_Y + GAME_AREA_HEIGHT) {
         ball.dy = -ball.dy;
     }
     
-    // Ball collision with paddles
+    // ball collision with paddles
     if (check_paddle_collision(&left_paddle) && ball.dx < 0) {
         ball.dx = -ball.dx;
         ball.x = left_paddle.x + left_paddle.width; // Prevent sticking
@@ -172,12 +170,12 @@ static void update_game() {
         ball.x = right_paddle.x - ball.size; // Prevent sticking
     }
     
-    // Ball out of bounds (scoring)
+    // ball out of bounds (scoring)
     if (ball.x < GAME_AREA_X) {
         right_score++;
         if (right_score >= WIN_SCORE) {
             game_over = true;
-            winner = 2; // Right player wins
+            winner = 2; // right player wins (opp)
         } else {
             reset_ball();
         }
@@ -185,32 +183,31 @@ static void update_game() {
         left_score++;
         if (left_score >= WIN_SCORE) {
             game_over = true;
-            winner = 1; // Left player wins
+            winner = 1; // left player wins (you)
         } else {
-            reset_ball();
+            reset_ball(); // reset
         }
     }
     
-    // AI for right paddle - always moves but still beatable
+    // ai 
     int paddle_center = right_paddle.y + right_paddle.height / 2;
     int ball_center = ball.y + ball.size / 2;
 
     ai_delay_counter++;
-    // AI reacts every 2nd frame (slightly better than every 3rd)
+    // ai reacts every 2 frames
     if (ai_delay_counter >= 2) {
-        ai_delay_counter = 0;  // Reset counter
+        ai_delay_counter = 0;  // reset
 
-        // Moderate dead zone and reasonable movement speed
-        if (ball_center < paddle_center - 8) {  // Reduced dead zone to 8 pixels (was 15)
-            right_paddle.y -= 1;  // Still slower than player (PADDLE_SPEED = 2)
-        } else if (ball_center > paddle_center + 8) {  // Reduced dead zone to 8 pixels (was 15)
-            right_paddle.y += 1;  // Still slower than player (PADDLE_SPEED = 2)
+        if (ball_center < paddle_center - 8) {  
+            right_paddle.y -= 1; 
+        } else if (ball_center > paddle_center + 8) {  
+            right_paddle.y += 1; 
         }
     }
 
 
     
-    // Keep right paddle in bounds
+    // keep paddle within game area
     if (right_paddle.y < GAME_AREA_Y) {
         right_paddle.y = GAME_AREA_Y;
     }
@@ -220,27 +217,27 @@ static void update_game() {
 }
 
 /**
- * Draw game window
+ * draw game window
  */
-static void draw_pong_window() {
-    // Clear screen
+static void pong_draw_window() {
+    // clear
     gui_clear_screen(VGA_COLOR_LIGHT_GREY);
     
-    // Draw window border (file explorer style)
+    // draw border
     gui_draw_window_box(PONG_X, PONG_Y, PONG_WIDTH, PONG_HEIGHT,
                        VGA_COLOR_BLACK, VGA_COLOR_WHITE, VGA_COLOR_LIGHT_GREY);
     
-    // Draw title bar
+    // draw title
     gui_draw_title_bar(PONG_X, PONG_Y, PONG_WIDTH, 15, VGA_COLOR_BLUE);
     gui_draw_text(PONG_X + 5, PONG_Y + 3, "MooseOS Pong", VGA_COLOR_WHITE);
     
-    // Draw game area background
+    // draw game bkg
     gui_draw_rect(GAME_AREA_X, GAME_AREA_Y, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, PONG_BG_COLOR);
     gui_draw_rect_outline(GAME_AREA_X - 1, GAME_AREA_Y - 1, GAME_AREA_WIDTH + 2, GAME_AREA_HEIGHT + 2, VGA_COLOR_WHITE);
 }
 
 /**
- * Draw center line
+ * draw center line
  */
 static void draw_center_line() {
     int center_x = GAME_AREA_X + GAME_AREA_WIDTH / 2;
@@ -250,31 +247,31 @@ static void draw_center_line() {
 }
 
 /**
- * Draw paddles
+ * draw paddles
  */
 static void draw_paddles() {
-    // Draw left paddle
+    // left
     gui_draw_rect(left_paddle.x, left_paddle.y, left_paddle.width, left_paddle.height, PADDLE_COLOR);
     
-    // Draw right paddle
+    // right
     gui_draw_rect(right_paddle.x, right_paddle.y, right_paddle.width, right_paddle.height, PADDLE_COLOR);
 }
 
 /**
- * Draw ball
+ *  drawll ball
  */
 static void draw_ball() {
     gui_draw_rect(ball.x, ball.y, ball.size, ball.size, BALL_COLOR);
 }
 
 /**
- * Draw scores
+ * draw scores
  */
 static void draw_scores() {
     char left_score_str[4];  // Support up to 2 digits + null terminator
     char right_score_str[4];
     
-    // Convert scores to strings (properly handle double digits)
+    // convert scores to strings
     if (left_score >= 10) {
         left_score_str[0] = '0' + (left_score / 10);
         left_score_str[1] = '0' + (left_score % 10);
@@ -293,19 +290,19 @@ static void draw_scores() {
         right_score_str[1] = '\0';
     }
     
-    // Always clear score areas completely at the top of game area - use title bar blue color
+    // clear..
     gui_draw_rect(GAME_AREA_X + GAME_AREA_WIDTH / 4 - 15, GAME_AREA_Y + 2, 30, 12, VGA_COLOR_BLACK);
     gui_draw_rect(GAME_AREA_X + 3 * GAME_AREA_WIDTH / 4 - 15, GAME_AREA_Y + 2, 30, 12, VGA_COLOR_BLACK);
     
-    // Draw scores at the top of the game area
+    // ..then draw
     gui_draw_text(GAME_AREA_X + GAME_AREA_WIDTH / 4, GAME_AREA_Y + 5, left_score_str, SCORE_COLOR);
     gui_draw_text(GAME_AREA_X + 3 * GAME_AREA_WIDTH / 4, GAME_AREA_Y + 5, right_score_str, SCORE_COLOR);
 }
 
 /**
- * Draw pause message
+ *  paws msg
  */
-static void draw_pause_message() {
+static void pong_drawpause() {
     if (game_paused) {
         const char* pause_msg = "PAUSED - Press SPACE to resume";
         int msg_width = gui_text_width(pause_msg);
@@ -319,9 +316,9 @@ static void draw_pause_message() {
 }
 
 /**
- * Draw game over message
+ * draw game over msg
  */
-static void draw_game_over_message() {
+static void pong_gameover() {
     if (game_over) {
         const char* game_over_msg = "GAME OVER!";
         const char* winner_msg = winner == 1 ? "YOU WIN!" : "OPPONENT WINS!";
@@ -338,26 +335,25 @@ static void draw_game_over_message() {
         int msg_y2 = GAME_AREA_Y + GAME_AREA_HEIGHT / 2;
         int msg_y3 = GAME_AREA_Y + GAME_AREA_HEIGHT / 2 + 15;
         
-        // Draw background for text
+        // bkg
         gui_draw_rect(GAME_AREA_X + 20, msg_y1 - 5, GAME_AREA_WIDTH - 40, 40, VGA_COLOR_DARK_GREY);
         
-        // Draw messages
+        // msgs
         gui_draw_text(msg_x1, msg_y1, game_over_msg, VGA_COLOR_RED);
         gui_draw_text(msg_x2, msg_y2, winner_msg, VGA_COLOR_LIGHT_BROWN);
         gui_draw_text(msg_x3, msg_y3, restart_msg, VGA_COLOR_WHITE);
     }
 }
 /**
- * Optimized drawing function that only redraws the game area
+ * draw game
  */
-static void draw_pong_game() {
-    // Clear larger areas around previous positions but stay within bounds
-    int clear_x = prev_ball.x - 3;  // Increased margin
+static void pong_drawgame() {
+    int clear_x = prev_ball.x - 3; 
     int clear_y = prev_ball.y - 3;
-    int clear_width = prev_ball.size + 6;  // Increased margin
+    int clear_width = prev_ball.size + 6;  
     int clear_height = prev_ball.size + 6;
     
-    // Clamp to game area boundaries
+
     if (clear_x < GAME_AREA_X) {
         clear_width -= (GAME_AREA_X - clear_x);
         clear_x = GAME_AREA_X;
@@ -373,16 +369,15 @@ static void draw_pong_game() {
         clear_height = (GAME_AREA_Y + GAME_AREA_HEIGHT) - clear_y;
     }
     
-    // Only clear if within bounds
+    // clear if in bounds
     if (clear_width > 0 && clear_height > 0) {
         gui_draw_rect(clear_x, clear_y, clear_width, clear_height, PONG_BG_COLOR);
     }
     
-    // Clear paddle areas with boundary checks
-    // Left paddle
-    clear_x = prev_left_paddle.x - 3;  // Increased margin
+    // clear left paddle
+    clear_x = prev_left_paddle.x - 3;  
     clear_y = prev_left_paddle.y - 3;
-    clear_width = prev_left_paddle.width + 6;  // Increased margin
+    clear_width = prev_left_paddle.width + 6;  
     clear_height = prev_left_paddle.height + 6;
     
     if (clear_x < GAME_AREA_X) {
@@ -404,10 +399,10 @@ static void draw_pong_game() {
         gui_draw_rect(clear_x, clear_y, clear_width, clear_height, PONG_BG_COLOR);
     }
     
-    // Right paddle
-    clear_x = prev_right_paddle.x - 3;  // Increased margin
+    // right paddle, same thing
+    clear_x = prev_right_paddle.x - 3;  
     clear_y = prev_right_paddle.y - 3;
-    clear_width = prev_right_paddle.width + 6;  // Increased margin
+    clear_width = prev_right_paddle.width + 6;  
     clear_height = prev_right_paddle.height + 6;
     
     if (clear_x < GAME_AREA_X) {
@@ -429,17 +424,17 @@ static void draw_pong_game() {
         gui_draw_rect(clear_x, clear_y, clear_width, clear_height, PONG_BG_COLOR);
     }
     
-    // Always redraw the entire center line to prevent corruption
+    // redraw center line
     draw_center_line();
     
-    // Draw current positions
+    // draw current positions
     draw_paddles();
     draw_ball();
     
-    // Periodically clear the entire game area to prevent trail accumulation
+    // sometimes clears game, just for safety reason, those who know
     static int full_clear_counter = 0;
     full_clear_counter++;
-    if (full_clear_counter >= 150) {  // Even less frequent full clears
+    if (full_clear_counter >= 150) {  
         full_clear_counter = 0;
         gui_draw_rect(GAME_AREA_X, GAME_AREA_Y, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, PONG_BG_COLOR);
         draw_center_line();
@@ -447,34 +442,30 @@ static void draw_pong_game() {
         draw_ball();
     }
     
-    // Redraw scores every few frames to prevent corruption but reduce lag
+    // redraw scores every few frames
     static int score_redraw_counter = 0;
     score_redraw_counter++;
-    if (score_redraw_counter >= 5) {  // Redraw scores every 5 frames
+    if (score_redraw_counter >= 5) { 
         score_redraw_counter = 0;
         draw_scores();
     }
+    // draw stuff if stuff
+    pong_drawpause();
+    pong_gameover();
     
-    draw_pause_message();
-    draw_game_over_message();
-    
-    // Update previous positions
+    // update previous positions
     prev_ball = ball;
     prev_left_paddle = left_paddle;
     prev_right_paddle = right_paddle;
 }
 
-// =============================================================================
-// PUBLIC INTERFACE
-// =============================================================================
-
 /**
- * Main pong drawing function
+ * draw
  */
 void gui_draw_pong() {
     gui_init();
-    draw_pong_window();
-    draw_pong_game();
+    pong_draw_window();
+    pong_drawgame();
     
     pong_active = true;
     dialog_active = false;
@@ -484,20 +475,20 @@ void gui_draw_pong() {
 }
 
 /**
- * Handle pong keyboard input
+ * input
  */
-bool gui_handle_pong_key(unsigned char key, char scancode) {
+bool pong_handlekey(unsigned char key, char scancode) {
     if (!pong_active) return false;
     
     switch (scancode) {
         case ESC_KEY_CODE:
-            // Exit pong and return to dock
+            // exit
             pong_active = false;
             dock_return();
             return true;
             
         case 0x11: // W key
-            // Move left paddle up
+            // up
             if (!game_paused && !game_over) {
                 left_paddle.y -= PADDLE_SPEED;
                 if (left_paddle.y < GAME_AREA_Y) {
@@ -507,7 +498,7 @@ bool gui_handle_pong_key(unsigned char key, char scancode) {
             return true;
             
         case 0x1F: // S key
-            // Move left paddle down
+            // down
             if (!game_paused && !game_over) {
                 left_paddle.y += PADDLE_SPEED;
                 if (left_paddle.y + left_paddle.height > GAME_AREA_Y + GAME_AREA_HEIGHT) {
@@ -520,18 +511,17 @@ bool gui_handle_pong_key(unsigned char key, char scancode) {
             // Toggle pause (only if game is not over)
             if (!game_over) {
                 game_paused = !game_paused;
-                // Force full redraw for pause message
                 gui_draw_rect(GAME_AREA_X, GAME_AREA_Y, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, PONG_BG_COLOR);
                 draw_center_line();
                 draw_scores();
                 draw_paddles();
                 draw_ball();
-                draw_pause_message();
+                pong_drawpause();
             }
             return true;
             
         case 0x13: // R key
-            // Restart game
+            // restart game
             pong_init_game();
             gui_draw_pong();
             return true;
@@ -542,30 +532,27 @@ bool gui_handle_pong_key(unsigned char key, char scancode) {
 }
 
 /**
- * Update pong game (call this from main loop)
+ * update pong 
  */
 void pong_update() {
     if (pong_active) {
         if (!game_paused && !game_over) {
             frame_counter++;
             
-            // Only update every 30th frame to slow down the game and reduce lag
             if (frame_counter >= 30) {
                 frame_counter = 0;
                 
-                // Update game logic
                 update_game();
                 
-                // Use optimized drawing to reduce screen corruption
-                draw_pong_game();
+                pong_drawgame();
             }
         } else {
-            // Game is paused or over, still draw occasionally to show messages
+            // idk this works
             static int static_frame_counter = 0;
             static_frame_counter++;
             if (static_frame_counter >= 30) {
                 static_frame_counter = 0;
-                draw_pong_game();
+                pong_drawgame();
             }
         }
     }

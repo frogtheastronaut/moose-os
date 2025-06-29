@@ -60,8 +60,8 @@ static bool terminal_active = false;
 extern bool dialog_active;
 extern bool explorer_active;
 extern bool editor_active;
-extern FileSystemNode* root;
-extern FileSystemNode* cwd;
+extern File* root;
+extern File* cwd;
 
 // =============================================================================
 // TERMINAL FUNCTIONS
@@ -170,7 +170,7 @@ static void execute_command(const char* cmd) {
             terminal_print("Directory is empty.");
         } else {
             for (int i = 0; i < cwd->folder.childCount; i++) {
-                FileSystemNode* child = cwd->folder.children[i];
+                File* child = cwd->folder.children[i];
                 char line[CHARS_PER_LINE + 1];
                 if (child->type == FOLDER_NODE) {
                     msnprintf(line, sizeof(line), "[DIR]  %s", child->name);
@@ -199,7 +199,7 @@ static void execute_command(const char* cmd) {
         } else {
             bool found = false;
             for (int i = 0; i < cwd->folder.childCount; i++) {
-                FileSystemNode* child = cwd->folder.children[i];
+                File* child = cwd->folder.children[i];
                 if (child->type == FOLDER_NODE && strEqual(child->name, dirname)) {
                     cwd = child;
                     char line[CHARS_PER_LINE + 1];
@@ -245,7 +245,7 @@ static void execute_command(const char* cmd) {
         // Search for the file in current directory
         bool found = false;
         for (int i = 0; i < cwd->folder.childCount; i++) {
-            FileSystemNode* child = cwd->folder.children[i];
+            File* child = cwd->folder.children[i];
             if (child->type == FILE_NODE && strEqual(child->name, filename)) {
                 found = true;
                 if (strlen(child->file.content) > 0) {
@@ -285,7 +285,7 @@ static void execute_command(const char* cmd) {
     }
     // Show current time and date
     else if (strEqual(cmd, "time")) {
-        rtc_time_t local_time = rtc_get_local_time();
+        rtc_time local_time = rtc_get_time();
         char time_line[CHARS_PER_LINE + 1];
         char date_line[CHARS_PER_LINE + 1];
         
@@ -384,10 +384,11 @@ static void execute_command(const char* cmd) {
             
             // Validate range (-12 to +14 covers most timezones)
             if (offset >= -12 && offset <= 14) {
-                rtc_set_timezone_offset(offset);
+                timezone_offset = offset; 
                 terminal_print("Timezone updated");
             } else {
-                terminal_print_error("Invalid timezone (must be from -12 to +14)");
+                timezone_offset = offset;
+                terminal_print_error("Wierd timezone, but sure");
             }
         } else {
             terminal_print_error("Usage: settimezone <hours>");
@@ -467,7 +468,7 @@ void gui_draw_terminal() {
 /**
  * Handle terminal keyboard input
  */
-bool gui_handle_terminal_key(unsigned char key, char scancode) {
+bool terminal_handlekey(unsigned char key, char scancode) {
     if (!terminal_active) return false;
     
     switch (scancode) {

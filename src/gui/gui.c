@@ -15,7 +15,7 @@
 // Screen buffer in VGA mode 13h (320x200, 256 colors)
 static uint8_t* vga_buffer = (uint8_t*)0xA0000;
 // Removed horizontal scrolling variables since they are no longer needed
-#define EDITOR_MAX_CHARS_PER_LINE 40 // Maximum characters visible per line
+#define EDITOR_MAX_CHARS_PER_LINE 35 // Maximum characters visible per line
 // Screen dimensions
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 200
@@ -658,7 +658,7 @@ void gui_draw_dialog(const char* title, const char* prompt) {
  */
 char* get_file_content(const char* filename) {
     for (int i = 0; i < cwd->folder.childCount; i++) {
-        FileSystemNode* child = cwd->folder.children[i];
+        File* child = cwd->folder.children[i];
         if (child->type == FILE_NODE && strEqual(child->name, filename)) {
             return child->file.content;
         }

@@ -1,5 +1,5 @@
 /*
-	SimpleM
+	MooseOS
 	Copyright 2025 Ethan Zhang
 */
 #ifndef I386_VGA_H
@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 
+// colors
 enum vga_color {
 	VGA_COLOR_BLACK = 0,
 	VGA_COLOR_BLUE = 1,

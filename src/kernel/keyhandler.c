@@ -8,46 +8,34 @@
 #include "../gui/include/gui.h"
 #include "../gui/include/dock.h"
 #include "../gui/include/terminal.h"
+#include "include/keydef.h"
 #include <stdbool.h>
 
-// External variables from GUI
+// external vars (dock.c)
 extern bool dialog_active;
 extern bool explorer_active;
 extern bool editor_active;
 
-// External functions from GUI
+// external functions
 extern bool gui_handle_dialog_key(unsigned char key, char scancode);
 extern bool gui_handle_explorer_key(unsigned char key, char scancode);
 extern bool gui_handle_editor_key(unsigned char key, char scancode);
-extern bool gui_handle_dock_key(unsigned char key, char scancode);  // Add this
-extern bool gui_handle_terminal_key(unsigned char key, char scancode); // Add this
-extern bool gui_handle_pong_key(unsigned char key, char scancode); // Add this
+extern bool dock_handle_key(unsigned char key, char scancode); 
+extern bool terminal_handlekey(unsigned char key, char scancode); 
+extern bool pong_handlekey(unsigned char key, char scancode);
 
-// Keyboard scan codes
-#define ENTER_KEY_CODE 0x1C
-#define BS_KEY_CODE 0xE
-#define CAPS_KEY_CODE 0x3A
-#define LSHIFT_KEY_CODE 0x2A
-#define RSHIFT_KEY_CODE 0x36
-#define ESC_KEY_CODE 0x01
-#define ARROW_UP_KEY 0x48
-#define ARROW_DOWN_KEY 0x50
-#define ARROW_LEFT_KEY 0x4B
-#define ARROW_RIGHT_KEY 0x4D
-
+// set 'em all to false
 bool dialog_active = false;
 bool explorer_active = false;
 bool caps = false;
 bool shift = false;
 
-// Add global shift state tracking
+// shift is nup
 static bool shift_pressed = false;
 
-/**
- * Maps a keyboard scancode to an ASCII character
- */
-char get_char_from_scancode(unsigned char scancode, bool shift_pressed) {
-    // Handle letters
+// turn a scancode into a char
+char scancode_to_char(unsigned char scancode, bool shift_pressed) {
+    // typable letters
     if (scancode >= 0x10 && scancode <= 0x19) {
         // QWERTYUIOP row
         char c = "qwertyuiop"[scancode - 0x10];
@@ -63,7 +51,7 @@ char get_char_from_scancode(unsigned char scancode, bool shift_pressed) {
         char c = "zxcvbnm"[scancode - 0x2C];
         return shift_pressed || caps ? c - 32 : c;
     }
-    // Numbers and symbols (with shift)
+    // numbers with or w/o shift
     else if (scancode >= 0x02 && scancode <= 0x0B) {
         if (shift_pressed) {
             // Shift + number gives symbols
@@ -73,11 +61,11 @@ char get_char_from_scancode(unsigned char scancode, bool shift_pressed) {
             return "1234567890"[scancode - 0x02];
         }
     }
-    // Space
+    // space key
     else if (scancode == 0x39) {
         return ' ';
     }
-    // Special characters
+    // special, special ones
     else if (scancode == 0x0C) return shift_pressed ? '_' : '-';
     else if (scancode == 0x0D) return shift_pressed ? '+' : '=';
     else if (scancode == 0x1A) return shift_pressed ? '{' : '[';
@@ -90,61 +78,64 @@ char get_char_from_scancode(unsigned char scancode, bool shift_pressed) {
     else if (scancode == 0x34) return shift_pressed ? '>' : '.';
     else if (scancode == 0x35) return shift_pressed ? '?' : '/';
     
-    return 0; // Not a typable character
+    return 0; // not a character, GET OUT!!
 }
 
 void processKey(unsigned char key, char scancode) {
     if (scancode < 0)
         return;
         
-    // Handle shift keys
+    // shift
     if (scancode == LSHIFT_KEY_CODE || scancode == RSHIFT_KEY_CODE) {
         shift = !shift;
         shift_pressed = (key != 0);  // true for press, false for release
         return;
     }
     
-    // Handle caps lock
+    // caps
     if (scancode == CAPS_KEY_CODE) {
         caps = !caps;
         return;
     }
     
-    // Convert scancode to ASCII if it's a typable character
-    char character = get_char_from_scancode(scancode, shift_pressed);
+    // convert scancode to char
+    char character = scancode_to_char(scancode, shift_pressed);
         
-    // Check terminal first (before other interfaces)
+    // check terminal
     if (terminal_is_active()) {
-        if (gui_handle_terminal_key(character, scancode)) {  // Pass character, not key
+        if (terminal_handlekey(character, scancode)) {  // Pass character, not key
             return;
         }
     }
-    // Check if pong is active
+
+    // check pong
     else if (pong_active == true) {
-        if (gui_handle_pong_key(character, scancode)) {
+        if (pong_handlekey(character, scancode)) {
             return;
         }
     }
-    // Check if text editor is active
+
+    // check editor
     else if (editor_active) {
         if (gui_handle_editor_key(character, scancode)) {
             return;
         }
     }
+    // check explorer
     else if (explorer_active) {
-        // If dialog is active, pass both the scancode and the converted character
+        // explorer active, check dialog
         if (dialog_active) {
             gui_handle_dialog_key(character, scancode);
             return;
         }
-        // Otherwise let the explorer handle navigation keys
+        // nope just explorer
         else if (gui_handle_explorer_key(character, scancode)) {
             return;
         }
     }
-    // Add dock handling - this should be the default when no other interface is active
+    // THEN we check the dock (because yes)
     else {
-        if (gui_handle_dock_key(character, scancode)) {
+        if (dock_handle_key(character, scancode)) {
             return;
         }
     }

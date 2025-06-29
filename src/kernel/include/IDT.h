@@ -1,11 +1,9 @@
 /*
-	SimpleM
+	MooseOS
 	Copyright 2025 Ethan Zhang
 */
-
+#ifndef IDT_H
+#define IDT_H
 #include "../IDT.c"
 
-void idt_init(void);
-void kb_init(void);
-void keyboard_handler_main(void);
-struct IDT_entry;
+#endif

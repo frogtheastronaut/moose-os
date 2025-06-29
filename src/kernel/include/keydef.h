@@ -1,5 +1,7 @@
 #ifndef KEYDEF_H
 #define KEYDEF_H
+
+// keys
 #define ENTER_KEY_CODE 0x1C
 #define BS_KEY_CODE 0xE
 #define CAPS_KEY_CODE 0x3A

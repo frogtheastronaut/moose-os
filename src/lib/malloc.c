@@ -1,6 +1,6 @@
 /*
-    Moose Operating System
-    Copyright 2025 Ethan Zhang, All rights reserved.
+  This file is taken from a tutorial, not part of Moose OS.
+  i put it here for fun. get over with it. its not part of the code.
 */
 
 #include <assert.h>

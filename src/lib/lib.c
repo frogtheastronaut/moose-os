@@ -7,12 +7,17 @@
 #include <stdint.h>
 
 #define MAX_NAME_LEN 128
+
+
+// don't worry, i don't get this either
+// taken from GNU C library because i don't have these includes
 typedef char *va_list;
 #define _INTSIZEOF(n)    ( (sizeof(n) + sizeof(int) - 1) & ~(sizeof(int) - 1) )
 #define va_start(ap,v)   ( ap = (va_list)&v + _INTSIZEOF(v) )
 #define va_arg(ap,t)     ( *(t *)((ap += _INTSIZEOF(t)) - _INTSIZEOF(t)) )
 #define va_end(ap)       ( ap = (va_list)0 )
 
+// copy string from src to dest
 void copyStr(char* dest, const char* src) {
     int i = 0;
     while (src[i] && i < MAX_NAME_LEN - 1) {
@@ -22,7 +27,7 @@ void copyStr(char* dest, const char* src) {
     dest[i] = '\0';
 }
 
-// Basic string compare
+// basically "" == ""
 int strEqual(const char* a, const char* b) {
     int i = 0;
     while (a[i] && b[i]) {
@@ -31,7 +36,7 @@ int strEqual(const char* a, const char* b) {
     }
     return a[i] == b[i];
 }
-
+// snprintf but its mine HAHAHAHA
 int msnprintf(char *buffer, int size, const char *format, ...) {
     va_list args;
     va_start(args, format);
@@ -71,7 +76,7 @@ int msnprintf(char *buffer, int size, const char *format, ...) {
     va_end(args);
     return written;
 }
-
+// get length of string
 size_t strlen(const char* str) 
 {
 	size_t len = 0;

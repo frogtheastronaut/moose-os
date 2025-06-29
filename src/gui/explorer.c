@@ -33,7 +33,7 @@ void gui_draw_filesplorer() {
         copyStr(full_path, "/");
     } else {
         // We're in a subdirectory - build path from bottom up
-        FileSystemNode* node = cwd;
+        File* node = cwd;
         
         // Start with current directory
         copyStr(full_path, node->name);
@@ -83,7 +83,7 @@ void gui_draw_filesplorer() {
     
     // Draw actual files and folders
     for (int i = 0; i < cwd->folder.childCount && displayed_count < 12; i++) {
-        FileSystemNode* child = cwd->folder.children[i];
+        File* child = cwd->folder.children[i];
         
         // Calculate selection index properly:
         // If in root: selection index = the file index
@@ -196,7 +196,7 @@ bool gui_handle_dialog_key(unsigned char key, char scancode) {
         
         if (dialog_type == DIALOG_TYPE_NEW_FILE) {
             // This is a new file dialog from dock
-            dock_create_and_open_file();
+            dock_mkopen_file();
         } else {
             // Regular directory/file creation dialog
             dialog_create_item();
@@ -305,7 +305,7 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
                 if (cwd != root) actual_index -= 1;  // Account for ".." entry
                 
                 if (actual_index >= 0 && actual_index < cwd->folder.childCount) {
-                    FileSystemNode* child = cwd->folder.children[actual_index];
+                    File* child = cwd->folder.children[actual_index];
                     if (child->type == FOLDER_NODE) {
                         // Navigate to folder
                         filesys_cd(child->name);
@@ -314,7 +314,7 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
                         return true;
                     } else {
                         // Open file in text editor
-                        gui_open_text_editor(child->name);
+                        editor_open(child->name);
                         return true;
                     }
                 }
@@ -350,7 +350,7 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
                 if (cwd != root) actual_index -= 1;  // Account for ".." entry
                 
                 if (actual_index >= 0 && actual_index < cwd->folder.childCount) {
-                    FileSystemNode* child = cwd->folder.children[actual_index];
+                    File* child = cwd->folder.children[actual_index];
                     
                     if (child->type == FOLDER_NODE) {
                         // Delete folder
@@ -428,7 +428,7 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
                 filesys_editfile(editor_filename, editor_content);
                 editor_modified = false; // Reset modified flag after saving
                 
-                gui_draw_text_editor();
+                editor_draw();
             }
             return true;
             
@@ -447,7 +447,7 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
                 filesys_editfile(editor_filename, editor_content);
                 editor_modified = false; // Reset modified flag after saving
                 
-                gui_draw_text_editor();
+                editor_draw();
             }
             return true;
             
@@ -462,7 +462,7 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
                     editor_cursor_col = line_length;
                 }
                 editor_cursor_pos = line_col_to_cursor_pos(editor_cursor_line, editor_cursor_col);
-                gui_draw_text_editor();
+                editor_draw();
             }
             return true;
             
@@ -477,7 +477,7 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
                     editor_cursor_col = line_length;
                 }
                 editor_cursor_pos = line_col_to_cursor_pos(editor_cursor_line, editor_cursor_col);
-                gui_draw_text_editor();
+                editor_draw();
             }
             return true;
             
@@ -486,7 +486,7 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
             if (editor_cursor_pos > 0) {
                 editor_cursor_pos--;
                 cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
-                gui_draw_text_editor();
+                editor_draw();
             }
             return true;
             
@@ -495,7 +495,7 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
             if (editor_cursor_pos < strlen(editor_content)) {
                 editor_cursor_pos++;
                 cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
-                gui_draw_text_editor();
+                editor_draw();
             }
             return true;
             
@@ -522,7 +522,7 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
                         filesys_editfile(editor_filename, editor_content);
                         editor_modified = false; // Reset modified flag after saving
                         
-                        gui_draw_text_editor();
+                        editor_draw();
                     }
                     // If line is at max length, simply ignore the character (don't type it)
                 }

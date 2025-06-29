@@ -1,30 +1,36 @@
 /*
     Moose Operating System
     Copyright 2025 Ethan Zhang, All rights reserved.
+
+	Some of this was taken of a tutorial, and modified.
 */
 
 #include "include/keyhandler.h"
 
-
+// defines
 #define VGA_WIDTH   80
 #define VGA_HEIGHT  25
 #define BYTES_FOR_EACH_ELEMENT 2
 #define SCREENSIZE BYTES_FOR_EACH_ELEMENT * COLUMNS_IN_LINE * LINES
 
+// more defines?
 #define KEYBOARD_DATA_PORT 0x60
 #define KEYBOARD_STATUS_PORT 0x64
 #define IDT_SIZE 256
 #define INTERRUPT_GATE 0x8e
 #define KERNEL_CODE_SEGMENT_OFFSET 0x08
 
+// keyboard handlers
 extern void keyboard_handler(void);
 extern char read_port(unsigned short port);
 extern void write_port(unsigned short port, unsigned char data);
 extern void load_idt(unsigned long *idt_ptr);
 unsigned int current_loc = 0;
+
 /* video memory begins at address 0xb8000 */
 char *vidptr = (char*)0xb8000;
 
+// IDT entry structure
 struct IDT_entry {
 	unsigned short int offset_lowerbits;
 	unsigned short int selector;
@@ -35,7 +41,7 @@ struct IDT_entry {
 
 struct IDT_entry IDT[IDT_SIZE];
 
-
+// init, innit?
 void idt_init(void)
 {
 	unsigned long keyboard_address;
@@ -108,6 +114,7 @@ void keyboard_handler_main(void)
 	/* Lowest bit of status will be set if buffer is not empty */
 	if (status & 0x01) {
 		keycode = read_port(KEYBOARD_DATA_PORT);
+		// goes to keyhandler.c because
 		processKey(keyboard_map_normal[(unsigned char) keycode], keycode);
 	}
 }

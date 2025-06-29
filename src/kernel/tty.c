@@ -1,6 +1,9 @@
 /*
     Moose Operating System & SimpleM
     Copyright 2025 Ethan Zhang, All rights reserved.
+
+	This file is mostly deprecated, as I am using GUI right now.
+	Nevertheless, I will keep it for reference.
 */
 
 #include <stdbool.h>
