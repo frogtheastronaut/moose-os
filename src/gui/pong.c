@@ -1,3 +1,4 @@
+
 /*
     Moose Operating System
     Copyright 2025 Ethan Zhang, All rights reserved.
@@ -531,31 +532,21 @@ bool pong_handlekey(unsigned char key, char scancode) {
     }
 }
 
-/**
- * update pong 
- */
-void pong_update() {
-    if (pong_active) {
-        if (!game_paused && !game_over) {
-            frame_counter++;
-            
-            if (frame_counter >= 30) {
-                frame_counter = 0;
-                
-                update_game();
-                
-                pong_drawgame();
-            }
-        } else {
-            // idk this works
-            static int static_frame_counter = 0;
-            static_frame_counter++;
-            if (static_frame_counter >= 30) {
-                static_frame_counter = 0;
-                pong_drawgame();
-            }
-        }
-    }
+
+// Called from kernel or GUI to start Pong in single-task mode
+void pong_start(void) {
+    pong_init_game();
+    gui_draw_pong();
 }
 
-
+// Pong update function for single-task mode
+void pong_update(void) {
+    static int frame_counter = 0;
+    if (!pong_active || game_paused || game_over) return;
+    frame_counter++;
+    if (frame_counter >= 4) { // update every 8 frames (slower ball)
+        frame_counter = 0;
+        update_game();
+        pong_drawgame();
+    }
+}
