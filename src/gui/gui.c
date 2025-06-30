@@ -20,15 +20,6 @@ static uint8_t* vga_buffer = (uint8_t*)0xA0000;
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 200
 
-uint32_t ticks = 0;
-
-void timer_handler() {
-    ticks++;
-}
-
-uint32_t get_ticks(void) {
-    return ticks;
-}
 // Add these global variables to track selection state
 int current_selection = 0;  // Index of currently selected item
 
@@ -616,10 +607,8 @@ void gui_draw_dialog(const char* title, const char* prompt) {
         gui_draw_text(x + 12, y + 42, dialog_input, VGA_COLOR_BLACK);
         
         // Draw cursor
-        if ((get_ticks() / 10) % 2 == 0) { 
-            int cursor_x = x + 12 + text_width;
-            gui_draw_vline(cursor_x, y + 42, y + 42 + 8, VGA_COLOR_BLACK);
-        }
+        int cursor_x = x + 12 + text_width;
+        gui_draw_vline(cursor_x, y + 42, y + 42 + 8, VGA_COLOR_BLACK);
     } else {
         // Text doesn't fit, scroll it so the cursor is visible
         int offset = text_width - max_visible_width;
@@ -642,10 +631,8 @@ void gui_draw_dialog(const char* title, const char* prompt) {
         gui_draw_text(x + 12, y + 42, &dialog_input[visible_start], VGA_COLOR_BLACK);
         
         // Draw cursor at the end
-        if ((get_ticks() / 10) % 2 == 0) {
-            int cursor_x = x + 12 + (text_width - offset);
-            gui_draw_vline(cursor_x, y + 42, y + 42 + 8, VGA_COLOR_BLACK);
-        }
+        int cursor_x = x + 12 + (text_width - offset);
+        gui_draw_vline(cursor_x, y + 42, y + 42 + 8, VGA_COLOR_BLACK);
     }
     
     // Draw keyboard shortcut text at the bottom

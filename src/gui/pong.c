@@ -1,4 +1,3 @@
-
 /*
     Moose Operating System
     Copyright 2025 Ethan Zhang, All rights reserved.
@@ -548,5 +547,17 @@ void pong_update(void) {
         frame_counter = 0;
         update_game();
         pong_drawgame();
+    }
+}
+
+// Pong task for pre-emptive multitasking
+void pong_task(void) {
+    while (1) {
+        if (pong_active && !game_paused && !game_over) {
+            update_game();
+            pong_drawgame();
+        }
+        // Let other tasks run
+        // No need for delay, pre-emption will handle fairness
     }
 }

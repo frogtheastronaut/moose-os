@@ -22,6 +22,7 @@
 
 // keyboard handlers
 extern void keyboard_handler(void);
+extern void timer_handler(void);
 extern char read_port(unsigned short port);
 extern void write_port(unsigned short port, unsigned char data);
 extern void load_idt(unsigned long *idt_ptr);
@@ -44,18 +45,27 @@ struct IDT_entry IDT[IDT_SIZE];
 // init, innit?
 void idt_init(void)
 {
-	unsigned long keyboard_address;
-	unsigned long idt_address;
-	unsigned long idt_ptr[2];
-	caps = false;
+    unsigned long keyboard_address;
+    unsigned long timer_address;
+    unsigned long idt_address;
+    unsigned long idt_ptr[2];
+    caps = false;
 
-	/* populate IDT entry of keyboard's interrupt */
-	keyboard_address = (unsigned long)keyboard_handler;
-	IDT[0x21].offset_lowerbits = keyboard_address & 0xffff;
-	IDT[0x21].selector = KERNEL_CODE_SEGMENT_OFFSET;
-	IDT[0x21].zero = 0;
-	IDT[0x21].type_attr = INTERRUPT_GATE;
-	IDT[0x21].offset_higherbits = (keyboard_address & 0xffff0000) >> 16;
+    /* populate IDT entry of timer interrupt (IRQ0) */
+    timer_address = (unsigned long)timer_handler;
+    IDT[0x20].offset_lowerbits = timer_address & 0xffff;
+    IDT[0x20].selector = KERNEL_CODE_SEGMENT_OFFSET;
+    IDT[0x20].zero = 0;
+    IDT[0x20].type_attr = INTERRUPT_GATE;
+    IDT[0x20].offset_higherbits = (timer_address & 0xffff0000) >> 16;
+
+    /* populate IDT entry of keyboard's interrupt */
+    keyboard_address = (unsigned long)keyboard_handler;
+    IDT[0x21].offset_lowerbits = keyboard_address & 0xffff;
+    IDT[0x21].selector = KERNEL_CODE_SEGMENT_OFFSET;
+    IDT[0x21].zero = 0;
+    IDT[0x21].type_attr = INTERRUPT_GATE;
+    IDT[0x21].offset_higherbits = (keyboard_address & 0xffff0000) >> 16;
 
 	/*     Ports
 	*	 PIC1	PIC2

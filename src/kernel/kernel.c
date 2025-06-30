@@ -55,6 +55,10 @@ void kernel_main(void)
     gui_init();
     idt_init();
     kb_init();
+    // Set up PIT for timer interrupts (100Hz)
+    outb(0x43, 0x36); // PIT command: channel 0, lo/hi byte, mode 3
+    outb(0x40, 11932 & 0xFF); // low byte (1193182 / 100)
+    outb(0x40, 11932 >> 8);   // high byte
     dock_init();
     rtc_init();
     init_filesys();
@@ -62,9 +66,8 @@ void kernel_main(void)
 
     // make dock
     task_create(dock);
+    task_create(pong_task); // Add pong as a separate pre-emptive task
 
-    // loopity loopity
-    while(1) {
-        task_schedule();
-    }
+    task_start();
+    while(1) {}
 }
