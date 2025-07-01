@@ -1,5 +1,6 @@
 ## Running Moose OS
-Running this code is pretty straightforward (at least, on my Mac it is). Just install QEMU with your package manager. I use Brew, so I run <br>
+Running this code is pretty straightforward (at least, on my Mac it is). 
+Just install QEMU with your package manager. I use Brew, so I run <br>
 `brew install qemu`<br>
 And then, in the MooseOS directory, I run <br>
 `make run`<br>

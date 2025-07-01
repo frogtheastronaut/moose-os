@@ -1,5 +1,8 @@
 The Moose Operating System
 
+GITHUB LINK HERE: https://github.com/frogtheastronaut/moose-os (all other files found there)
+SOM LINK HERE: https://summer.hackclub.com/projects/555 (has Devlog and general project info)
+
 Hi, welcome to the MOOSE OS project!
 This project has a few features, and I am adding more.
 
