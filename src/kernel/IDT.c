@@ -20,6 +20,51 @@
 #define INTERRUPT_GATE 0x8e
 #define KERNEL_CODE_SEGMENT_OFFSET 0x08
 
+// GDT entry structure
+struct GDT_entry {
+    unsigned short limit_low;
+    unsigned short base_low;
+    unsigned char base_middle;
+    unsigned char access;
+    unsigned char granularity;
+    unsigned char base_high;
+} __attribute__((packed));
+
+struct GDT_ptr {
+    unsigned short limit;
+    unsigned int base;
+} __attribute__((packed));
+
+// GDT with 3 entries: null, code, data
+struct GDT_entry GDT[3];
+struct GDT_ptr gdt_ptr;
+
+// Function to set up a GDT entry
+void gdt_set_gate(int num, unsigned long base, unsigned long limit, unsigned char access, unsigned char gran) {
+    GDT[num].base_low = (base & 0xFFFF);
+    GDT[num].base_middle = (base >> 16) & 0xFF;
+    GDT[num].base_high = (base >> 24) & 0xFF;
+    GDT[num].limit_low = (limit & 0xFFFF);
+    GDT[num].granularity = (limit >> 16) & 0x0F;
+    GDT[num].granularity |= gran & 0xF0;
+    GDT[num].access = access;
+}
+
+// External function to load GDT (needs to be in assembly)
+extern void gdt_flush(unsigned int);
+
+// Initialize GDT
+void gdt_init() {
+    gdt_ptr.limit = (sizeof(struct GDT_entry) * 3) - 1;
+    gdt_ptr.base = (unsigned int)&GDT;
+
+    gdt_set_gate(0, 0, 0, 0, 0);                // Null segment
+    gdt_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); // Code segment
+    gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF); // Data segment
+
+    gdt_flush((unsigned int)&gdt_ptr);
+}
+
 // keyboard handlers
 extern void keyboard_handler(void);
 extern void timer_handler(void);
@@ -50,6 +95,9 @@ void idt_init(void)
     unsigned long idt_address;
     unsigned long idt_ptr[2];
     caps = false;
+
+    /* First, set up our own GDT to ensure valid segment selectors */
+    gdt_init();
 
     /* populate IDT entry of timer interrupt (IRQ0) */
     timer_address = (unsigned long)timer_handler;

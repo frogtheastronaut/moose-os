@@ -60,6 +60,8 @@ static int right_score = 0;
 static bool pong_active = false;
 static bool game_paused = false;
 static bool game_over = false;
+static bool show_help = false; // Toggle for help display
+static bool help_auto_paused = false; // Track if help auto-paused the game
 
 static int winner = 0; // 1 for left player, 2 for right player
 static int frame_counter = 0;
@@ -70,6 +72,7 @@ static int ai_delay_counter = 0; // controls AI paddle speed
 static Ball prev_ball;
 static Paddle prev_left_paddle;
 static Paddle prev_right_paddle;
+static bool prev_help_state = false; // Track previous help state for clearing
 
 // exterm
 extern bool dialog_active;
@@ -106,6 +109,7 @@ static void pong_init_game() {
     prev_ball = ball;
     prev_left_paddle = left_paddle;
     prev_right_paddle = right_paddle;
+    prev_help_state = false;
 
     // reset
     ai_delay_counter = 0;
@@ -115,6 +119,8 @@ static void pong_init_game() {
     right_score = 0;
     game_paused = false; 
     game_over = false;
+    show_help = false; // Reset help display
+    help_auto_paused = false; // Reset auto-pause state
     winner = 0;
     frame_counter = 0;
 }
@@ -217,6 +223,41 @@ static void update_game() {
 }
 
 /**
+ * draw instructions box when help is toggled - styled like dialog boxes
+ */
+static void draw_instructions() {
+    if (!show_help) return;
+    
+    // Dialog dimensions (matching gui_draw_dialog)
+    int width = 280;
+    int height = 140;
+    int x = (SCREEN_WIDTH - width) / 2;
+    int y = (SCREEN_HEIGHT - height) / 2;
+    
+    // Draw dialog box with shadow (matching gui_draw_dialog style)
+    gui_draw_rect(x + 4, y + 4, width, height, VGA_COLOR_DARK_GREY); // Shadow
+    gui_draw_window_box(x, y, width, height,
+                      VGA_COLOR_BLACK,
+                      VGA_COLOR_WHITE,
+                      VGA_COLOR_LIGHT_GREY);
+    
+    // Draw title bar (matching gui_draw_dialog style)
+    gui_draw_title_bar(x, y, width, 15, VGA_COLOR_BLUE);
+    gui_draw_text(x + 10, y + 4, "Pong Controls", VGA_COLOR_WHITE);
+    
+    // Draw instructions with proper spacing
+    int text_y = y + 30;
+    gui_draw_text(x + 15, text_y, "W / S  - Move your paddle up/down", VGA_COLOR_BLACK);
+    gui_draw_text(x + 15, text_y + 15, "SPACE  - Pause/Resume game", VGA_COLOR_BLACK);
+    gui_draw_text(x + 15, text_y + 30, "R      - Restart game", VGA_COLOR_BLACK);
+    gui_draw_text(x + 15, text_y + 45, "H      - Toggle this help", VGA_COLOR_BLACK);
+    gui_draw_text(x + 15, text_y + 60, "ESC    - Exit to dock", VGA_COLOR_BLACK);
+    
+    // Draw close instruction at bottom
+    gui_draw_text(x + 15, text_y + 85, "Press H again to close", VGA_COLOR_DARK_GREY);
+}
+
+/**
  * draw game window
  */
 static void pong_draw_window() {
@@ -303,7 +344,8 @@ static void draw_scores() {
  *  paws msg
  */
 static void pong_drawpause() {
-    if (game_paused) {
+    // Don't show pause message when help is displayed
+    if (game_paused && !show_help) {
         const char* pause_msg = "PAUSED - Press SPACE to resume";
         int msg_width = gui_text_width(pause_msg);
         int msg_x = GAME_AREA_X + (GAME_AREA_WIDTH - msg_width) / 2;
@@ -432,14 +474,17 @@ static void pong_drawgame() {
     draw_ball();
     
     // sometimes clears game, just for safety reason, those who know
-    static int full_clear_counter = 0;
-    full_clear_counter++;
-    if (full_clear_counter >= 150) {  
-        full_clear_counter = 0;
-        gui_draw_rect(GAME_AREA_X, GAME_AREA_Y, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, PONG_BG_COLOR);
-        draw_center_line();
-        draw_paddles();
-        draw_ball();
+    // Don't do full clear if help is showing to avoid flicker
+    if (!show_help) {
+        static int full_clear_counter = 0;
+        full_clear_counter++;
+        if (full_clear_counter >= 150) {  
+            full_clear_counter = 0;
+            gui_draw_rect(GAME_AREA_X, GAME_AREA_Y, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, PONG_BG_COLOR);
+            draw_center_line();
+            draw_paddles();
+            draw_ball();
+        }
     }
     
     // redraw scores every few frames
@@ -453,10 +498,47 @@ static void pong_drawgame() {
     pong_drawpause();
     pong_gameover();
     
-    // update previous positions
+    // Clear help area if help was just turned off
+    if (prev_help_state && !show_help) {
+        // Clear the entire screen area where help dialog appears
+        int help_width = 280;
+        int help_height = 140;
+        int help_x = (SCREEN_WIDTH - help_width) / 2;
+        int help_y = (SCREEN_HEIGHT - help_height) / 2;
+        
+        // Clear help dialog area including shadow with background color
+        gui_draw_rect(help_x, help_y, help_width + 4, help_height + 4, VGA_COLOR_LIGHT_GREY);
+        
+        // Redraw the pong window if it overlaps with the help area
+        if (help_y < PONG_Y + PONG_HEIGHT && help_y + help_height > PONG_Y) {
+            // Redraw the affected part of the pong window
+            gui_draw_window_box(PONG_X, PONG_Y, PONG_WIDTH, PONG_HEIGHT,
+                               VGA_COLOR_BLACK, VGA_COLOR_WHITE, VGA_COLOR_LIGHT_GREY);
+            gui_draw_title_bar(PONG_X, PONG_Y, PONG_WIDTH, 15, VGA_COLOR_BLUE);
+            gui_draw_text(PONG_X + 5, PONG_Y + 3, "MooseOS Pong", VGA_COLOR_WHITE);
+            
+            // Redraw game area background and border
+            gui_draw_rect(GAME_AREA_X, GAME_AREA_Y, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, PONG_BG_COLOR);
+            gui_draw_rect_outline(GAME_AREA_X - 1, GAME_AREA_Y - 1, GAME_AREA_WIDTH + 2, GAME_AREA_HEIGHT + 2, VGA_COLOR_WHITE);
+            
+            // Redraw game elements
+            draw_center_line();
+            draw_paddles();
+            draw_ball();
+            draw_scores();
+            pong_drawpause();
+            pong_gameover();
+        }
+    }
+    
+    // update previous positions BEFORE drawing help
     prev_ball = ball;
     prev_left_paddle = left_paddle;
     prev_right_paddle = right_paddle;
+    prev_help_state = show_help;
+    
+    // Draw help box LAST to ensure it's on top and not cleared
+    draw_instructions();
 }
 
 /**
@@ -526,6 +608,27 @@ bool pong_handlekey(unsigned char key, char scancode) {
             gui_draw_pong();
             return true;
             
+        case 0x23: // H key
+            // toggle help display
+            if (!show_help) {
+                // Showing help - pause the game if it's not already paused or over
+                if (!game_paused && !game_over) {
+                    game_paused = true;
+                    help_auto_paused = true; // Mark as auto-paused
+                } else {
+                    help_auto_paused = false; // Was already paused
+                }
+                show_help = true;
+            } else {
+                // Hiding help - unpause only if we auto-paused it
+                show_help = false;
+                if (help_auto_paused && game_paused && !game_over) {
+                    game_paused = false;
+                }
+                help_auto_paused = false; // Reset the flag
+            }
+            return true;
+            
         default:
             return false;
     }
@@ -541,7 +644,23 @@ void pong_start(void) {
 // Pong update function for single-task mode
 void pong_update(void) {
     static int frame_counter = 0;
-    if (!pong_active || game_paused || game_over) return;
+    static bool help_drawn = false; // Track if help has been drawn
+    
+    if (!pong_active) return;
+    
+    // When help is shown, only draw once and then stop
+    if (show_help) {
+        if (!help_drawn) {
+            pong_drawgame();
+            help_drawn = true;
+        }
+        return;
+    } else {
+        help_drawn = false; // Reset when help is hidden
+    }
+    
+    if (game_paused || game_over) return;
+    
     frame_counter++;
     if (frame_counter >= 4) { // update every 8 frames (slower ball)
         frame_counter = 0;
