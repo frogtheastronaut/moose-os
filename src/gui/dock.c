@@ -15,7 +15,6 @@
 #include "../kernel/include/keyboard.h"
 #include "../lib/lib.h"
 #include "include/terminal.h"
-#include "include/pong.h"
 #include "../time/rtc.h"
 
 // defines
@@ -60,8 +59,8 @@ extern void gui_draw_filesplorer();
 #define SELECTION_TEXT_COLOR VGA_COLOR_WHITE
 
 // vars
-static int selected_app = 0;  // 0 = File Explorer, 1 = Text Editor, 2 = Terminal, 3 = Pong
-static const int total_apps = 4;  
+static int selected_app = 0;  // 0 = File Explorer, 1 = Text Editor, 2 = Terminal
+static const int total_apps = 3;  
 static uint32_t last_time_update = 0;  // last update
 static char last_time_str[32] = "";    // last time as in time time
 
@@ -74,7 +73,6 @@ extern void gui_draw_dialog(const char* title, const char* prompt);
 extern bool explorer_active;
 extern bool editor_active;
 extern bool terminal_active;
-extern bool pong_active;
 extern volatile uint32_t ticks;
 
 // more
@@ -85,7 +83,8 @@ extern int filesys_mkfile(const char* name, const char* content);
 // func decs
 static void launch_selected_app(void);
 static void handle_shutdown(void);
-static void dock_mkopen_file(void);  
+static void dock_mkopen_file(void);
+static bool dock_handle_mouse_click(int mouse_x, int mouse_y);
 
 // huh
 #define DIALOG_TYPE_NEW_FILE 2
@@ -117,28 +116,26 @@ static void dock_draw_icon(int x, int y, uint8_t bg_color, int app_index) {
         case 2: // temriasndfal
             icon_bitmap = terminal_icon;
             break;
-        case 3: // pongongong
-            icon_bitmap = pong_icon;
-            break;
         case 1: // ted
         default:
             icon_bitmap = file_icon;
             break;
     }
     
+    // Optimized drawing - use fewer pixel operations
     for (int row = 0; row < 16; row++) {
         for (int col = 0; col < 16; col++) {
             uint8_t pixel = icon_bitmap[row][col];
-            uint8_t color;
             
-            // color = colour
+            // Skip transparent pixels when background matches to save operations
             if (pixel == 0) {
-                color = bg_color;  // transparent
+                if (bg_color == WINDOW_BACKGROUND) {
+                    continue; // Skip setting pixel if it's already the right color
+                }
+                gui_set_pixel(x + col, y + row, bg_color);
             } else {
-                color = icon_color_map[pixel];  // color mapping from images.h
+                gui_set_pixel(x + col, y + row, icon_color_map[pixel]);
             }
-            // sets pixel
-            gui_set_pixel(x + col, y + row, color);
         }
     }
 }
@@ -196,17 +193,28 @@ static void dock_draw_apps() {
     
     // terminal
     dock_draw_app(2, "Terminal", start_x + FILE_SPACING_X * 2, start_y);
-    
-    // pong
-    dock_draw_app(3, "Pong", start_x, start_y + FILE_SPACING_Y);
 }
 
 /**
- * time displaydsdf
+ * time displaydsdf - optimized for performance
  */
 static void dock_draw_time() {
+    static rtc_time last_time = {0};
+    
     // get current time
     rtc_time current_time = rtc_get_time();
+    
+    // Only redraw if seconds actually changed to reduce unnecessary redraws
+    if (current_time.seconds == last_time.seconds && 
+        current_time.minutes == last_time.minutes &&
+        current_time.hours == last_time.hours &&
+        current_time.day == last_time.day &&
+        current_time.month == last_time.month &&
+        current_time.year == last_time.year) {
+        return; // No time change, skip expensive redraw
+    }
+    
+    last_time = current_time;
     
     // time, in format HH:MM:SS DD/MM/YYYY UTC±X
     char time_str[32];
@@ -232,9 +240,8 @@ static void dock_draw_time() {
     time_str[17] = '0' + (current_time.year / 10);
     time_str[18] = '0' + (current_time.year % 10);
     
-    // timezone
+    // timezone - simplified
     int offset = timezone_offset; // from rtc.c
-    int ltime_str = 0;
     time_str[19] = ' ';
     time_str[20] = 'U';
     time_str[21] = 'T';
@@ -244,12 +251,10 @@ static void dock_draw_time() {
         if (offset < 10) {
             time_str[24] = '0' + offset;
             time_str[25] = '\0';
-            ltime_str = 25;
         } else {
             time_str[24] = '0' + (offset / 10);
             time_str[25] = '0' + (offset % 10);
             time_str[26] = '\0';
-            ltime_str = 26;
         }
     } else {
         int abs_offset = -offset;
@@ -257,51 +262,25 @@ static void dock_draw_time() {
         if (abs_offset < 10) {
             time_str[24] = '0' + abs_offset;
             time_str[25] = '\0';
-            ltime_str = 25;
         } else {
             time_str[24] = '0' + (abs_offset / 10);
             time_str[25] = '0' + (abs_offset % 10);
             time_str[26] = '\0';
-            ltime_str = 26;
-        }
-    }
-    if (offset >= -12 && offset <= 14) {
-        // nuthin'
-    } else {
-        time_str[ltime_str] = '?';
-        time_str[ltime_str + 1] = '\0';
-    }
-    
-    // check if time changed
-    bool time_changed = false;
-    for (int i = 0; time_str[i] != '\0' && i < 31; i++) {
-        if (last_time_str[i] != time_str[i]) {
-            time_changed = true;
-            break;
         }
     }
     
-    // redraw if time changed
-    if (time_changed) {
-        // status bar
-        int status_bar_width = WINDOW_WIDTH - 16;
-        int status_bar_height = 15;
-        int status_bar_x = WINDOW_X + 8;
-        int status_bar_y = WINDOW_Y + WINDOW_HEIGHT - status_bar_height - 8;
-        
-        // bar background
-        gui_draw_rect(status_bar_x, status_bar_y, status_bar_width, status_bar_height, VGA_COLOR_LIGHT_GREY);
-        gui_draw_hline(status_bar_x, status_bar_x + status_bar_width - 1, status_bar_y, VGA_COLOR_DARK_GREY);
-        
-        // text
-        gui_draw_text(status_bar_x + 5, status_bar_y + 3, time_str, VGA_COLOR_BLACK);
-        
-        // c4ch3 
-        for (int i = 0; i < 32; i++) {
-            last_time_str[i] = time_str[i];
-            if (time_str[i] == '\0') break;
-        }
-    }
+    // status bar
+    int status_bar_width = WINDOW_WIDTH - 16;
+    int status_bar_height = 15;
+    int status_bar_x = WINDOW_X + 8;
+    int status_bar_y = WINDOW_Y + WINDOW_HEIGHT - status_bar_height - 8;
+    
+    // bar background
+    gui_draw_rect(status_bar_x, status_bar_y, status_bar_width, status_bar_height, VGA_COLOR_LIGHT_GREY);
+    gui_draw_hline(status_bar_x, status_bar_x + status_bar_width - 1, status_bar_y, VGA_COLOR_DARK_GREY);
+    
+    // text
+    gui_draw_text(status_bar_x + 5, status_bar_y + 3, time_str, VGA_COLOR_BLACK);
 }
 
 /**
@@ -328,6 +307,10 @@ static void dock_draw_window() {
  * Main function to draw the complete file explorer style dock
  */
 void gui_draw_dock() {
+    // Clear any cursor artifacts when drawing dock
+    extern void gui_clear_mouse_cursor(void);
+    gui_clear_mouse_cursor();
+    
     // Initialize VGA if needed
     gui_init();
     
@@ -344,12 +327,81 @@ void gui_draw_dock() {
     dialog_active = false;
     explorer_active = false;
     editor_active = false;
+    
+    // Ensure mouse cursor is redrawn after all dock elements
+    extern void gui_update_mouse_cursor(void);
+    cursor_visible = false; // Force redraw
+    gui_update_mouse_cursor();
+}
+
+/**
+ * Handle mouse clicks on dock apps
+ */
+static bool dock_handle_mouse_click(int mouse_x, int mouse_y) {
+    // Only handle clicks when dock is active and no dialog is open
+    if (!dock_is_active()) {
+        return false;
+    }
+    
+    // Calculate app positions same as in dock_draw_apps()
+    int start_x = FILE_AREA_X + 20;
+    int start_y = FILE_AREA_Y;
+    
+    // Define click areas for each app (icon + text area)
+    int app_positions[4][4]; // [app_index][x, y, width, height]
+    
+    // App 0: File Explorer
+    app_positions[0][0] = start_x - 35;  // x (centered around icon)
+    app_positions[0][1] = start_y - 2;   // y
+    app_positions[0][2] = 70;            // width
+    app_positions[0][3] = 32;            // height (icon + text)
+    
+    // App 1: Text Editor  
+    app_positions[1][0] = start_x + FILE_SPACING_X - 35;
+    app_positions[1][1] = start_y - 2;
+    app_positions[1][2] = 70;
+    app_positions[1][3] = 32;
+    
+    // App 2: Terminal
+    app_positions[2][0] = start_x + FILE_SPACING_X * 2 - 35;
+    app_positions[2][1] = start_y - 2;
+    app_positions[2][2] = 70;
+    app_positions[2][3] = 32;
+    // Check if click is within any app area
+    for (int i = 0; i < total_apps; i++) {
+        int x = app_positions[i][0];
+        int y = app_positions[i][1];
+        int w = app_positions[i][2];
+        int h = app_positions[i][3];
+        
+        if (mouse_x >= x && mouse_x < x + w && 
+            mouse_y >= y && mouse_y < y + h) {
+            // Click detected on app i
+            int previous_selection = selected_app;
+            selected_app = i;
+            
+            // Redraw if selection changed
+            if (previous_selection != selected_app) {
+                gui_draw_dock();
+            }
+            
+            // Launch the selected app
+            launch_selected_app();
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 /**
  * launch selected app
  */
 static void launch_selected_app() {
+    // Clear cursor artifacts before launching any application
+    extern void gui_clear_mouse_cursor(void);
+    gui_clear_mouse_cursor();
+    
     switch (selected_app) {
         case 0:
             // Launch File Explorer
@@ -374,17 +426,6 @@ static void launch_selected_app() {
             editor_active = false;
             dialog_active = false;
             gui_open_terminal();
-            break;
-            
-        case 3:
-            // Launch Pong
-            pong_active = true;
-            explorer_active = false;
-            editor_active = false;
-            terminal_active = false;
-            dialog_active = false;
-            pong_init_game();
-            gui_draw_pong();
             break;
             
         default:
@@ -436,7 +477,7 @@ bool dock_handle_key(unsigned char key, char scancode) {
     }
     
     // if we have a dialog and in dock, we handle it
-    if (explorer_active || editor_active || terminal_active || pong_active) {
+    if (explorer_active || editor_active || terminal_active) {
         return false;
     }
     // change selected app to prev
@@ -481,18 +522,14 @@ bool dock_handle_key(unsigned char key, char scancode) {
             return true;
             
         default:
-            // just redraw it alr
-            if (key != 0) {
-                gui_draw_dock();
-                return true;
-            }
+            // Don't redraw for every key - only for specific keys that matter
             return false;
     }
     
-    // redraw time display
+    // Only redraw if selection actually changed
     if (previous_selection != selected_app) {
-        gui_draw_dock();  // Full redraw if selection changed
-     }
+        gui_draw_dock();  // Full redraw only when selection changed
+    }
     
     return true;
 }
@@ -509,17 +546,20 @@ void dock_init() {
  * dock active?
  */
 bool dock_is_active() {
-    return (!explorer_active && !editor_active && !dialog_active && !terminal_active && !pong_active); // crazy logic right here *claps*
+    return (!explorer_active && !editor_active && !dialog_active && !terminal_active); // crazy logic right here *claps*
 }
 
 /**
  * go back to dock
  */
 void dock_return() {
+    // Clear any cursor artifacts when returning to dock
+    extern void gui_clear_mouse_cursor(void);
+    gui_clear_mouse_cursor();
+    
     explorer_active = false;
     editor_active = false;
     terminal_active = false;
-    pong_active = false;
     dialog_active = false;
     selected_app = 0;
     gui_draw_dock();
@@ -562,99 +602,62 @@ void dock_mkopen_file() {
 }
 
 /**
- * update time
+ * Handle mouse input for dock
  */
-void dock_update_time() {
-    static uint32_t last_mouse_update = 0;
+bool dock_handle_mouse() {
+    static bool last_left_state = false;
     
-    // check if dock is visible
-    if (dock_is_active() && terminal_active == false && editor_active == false && dialog_active == false && pong_active == false) {
-        dock_draw_time();
-        // Mouse info display removed as requested
+    if (!dock_is_active()) {
+        return false;
     }
     
-    // Update mouse cursor less frequently to reduce lag (every 10th call)
-    if (ticks - last_mouse_update > 2) {  // Update every ~20ms instead of every frame
-        gui_update_mouse_cursor();
-        last_mouse_update = ticks;
+    mouse_state_t* mouse = get_mouse_state();
+    if (!mouse) {
+        return false;
     }
+    
+    // Scale mouse coordinates to VGA mode 13h (320x200)
+    int mouse_x = (mouse->x_position * SCREEN_WIDTH) / 640;
+    int mouse_y = (mouse->y_position * SCREEN_HEIGHT) / 480;
+    
+    // Check for left mouse button click
+    if (mouse->left_button) {
+        // Prevent multiple triggers by checking if this is a new click
+        if (!last_left_state) {
+            // New click detected
+            last_left_state = true;
+            return dock_handle_mouse_click(mouse_x, mouse_y);
+        }
+    } else {
+        // Reset click state when button is released
+        last_left_state = false;
+    }
+    
+    return false;
 }
 
 /**
- * display mouse information
+ * update time - ULTRA OPTIMIZED for maximum performance
  */
-void dock_draw_mouse_info() {
-    static int last_mouse_x_displayed = -1;
-    static int last_mouse_y_displayed = -1;
-    static unsigned char last_buttons = 0xFF; // Initialize to invalid value
+void dock_update_time() {
+    static uint32_t last_time_update = 0;
+    static uint32_t last_mouse_recovery = 0;
     
-    mouse_state_t* mouse = get_mouse_state();
+    // MAXIMUM PERFORMANCE: Update time very infrequently
+    // This reduces drawing operations significantly
+    #define TIME_UPDATE_FREQUENCY 2000  // Every 20 seconds
     
-    // Only update if mouse position or buttons changed significantly
-    unsigned char current_buttons = (mouse->left_button ? 1 : 0) | 
-                                   (mouse->right_button ? 2 : 0) | 
-                                   (mouse->middle_button ? 4 : 0);
-    
-    if (mouse->x_position == last_mouse_x_displayed && 
-        mouse->y_position == last_mouse_y_displayed &&
-        current_buttons == last_buttons) {
-        return; // No change, don't redraw
+    if (dock_is_active() && (ticks - last_time_update >= TIME_UPDATE_FREQUENCY)) {
+        dock_draw_time();
+        last_time_update = ticks;
     }
     
-    last_mouse_x_displayed = mouse->x_position;
-    last_mouse_y_displayed = mouse->y_position;
-    last_buttons = current_buttons;
-    
-    // Create mouse info string
-    char mouse_str[64];
-    mouse_str[0] = 'M';
-    mouse_str[1] = ':';
-    mouse_str[2] = ' ';
-    
-    // X position
-    int x_pos = mouse->x_position;
-    int str_pos = 3;
-    if (x_pos >= 100) {
-        mouse_str[str_pos++] = '0' + (x_pos / 100);
-        x_pos %= 100;
+    // MOUSE FREEZE RECOVERY: Periodic check to ensure cursor visibility
+    if (ticks - last_mouse_recovery >= 500) { // Every 5 seconds - less frequent since main loop handles it
+        extern void gui_update_mouse_cursor(void);
+        gui_update_mouse_cursor();
+        last_mouse_recovery = ticks;
     }
-    if (x_pos >= 10 || mouse->x_position >= 100) {
-        mouse_str[str_pos++] = '0' + (x_pos / 10);
-        x_pos %= 10;
-    }
-    mouse_str[str_pos++] = '0' + x_pos;
-    
-    mouse_str[str_pos++] = ',';
-    
-    // Y position
-    int y_pos = mouse->y_position;
-    if (y_pos >= 100) {
-        mouse_str[str_pos++] = '0' + (y_pos / 100);
-        y_pos %= 100;
-    }
-    if (y_pos >= 10 || mouse->y_position >= 100) {
-        mouse_str[str_pos++] = '0' + (y_pos / 10);
-        y_pos %= 10;
-    }
-    mouse_str[str_pos++] = '0' + y_pos;
-    
-    // Buttons
-    mouse_str[str_pos++] = ' ';
-    mouse_str[str_pos++] = '[';
-    mouse_str[str_pos++] = mouse->left_button ? 'L' : '-';
-    mouse_str[str_pos++] = mouse->middle_button ? 'M' : '-';
-    mouse_str[str_pos++] = mouse->right_button ? 'R' : '-';
-    mouse_str[str_pos++] = ']';
-    mouse_str[str_pos] = '\0';
-    
-    // Draw mouse info on the right side of status bar
-    int status_bar_x = WINDOW_X + 8;
-    int status_bar_y = WINDOW_Y + WINDOW_HEIGHT - 15 - 8;
-    int text_x = status_bar_x + WINDOW_WIDTH - 16 - gui_text_width(mouse_str) - 5;
-    
-    // Clear area first
-    gui_draw_rect(text_x - 5, status_bar_y, gui_text_width(mouse_str) + 10, 15, VGA_COLOR_LIGHT_GREY);
-    
-    // Draw mouse info
-    gui_draw_text(text_x, status_bar_y + 3, mouse_str, VGA_COLOR_BLACK);
 }
+
+

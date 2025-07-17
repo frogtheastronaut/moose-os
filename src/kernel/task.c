@@ -87,6 +87,8 @@ void task_yield() {
 }
 
 void task_schedule() {
+    if (num_tasks == 0) return; // Safety check: no tasks to schedule
+    
     int prev_task = current_task;
     int next = (current_task + 1) % num_tasks;
     for (int i = 0; i < num_tasks; ++i) {

@@ -52,37 +52,37 @@ load_idt:
 	sti
 	ret
 
-; GDT flush function
+; gdt flush function
 gdt_flush:
-	mov eax, [esp+4]  ; Get the pointer to the GDT, passed as a parameter.
-	lgdt [eax]        ; Load the new GDT pointer
+	mov eax, [esp+4] 
+	lgdt [eax]      
 
-	mov ax, 0x10      ; 0x10 is the offset in the GDT to our data segment
-	mov ds, ax        ; Load all data segment selectors
+	mov ax, 0x10  
+	mov ds, ax     
 	mov es, ax
 	mov fs, ax
 	mov gs, ax
 	mov ss, ax
-	jmp 0x08:.flush   ; 0x08 is the offset to our code segment: Far jump!
+	jmp 0x08:.flush
 .flush:
 	ret
 
-; Keyboard Handler
+
 keyboard_handler:                 
 	call    keyboard_handler_main ; keyboard_handler_main from kernel/IDT.c
 	iretd
-
-; Mouse Handler
+ 
 mouse_handler:
+	pusha                   
 	call    mouse_handler_main    ; mouse_handler_main from kernel/mouse.c
-	iretd
+	popa                     
+	iretd                       
 
-; Timer interrupt handler for pre-emptive multitasking
+; timer
 timer_handler:
     pusha
     call task_tick
     popa
-    ; Send EOI to PIC
     mov al, 0x20
     out 0x20, al
     iretd

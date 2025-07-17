@@ -21,8 +21,7 @@ extern bool gui_handle_dialog_key(unsigned char key, char scancode);
 extern bool gui_handle_explorer_key(unsigned char key, char scancode);
 extern bool gui_handle_editor_key(unsigned char key, char scancode);
 extern bool dock_handle_key(unsigned char key, char scancode); 
-extern bool terminal_handlekey(unsigned char key, char scancode); 
-extern bool pong_handlekey(unsigned char key, char scancode);
+extern bool terminal_handlekey(unsigned char key, char scancode);
 
 // set 'em all to false
 bool dialog_active = false;
@@ -103,14 +102,7 @@ void processKey(unsigned char key, char scancode) {
         
     // check terminal
     if (terminal_is_active()) {
-        if (terminal_handlekey(character, scancode)) {  // Pass character, not key
-            return;
-        }
-    }
-
-    // check pong
-    else if (pong_active == true) {
-        if (pong_handlekey(character, scancode)) {
+        if (terminal_handlekey(character, scancode)) {
             return;
         }
     }

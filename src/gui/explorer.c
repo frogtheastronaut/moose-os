@@ -6,6 +6,7 @@
 #include "include/gui.h"
 #include "include/editor.h"
 #include "include/dock.h"
+#include "../kernel/include/mouse.h"
 
 /**
  * Updated file explorer function that shows current selection
@@ -132,6 +133,12 @@ void gui_draw_filesplorer() {
     
     // Set explorer as active
     explorer_active = true;
+    
+    // Ensure mouse cursor is redrawn after all explorer elements
+    extern void gui_update_mouse_cursor(void);
+    extern bool cursor_visible;
+    cursor_visible = false; // Force redraw
+    gui_update_mouse_cursor();
 }
 /**
  * Create new directory or file based on dialog input
@@ -227,7 +234,14 @@ bool gui_handle_dialog_key(unsigned char key, char scancode) {
         if (dialog_input_pos > 0) {
             dialog_input_pos--;
             dialog_input[dialog_input_pos] = '\0';
-            gui_draw_dialog("New File", "Enter filename:"); // Redraw dialog
+            // Redraw dialog with correct title based on dialog type
+            if (dialog_type == 0) {
+                gui_draw_dialog("Create Directory", "Enter directory name:");
+            } else if (dialog_type == 1) {
+                gui_draw_dialog("Create File", "Enter file name:");
+            } else {
+                gui_draw_dialog("New File", "Enter filename:");
+            }
         }
         return true;
     }
@@ -237,7 +251,14 @@ bool gui_handle_dialog_key(unsigned char key, char scancode) {
             dialog_input[dialog_input_pos] = key;
             dialog_input_pos++;
             dialog_input[dialog_input_pos] = '\0';
-            gui_draw_dialog("New File", "Enter filename:"); // Redraw dialog
+            // Redraw dialog with correct title based on dialog type
+            if (dialog_type == 0) {
+                gui_draw_dialog("Create Directory", "Enter directory name:");
+            } else if (dialog_type == 1) {
+                gui_draw_dialog("Create File", "Enter file name:");
+            } else {
+                gui_draw_dialog("New File", "Enter filename:");
+            }
         }
         return true;
     }
@@ -529,6 +550,106 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
                 return true;
             }
             break;
+    }
+    
+    return false;
+}
+
+/**
+ * Handle mouse clicks in file explorer
+ */
+static bool explorer_handle_mouse_click(int mouse_x, int mouse_y) {
+    if (!explorer_active || dialog_active) {
+        return false;
+    }
+    
+    // File display area starts at position (30, 40) with 70-pixel spacing
+    int start_x = 30;
+    int start_y = 40;
+    int item_spacing_x = 70;  
+    int item_spacing_y = 40;
+    int item_width = 60;
+    int item_height = 40;
+    int items_per_row = 4;
+    
+    // Calculate total items including ".." if not at root
+    int total_items = cwd->folder.childCount;
+    if (cwd != root) total_items++; // Account for ".." folder
+    
+    // Check if click is within the file display area bounds
+    if (mouse_x < start_x || mouse_y < start_y) {
+        return false;
+    }
+    
+    // Calculate which row and column was clicked
+    int click_col = (mouse_x - start_x) / item_spacing_x;
+    int click_row = (mouse_y - start_y) / item_spacing_y;
+    
+    // Ensure click is within valid column bounds
+    if (click_col >= items_per_row) {
+        return false;
+    }
+    
+    // Calculate the selection index
+    int clicked_selection = click_row * items_per_row + click_col;
+    
+    // Check if the selection is within valid bounds
+    if (clicked_selection >= total_items) {
+        return false;
+    }
+    
+    // Check if click is within the actual item boundaries
+    int item_x = start_x + (click_col * item_spacing_x);
+    int item_y = start_y + (click_row * item_spacing_y);
+    
+    if (mouse_x >= item_x && mouse_x < item_x + item_width &&
+        mouse_y >= item_y && mouse_y < item_y + item_height) {
+        
+        // Valid click on an item
+        int previous_selection = current_selection;
+        current_selection = clicked_selection;
+        
+        // Redraw if selection changed
+        if (previous_selection != current_selection) {
+            gui_draw_filesplorer();
+        }
+        
+        return true;
+    }
+    
+    return false;
+}
+
+/**
+ * Handle mouse input for file explorer
+ */
+bool explorer_handle_mouse() {
+    static bool last_left_state = false;
+    
+    if (!explorer_active) {
+        return false;
+    }
+    
+    mouse_state_t* mouse = get_mouse_state();
+    if (!mouse) {
+        return false;
+    }
+    
+    // Scale mouse coordinates to VGA mode 13h (320x200)
+    int mouse_x = (mouse->x_position * SCREEN_WIDTH) / 640;
+    int mouse_y = (mouse->y_position * SCREEN_HEIGHT) / 480;
+    
+    // Check for left mouse button click
+    if (mouse->left_button) {
+        // Prevent multiple triggers by checking if this is a new click
+        if (!last_left_state) {
+            // New click detected
+            last_left_state = true;
+            return explorer_handle_mouse_click(mouse_x, mouse_y);
+        }
+    } else {
+        // Reset click state when button is released
+        last_left_state = false;
     }
     
     return false;

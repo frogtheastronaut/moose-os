@@ -5,6 +5,8 @@
 
 #include "include/gui.h"
 
+extern bool terminal_active;
+
 /**
  * Draws the text editor interface
  */
@@ -88,6 +90,10 @@ void editor_draw() {
     strcat(status, col_str);
     
     gui_draw_text(5, 192, status, VGA_COLOR_WHITE);
+    
+    // Make sure cursor is visible after redraw
+    cursor_visible = false;
+    gui_update_mouse_cursor();
 }
 
 

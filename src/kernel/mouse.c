@@ -23,6 +23,7 @@ typedef struct {
 #define MOUSE_F_BIT  0x20
 #define MOUSE_V_BIT  0x08
 
+extern bool dock_is_active(void);
 // External functions from boot.asm
 extern char read_port(unsigned short port);
 extern void write_port(unsigned short port, unsigned char data);
@@ -103,13 +104,14 @@ void mouse_handler_main(void) {
     write_port(0xA0, 0x20); // Send EOI to slave PIC
     write_port(0x20, 0x20); // Send EOI to master PIC
     
-    // Check if mouse data is available
+    // Quick safety checks to prevent hanging
     if (!(status & MOUSE_BBIT)) {
-        return;
+        return; // No data available
     }
 
-    // Check if this is mouse data (bit 5 set)
     if (!(status & MOUSE_F_BIT)) {
+        // Clear any spurious data to prevent getting stuck
+        read_port(MOUSE_PORT);
         return;
     }
 
@@ -122,6 +124,7 @@ void mouse_handler_main(void) {
             
             // Check if this is a valid first byte
             if (!(mouse_in & MOUSE_V_BIT)) {
+                mouse_cycle = 0; // Reset cycle on invalid data
                 break;
             }
             
@@ -137,7 +140,7 @@ void mouse_handler_main(void) {
         case 2:
             // Third byte: Y movement
             mouse_byte[2] = mouse_in;
-            mouse_cycle = 0;
+            mouse_cycle = 0; // Always reset cycle after third byte
 
             // Update mouse state
             mouse_state.left_button = mouse_byte[0] & 0x01;
@@ -166,6 +169,21 @@ void mouse_handler_main(void) {
             if (mouse_state.y_position < 0) mouse_state.y_position = 0;
             if (mouse_state.y_position >= 480) mouse_state.y_position = 479;
             
+            // Update cursor only on actual movement to prevent excessive redraws
+            static uint32_t last_cursor_update = 0;
+            extern volatile uint32_t ticks;
+            extern void gui_update_mouse_cursor(void);
+            
+            if (ticks - last_cursor_update >= 1) { // Limit to every 10ms (more frequent)
+                gui_update_mouse_cursor();
+                last_cursor_update = ticks;
+            }
+            
+            break;
+            
+        default:
+            // Reset cycle if we get into an invalid state
+            mouse_cycle = 0;
             break;
     }
 }

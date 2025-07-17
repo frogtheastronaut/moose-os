@@ -10,13 +10,13 @@ build-kernel:
 	rm kasm.o switchtask.o kc.o
 
 run-kernel: build-kernel
-	qemu-system-i386 -kernel bin/MooseOS.elf
+	qemu-system-i386 -kernel bin/MooseOS.elf -m 128M
 
 run-kernel-windowed: build-kernel
-	qemu-system-i386 -kernel bin/MooseOS.elf 
+	qemu-system-i386 -kernel bin/MooseOS.elf -m 128M
 
 run-kernel-fullscreen: build-kernel
-	qemu-system-i386 -display cocoa,zoom-to-fit=on -kernel bin/MooseOS.elf -full-screen
+	qemu-system-i386 -display cocoa,zoom-to-fit=on -kernel bin/MooseOS.elf -full-screen -m 128M
 
 # ISO creation targets
 build-iso: build-kernel
@@ -34,12 +34,12 @@ build-iso: build-kernel
 	rm -rf iso
 
 run-iso: build-iso
-	# Run the ISO in QEMU
-	qemu-system-i386 -cdrom bin/MooseOS.iso
+	# Run the ISO in QEMU with 128MB RAM
+	qemu-system-i386 -cdrom bin/MooseOS.iso -m 128M
 
 run-iso-fullscreen: build-iso
-	# Run the ISO in QEMU full screen
-	qemu-system-i386 -display cocoa,zoom-to-fit=on -cdrom bin/MooseOS.iso -full-screen
+	# Run the ISO in QEMU full screen with 128MB RAM
+	qemu-system-i386 -display cocoa,zoom-to-fit=on -cdrom bin/MooseOS.iso -full-screen -m 128M
 
 # Cleanup targets
 clean-iso:

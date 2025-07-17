@@ -463,6 +463,12 @@ void gui_draw_terminal() {
     dialog_active = false;
     explorer_active = false;
     editor_active = false;
+    
+    // Ensure mouse cursor is redrawn after all terminal elements
+    extern void gui_update_mouse_cursor(void);
+    extern bool cursor_visible;
+    cursor_visible = false; // Force redraw
+    gui_update_mouse_cursor();
 }
 
 /**

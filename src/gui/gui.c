@@ -58,6 +58,16 @@ bool editor_modified = false; // Track if content has been modified
 #define EDITOR_START_Y 40        // Top margin
 #define EDITOR_WIDTH 290         // Editor content width
 
+// Mouse cursor state - moved here to be available globally
+static int last_mouse_x = -1;
+static int last_mouse_y = -1;
+static uint8_t cursor_backup[8][8]; // Backup area under cursor (8x8)
+static bool cursor_visible = false;
+
+// Function declarations for mouse cursor functions
+void update_mouse_cursor(void);
+void gui_update_mouse_cursor(void);
+
 /**
  * Sets a single pixel at the specified coordinates
  * 
@@ -225,6 +235,8 @@ void gui_draw_window_box(int x, int y, int width, int height,
     gui_draw_rect(x + 2, y + 2, width - 4, height - 4, face_color);
 }
 
+
+
 /**
  * Clears the entire screen with specified color
  * 
@@ -234,6 +246,10 @@ void gui_clear_screen(uint8_t color) {
     for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
         vga_buffer[i] = color;
     }
+    
+    // Always redraw mouse cursor after clearing screen
+    cursor_visible = false; // Force redraw
+    gui_update_mouse_cursor();
 }
 
 /**
@@ -740,13 +756,6 @@ int line_col_to_cursor_pos(int line, int col) {
 }
 
 // Mouse cursor support
-#include "../kernel/include/mouse.h"
-
-// Mouse cursor state
-static int last_mouse_x = -1;
-static int last_mouse_y = -1;
-static uint8_t cursor_backup[8][8]; // Backup area under cursor (8x8)
-static bool cursor_visible = false;
 
 /**
  * Simple arrow cursor pattern (8x8) - smaller cursor
@@ -801,7 +810,11 @@ void restore_cursor_background(int x, int y) {
             int screen_y = y + j;
             if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
                 screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
-                vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = cursor_backup[j][i];
+                // Additional safety check to prevent buffer overruns
+                int buffer_index = screen_y * SCREEN_WIDTH + screen_x;
+                if (buffer_index >= 0 && buffer_index < SCREEN_WIDTH * SCREEN_HEIGHT) {
+                    vga_buffer[buffer_index] = cursor_backup[j][i];
+                }
             }
         }
     }
@@ -819,9 +832,17 @@ void draw_mouse_cursor(int x, int y) {
                 screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
                 uint8_t pattern = cursor_pattern[j][i];
                 if (pattern == 1) {
-                    vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOR_BLACK;
+                    // Additional safety check to prevent buffer overruns
+                    int buffer_index = screen_y * SCREEN_WIDTH + screen_x;
+                    if (buffer_index >= 0 && buffer_index < SCREEN_WIDTH * SCREEN_HEIGHT) {
+                        vga_buffer[buffer_index] = VGA_COLOR_BLACK;
+                    }
                 } else if (pattern == 2) {
-                    vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOR_WHITE;
+                    // Additional safety check to prevent buffer overruns
+                    int buffer_index = screen_y * SCREEN_WIDTH + screen_x;
+                    if (buffer_index >= 0 && buffer_index < SCREEN_WIDTH * SCREEN_HEIGHT) {
+                        vga_buffer[buffer_index] = VGA_COLOR_WHITE;
+                    }
                 }
                 // pattern == 0 means transparent, don't draw anything
             }
@@ -835,6 +856,9 @@ void draw_mouse_cursor(int x, int y) {
 void update_mouse_cursor(void) {
     mouse_state_t* mouse = get_mouse_state();
     
+    // Basic safety check
+    if (!mouse) return;
+    
     // Scale mouse coordinates to VGA mode 13h (320x200)
     int cursor_x = (mouse->x_position * SCREEN_WIDTH) / 640;
     int cursor_y = (mouse->y_position * SCREEN_HEIGHT) / 480;
@@ -845,10 +869,13 @@ void update_mouse_cursor(void) {
     if (cursor_y < 0) cursor_y = 0;
     if (cursor_y > SCREEN_HEIGHT - 8) cursor_y = SCREEN_HEIGHT - 8;
     
-    // If cursor moved significantly, update it (reduce micro-movements)
+    // Only update if cursor moved significantly or if cursor is not visible
     int dx = cursor_x - last_mouse_x;
     int dy = cursor_y - last_mouse_y;
-    if ((dx * dx + dy * dy) > 1 || !cursor_visible) {  // Only update if moved more than 1 pixel or cursor not visible
+    if (dx < 0) dx = -dx;  // Manual abs() for dx
+    if (dy < 0) dy = -dy;  // Manual abs() for dy
+    int distance_moved = dx + dy;
+    if (!cursor_visible || distance_moved >= 2) {
         // Restore previous cursor area if cursor was visible
         if (cursor_visible && last_mouse_x >= 0 && last_mouse_y >= 0) {
             restore_cursor_background(last_mouse_x, last_mouse_y);
@@ -865,8 +892,39 @@ void update_mouse_cursor(void) {
 }
 
 /**
+ * Clear cursor from screen and reset cursor state
+ */
+void gui_clear_mouse_cursor(void) {
+    // Modified: Don't actually clear the cursor to keep it always visible
+    // Just force a redraw at the current position to ensure it's visible
+    update_mouse_cursor();
+}
+
+/**
  * Public interface for updating mouse cursor
  */
 void gui_update_mouse_cursor(void) {
     update_mouse_cursor();
+    
+    // Ensure cursor is always visible when this function is called
+    if (!cursor_visible) {
+        mouse_state_t* mouse = get_mouse_state();
+        if (mouse) {
+            // Force cursor to be drawn at current mouse position
+            int cursor_x = (mouse->x_position * SCREEN_WIDTH) / 640;
+            int cursor_y = (mouse->y_position * SCREEN_HEIGHT) / 480;
+            
+            // Bounds check
+            if (cursor_x < 0) cursor_x = 0;
+            if (cursor_x > SCREEN_WIDTH - 8) cursor_x = SCREEN_WIDTH - 8;
+            if (cursor_y < 0) cursor_y = 0;
+            if (cursor_y > SCREEN_HEIGHT - 8) cursor_y = SCREEN_HEIGHT - 8;
+            
+            save_cursor_background(cursor_x, cursor_y);
+            draw_mouse_cursor(cursor_x, cursor_y);
+            cursor_visible = true;
+            last_mouse_x = cursor_x;
+            last_mouse_y = cursor_y;
+        }
+    }
 }
