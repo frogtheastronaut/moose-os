@@ -13,6 +13,7 @@ section .text
 global start
 global start
 global keyboard_handler
+global mouse_handler
 global read_port
 global write_port
 global load_idt
@@ -22,6 +23,7 @@ global gdt_flush
 ; Externals, defined externally
 extern kernel_main	       
 extern keyboard_handler_main
+extern mouse_handler_main
 extern task_tick
 
 start:
@@ -68,6 +70,11 @@ gdt_flush:
 ; Keyboard Handler
 keyboard_handler:                 
 	call    keyboard_handler_main ; keyboard_handler_main from kernel/IDT.c
+	iretd
+
+; Mouse Handler
+mouse_handler:
+	call    mouse_handler_main    ; mouse_handler_main from kernel/mouse.c
 	iretd
 
 ; Timer interrupt handler for pre-emptive multitasking

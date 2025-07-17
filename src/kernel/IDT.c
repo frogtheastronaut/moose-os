@@ -67,6 +67,7 @@ void gdt_init() {
 
 // keyboard handlers
 extern void keyboard_handler(void);
+extern void mouse_handler(void);
 extern void timer_handler(void);
 extern char read_port(unsigned short port);
 extern void write_port(unsigned short port, unsigned char data);
@@ -91,6 +92,7 @@ struct IDT_entry IDT[IDT_SIZE];
 void idt_init(void)
 {
     unsigned long keyboard_address;
+    unsigned long mouse_address;
     unsigned long timer_address;
     unsigned long idt_address;
     unsigned long idt_ptr[2];
@@ -114,6 +116,14 @@ void idt_init(void)
     IDT[0x21].zero = 0;
     IDT[0x21].type_attr = INTERRUPT_GATE;
     IDT[0x21].offset_higherbits = (keyboard_address & 0xffff0000) >> 16;
+
+    /* populate IDT entry of mouse interrupt (IRQ12) */
+    mouse_address = (unsigned long)mouse_handler;
+    IDT[0x2C].offset_lowerbits = mouse_address & 0xffff;
+    IDT[0x2C].selector = KERNEL_CODE_SEGMENT_OFFSET;
+    IDT[0x2C].zero = 0;
+    IDT[0x2C].type_attr = INTERRUPT_GATE;
+    IDT[0x2C].offset_higherbits = (mouse_address & 0xffff0000) >> 16;
 
 	/*     Ports
 	*	 PIC1	PIC2
@@ -156,8 +166,10 @@ void idt_init(void)
 
 void kb_init(void)
 {
-	/* 0xFD is 11111101 - enables only IRQ1 (keyboard)*/
-	write_port(0x21 , 0xFD);
+	/* 0xF9 is 11111001 - enables IRQ1 (keyboard) and IRQ2 (cascade) and IRQ12 (mouse) */
+	/* This replaces 0xFD which only enabled keyboard */
+	write_port(0x21 , 0xF9);  // Enable IRQ1 (keyboard) and IRQ2 (cascade)
+	write_port(0xA1 , 0xEF);  // Enable IRQ12 (mouse) on slave PIC
 }
 
 void keyboard_handler_main(void)

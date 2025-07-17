@@ -12,6 +12,8 @@
 #include "../filesys/file.h"
 #include "../kernel/include/keyboard.h" // Make sure this includes the key code definitions
 #include "../lib/lib.h" // For string utilities
+#include "../kernel/include/mouse.h"
+
 // Screen buffer in VGA mode 13h (320x200, 256 colors)
 static uint8_t* vga_buffer = (uint8_t*)0xA0000;
 // Removed horizontal scrolling variables since they are no longer needed
@@ -735,4 +737,130 @@ int line_col_to_cursor_pos(int line, int col) {
     }
     
     return pos;
+}
+
+// Mouse cursor support
+#include "../kernel/include/mouse.h"
+
+// Mouse cursor state
+static int last_mouse_x = -1;
+static int last_mouse_y = -1;
+static uint8_t cursor_backup[16][16]; // Backup area under cursor
+static bool cursor_visible = false;
+
+/**
+ * Simple arrow cursor pattern (16x16)
+ * 0 = transparent, 1 = black, 2 = white
+ */
+static uint8_t cursor_pattern[16][16] = {
+    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {1,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {1,2,2,1,0,0,0,0,0,0,0,0,0,0,0,0},
+    {1,2,2,2,1,0,0,0,0,0,0,0,0,0,0,0},
+    {1,2,2,2,2,1,0,0,0,0,0,0,0,0,0,0},
+    {1,2,2,2,2,2,1,0,0,0,0,0,0,0,0,0},
+    {1,2,2,2,2,2,2,1,0,0,0,0,0,0,0,0},
+    {1,2,2,2,2,2,2,2,1,0,0,0,0,0,0,0},
+    {1,2,2,2,2,2,1,1,1,1,0,0,0,0,0,0},
+    {1,2,2,1,2,2,1,0,0,0,0,0,0,0,0,0},
+    {1,2,1,0,1,2,2,1,0,0,0,0,0,0,0,0},
+    {1,1,0,0,1,2,2,1,0,0,0,0,0,0,0,0},
+    {1,0,0,0,0,1,2,2,1,0,0,0,0,0,0,0},
+    {0,0,0,0,0,1,2,2,1,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0}
+};
+
+/**
+ * Save the area under the cursor
+ */
+void save_cursor_background(int x, int y) {
+    for (int j = 0; j < 16; j++) {
+        for (int i = 0; i < 16; i++) {
+            int screen_x = x + i;
+            int screen_y = y + j;
+            if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
+                screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
+                cursor_backup[j][i] = vga_buffer[screen_y * SCREEN_WIDTH + screen_x];
+            }
+        }
+    }
+}
+
+/**
+ * Restore the area under the cursor
+ */
+void restore_cursor_background(int x, int y) {
+    for (int j = 0; j < 16; j++) {
+        for (int i = 0; i < 16; i++) {
+            int screen_x = x + i;
+            int screen_y = y + j;
+            if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
+                screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
+                vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = cursor_backup[j][i];
+            }
+        }
+    }
+}
+
+/**
+ * Draw the mouse cursor at specified position
+ */
+void draw_mouse_cursor(int x, int y) {
+    for (int j = 0; j < 16; j++) {
+        for (int i = 0; i < 16; i++) {
+            int screen_x = x + i;
+            int screen_y = y + j;
+            if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
+                screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
+                uint8_t pattern = cursor_pattern[j][i];
+                if (pattern == 1) {
+                    vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOR_BLACK;
+                } else if (pattern == 2) {
+                    vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOR_WHITE;
+                }
+                // pattern == 0 means transparent, don't draw anything
+            }
+        }
+    }
+}
+
+/**
+ * Update mouse cursor position and display
+ */
+void update_mouse_cursor(void) {
+    mouse_state_t* mouse = get_mouse_state();
+    
+    // Scale mouse coordinates to VGA mode 13h (320x200)
+    int cursor_x = (mouse->x_position * SCREEN_WIDTH) / 640;
+    int cursor_y = (mouse->y_position * SCREEN_HEIGHT) / 480;
+    
+    // Ensure cursor stays within screen bounds
+    if (cursor_x < 0) cursor_x = 0;
+    if (cursor_x > SCREEN_WIDTH - 16) cursor_x = SCREEN_WIDTH - 16;
+    if (cursor_y < 0) cursor_y = 0;
+    if (cursor_y > SCREEN_HEIGHT - 16) cursor_y = SCREEN_HEIGHT - 16;
+    
+    // If cursor moved, update it
+    if (cursor_x != last_mouse_x || cursor_y != last_mouse_y) {
+        // Restore previous cursor area if cursor was visible
+        if (cursor_visible && last_mouse_x >= 0 && last_mouse_y >= 0) {
+            restore_cursor_background(last_mouse_x, last_mouse_y);
+        }
+        
+        // Save new background and draw cursor
+        save_cursor_background(cursor_x, cursor_y);
+        draw_mouse_cursor(cursor_x, cursor_y);
+        
+        cursor_visible = true;
+        last_mouse_x = cursor_x;
+        last_mouse_y = cursor_y;
+    }
+}
+
+/**
+ * Public interface for updating mouse cursor
+ */
+void gui_update_mouse_cursor(void) {
+    update_mouse_cursor();
 }

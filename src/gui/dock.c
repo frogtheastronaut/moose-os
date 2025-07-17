@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "../kernel/include/vga.h"
+#include "../kernel/include/mouse.h"
 #include "include/images.h"
 #include "../kernel/include/keydef.h"
 #include "../filesys/file.h"
@@ -566,5 +567,69 @@ void dock_update_time() {
     // check if dock is visible
     if (dock_is_active() && terminal_active == false && editor_active == false && dialog_active == false && pong_active == false) {
         dock_draw_time();
+        dock_draw_mouse_info();
     }
+    
+    // Always update mouse cursor regardless of what's active
+    gui_update_mouse_cursor();
+}
+
+/**
+ * display mouse information
+ */
+void dock_draw_mouse_info() {
+    mouse_state_t* mouse = get_mouse_state();
+    
+    // Create mouse info string
+    char mouse_str[64];
+    mouse_str[0] = 'M';
+    mouse_str[1] = ':';
+    mouse_str[2] = ' ';
+    
+    // X position
+    int x_pos = mouse->x_position;
+    int str_pos = 3;
+    if (x_pos >= 100) {
+        mouse_str[str_pos++] = '0' + (x_pos / 100);
+        x_pos %= 100;
+    }
+    if (x_pos >= 10 || mouse->x_position >= 100) {
+        mouse_str[str_pos++] = '0' + (x_pos / 10);
+        x_pos %= 10;
+    }
+    mouse_str[str_pos++] = '0' + x_pos;
+    
+    mouse_str[str_pos++] = ',';
+    
+    // Y position
+    int y_pos = mouse->y_position;
+    if (y_pos >= 100) {
+        mouse_str[str_pos++] = '0' + (y_pos / 100);
+        y_pos %= 100;
+    }
+    if (y_pos >= 10 || mouse->y_position >= 100) {
+        mouse_str[str_pos++] = '0' + (y_pos / 10);
+        y_pos %= 10;
+    }
+    mouse_str[str_pos++] = '0' + y_pos;
+    
+    // Buttons
+    mouse_str[str_pos++] = ' ';
+    mouse_str[str_pos++] = '[';
+    mouse_str[str_pos++] = mouse->left_button ? 'L' : '-';
+    mouse_str[str_pos++] = mouse->middle_button ? 'M' : '-';
+    mouse_str[str_pos++] = mouse->right_button ? 'R' : '-';
+    mouse_str[str_pos++] = ']';
+    mouse_str[str_pos] = '\0';
+    
+    // Draw mouse info on the right side of status bar
+    int status_bar_x = WINDOW_X + 8;
+    int status_bar_y = WINDOW_Y + WINDOW_HEIGHT - 15 - 8;
+    int text_x = status_bar_x + WINDOW_WIDTH - 16 - gui_text_width(mouse_str) - 5;
+    
+    // Clear area first
+    gui_draw_rect(text_x - 5, status_bar_y, gui_text_width(mouse_str) + 10, 15, VGA_COLOR_LIGHT_GREY);
+    
+    // Draw mouse info
+    gui_draw_text(text_x, status_bar_y + 3, mouse_str, VGA_COLOR_BLACK);
 }

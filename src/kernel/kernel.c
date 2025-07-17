@@ -5,6 +5,8 @@
 #include "include/tty.h"
 #include "include/IDT.h"
 #include "include/task.h"
+#include "include/mouse.h"
+#include "../lib/lib.h"
 #include "../gui/include/explorer.h"
 #include "../gui/include/gui.h"
 #include "../gui/include/dock.h"
@@ -55,6 +57,7 @@ void kernel_main(void)
     gui_init();
     idt_init();
     kb_init();
+    mouse_init();  // Initialize mouse support
     // Set up PIT for timer interrupts (100Hz)
     outb(0x43, 0x36); // PIT command: channel 0, lo/hi byte, mode 3
     outb(0x40, 11932 & 0xFF); // low byte (1193182 / 100)
