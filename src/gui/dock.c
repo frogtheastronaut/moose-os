@@ -8,6 +8,7 @@
 #include <stddef.h>
 #include "../kernel/include/vga.h"
 #include "../kernel/include/mouse.h"
+#include "../kernel/include/task.h"
 #include "include/images.h"
 #include "../kernel/include/keydef.h"
 #include "../filesys/file.h"
@@ -74,7 +75,7 @@ extern bool explorer_active;
 extern bool editor_active;
 extern bool terminal_active;
 extern bool pong_active;
-extern uint32_t ticks;
+extern volatile uint32_t ticks;
 
 // more
 extern File* root;
@@ -564,21 +565,45 @@ void dock_mkopen_file() {
  * update time
  */
 void dock_update_time() {
+    static uint32_t last_mouse_update = 0;
+    
     // check if dock is visible
     if (dock_is_active() && terminal_active == false && editor_active == false && dialog_active == false && pong_active == false) {
         dock_draw_time();
-        dock_draw_mouse_info();
+        // Mouse info display removed as requested
     }
     
-    // Always update mouse cursor regardless of what's active
-    gui_update_mouse_cursor();
+    // Update mouse cursor less frequently to reduce lag (every 10th call)
+    if (ticks - last_mouse_update > 2) {  // Update every ~20ms instead of every frame
+        gui_update_mouse_cursor();
+        last_mouse_update = ticks;
+    }
 }
 
 /**
  * display mouse information
  */
 void dock_draw_mouse_info() {
+    static int last_mouse_x_displayed = -1;
+    static int last_mouse_y_displayed = -1;
+    static unsigned char last_buttons = 0xFF; // Initialize to invalid value
+    
     mouse_state_t* mouse = get_mouse_state();
+    
+    // Only update if mouse position or buttons changed significantly
+    unsigned char current_buttons = (mouse->left_button ? 1 : 0) | 
+                                   (mouse->right_button ? 2 : 0) | 
+                                   (mouse->middle_button ? 4 : 0);
+    
+    if (mouse->x_position == last_mouse_x_displayed && 
+        mouse->y_position == last_mouse_y_displayed &&
+        current_buttons == last_buttons) {
+        return; // No change, don't redraw
+    }
+    
+    last_mouse_x_displayed = mouse->x_position;
+    last_mouse_y_displayed = mouse->y_position;
+    last_buttons = current_buttons;
     
     // Create mouse info string
     char mouse_str[64];

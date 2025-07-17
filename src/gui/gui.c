@@ -745,43 +745,42 @@ int line_col_to_cursor_pos(int line, int col) {
 // Mouse cursor state
 static int last_mouse_x = -1;
 static int last_mouse_y = -1;
-static uint8_t cursor_backup[16][16]; // Backup area under cursor
+static uint8_t cursor_backup[8][8]; // Backup area under cursor (8x8)
 static bool cursor_visible = false;
 
 /**
- * Simple arrow cursor pattern (16x16)
+ * Simple arrow cursor pattern (8x8) - smaller cursor
  * 0 = transparent, 1 = black, 2 = white
  */
-static uint8_t cursor_pattern[16][16] = {
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {1,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {1,2,2,1,0,0,0,0,0,0,0,0,0,0,0,0},
-    {1,2,2,2,1,0,0,0,0,0,0,0,0,0,0,0},
-    {1,2,2,2,2,1,0,0,0,0,0,0,0,0,0,0},
-    {1,2,2,2,2,2,1,0,0,0,0,0,0,0,0,0},
-    {1,2,2,2,2,2,2,1,0,0,0,0,0,0,0,0},
-    {1,2,2,2,2,2,2,2,1,0,0,0,0,0,0,0},
-    {1,2,2,2,2,2,1,1,1,1,0,0,0,0,0,0},
-    {1,2,2,1,2,2,1,0,0,0,0,0,0,0,0,0},
-    {1,2,1,0,1,2,2,1,0,0,0,0,0,0,0,0},
-    {1,1,0,0,1,2,2,1,0,0,0,0,0,0,0,0},
-    {1,0,0,0,0,1,2,2,1,0,0,0,0,0,0,0},
-    {0,0,0,0,0,1,2,2,1,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0}
+static uint8_t cursor_pattern[8][8] = {
+    {1,0,0,0,0,0,0,0},
+    {1,1,0,0,0,0,0,0},
+    {1,2,1,0,0,0,0,0},
+    {1,2,2,1,0,0,0,0},
+    {1,2,2,2,1,0,0,0},
+    {1,2,1,1,1,0,0,0},
+    {1,1,0,1,2,1,0,0},
+    {0,0,0,0,1,1,0,0}
 };
 
 /**
  * Save the area under the cursor
  */
 void save_cursor_background(int x, int y) {
-    for (int j = 0; j < 16; j++) {
-        for (int i = 0; i < 16; i++) {
+    // Add extra bounds checking to prevent corruption
+    if (x < -8 || y < -8 || x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) {
+        return; // Cursor completely off screen
+    }
+    
+    for (int j = 0; j < 8; j++) {
+        for (int i = 0; i < 8; i++) {
             int screen_x = x + i;
             int screen_y = y + j;
             if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
                 screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
                 cursor_backup[j][i] = vga_buffer[screen_y * SCREEN_WIDTH + screen_x];
+            } else {
+                cursor_backup[j][i] = VGA_COLOR_BLACK; // Default background for off-screen areas
             }
         }
     }
@@ -791,8 +790,13 @@ void save_cursor_background(int x, int y) {
  * Restore the area under the cursor
  */
 void restore_cursor_background(int x, int y) {
-    for (int j = 0; j < 16; j++) {
-        for (int i = 0; i < 16; i++) {
+    // Add extra bounds checking to prevent corruption
+    if (x < -8 || y < -8 || x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) {
+        return; // Cursor completely off screen
+    }
+    
+    for (int j = 0; j < 8; j++) {
+        for (int i = 0; i < 8; i++) {
             int screen_x = x + i;
             int screen_y = y + j;
             if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
@@ -807,8 +811,8 @@ void restore_cursor_background(int x, int y) {
  * Draw the mouse cursor at specified position
  */
 void draw_mouse_cursor(int x, int y) {
-    for (int j = 0; j < 16; j++) {
-        for (int i = 0; i < 16; i++) {
+    for (int j = 0; j < 8; j++) {
+        for (int i = 0; i < 8; i++) {
             int screen_x = x + i;
             int screen_y = y + j;
             if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
@@ -837,12 +841,14 @@ void update_mouse_cursor(void) {
     
     // Ensure cursor stays within screen bounds
     if (cursor_x < 0) cursor_x = 0;
-    if (cursor_x > SCREEN_WIDTH - 16) cursor_x = SCREEN_WIDTH - 16;
+    if (cursor_x > SCREEN_WIDTH - 8) cursor_x = SCREEN_WIDTH - 8;
     if (cursor_y < 0) cursor_y = 0;
-    if (cursor_y > SCREEN_HEIGHT - 16) cursor_y = SCREEN_HEIGHT - 16;
+    if (cursor_y > SCREEN_HEIGHT - 8) cursor_y = SCREEN_HEIGHT - 8;
     
-    // If cursor moved, update it
-    if (cursor_x != last_mouse_x || cursor_y != last_mouse_y) {
+    // If cursor moved significantly, update it (reduce micro-movements)
+    int dx = cursor_x - last_mouse_x;
+    int dy = cursor_y - last_mouse_y;
+    if ((dx * dx + dy * dy) > 1 || !cursor_visible) {  // Only update if moved more than 1 pixel or cursor not visible
         // Restore previous cursor area if cursor was visible
         if (cursor_visible && last_mouse_x >= 0 && last_mouse_y >= 0) {
             restore_cursor_background(last_mouse_x, last_mouse_y);

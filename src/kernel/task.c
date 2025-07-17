@@ -29,6 +29,9 @@ static task tasks[MAX_TASKS];
 static int current_task = -1;
 static int num_tasks = 0;
 
+// Global tick counter for timing
+volatile uint32_t ticks = 0;
+
 void task_init() {
     for (int i = 0; i < MAX_TASKS; ++i) {
         tasks[i].state = TASK_FINISHED;
@@ -42,6 +45,7 @@ extern void task_switch(uint32_t **old_sp, uint32_t *new_sp);
 
 // Called by timer interrupt handler
 void task_tick() {
+    ticks++;  // Increment the global tick counter
     task_schedule();
 }
 
