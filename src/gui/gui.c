@@ -618,40 +618,78 @@ void gui_draw_dialog(const char* title, const char* prompt) {
     gui_draw_rect(x + 10, y + 40, input_box_width, 14, VGA_COLOR_WHITE);
     gui_draw_rect_outline(x + 10, y + 40, input_box_width, 14, VGA_COLOR_BLACK);
     
-    // Calculate if text needs scrolling
+    // Calculate cursor position based on dialog_input_pos
+    int cursor_char_width = 0;
+    for (int i = 0; i < dialog_input_pos && dialog_input[i] != '\0'; i++) {
+        cursor_char_width += char_widths[(unsigned char)dialog_input[i]] + 1;
+    }
+    
+    // Calculate total text width
     int text_width = gui_text_width(dialog_input);
     int max_visible_width = input_box_width - 4;  // Leave room for cursor
     
     if (text_width <= max_visible_width) {
         // Text fits, draw it normally
+        
+        // Clear the input box first to remove artifacts
+        gui_draw_rect(x + 11, y + 41, input_box_width - 2, 12, VGA_COLOR_WHITE);
+        
         gui_draw_text(x + 12, y + 42, dialog_input, VGA_COLOR_BLACK);
         
-        // Draw cursor
-        int cursor_x = x + 12 + text_width;
+        // Draw cursor at the correct position
+        int cursor_x = x + 12 + cursor_char_width;
         gui_draw_vline(cursor_x, y + 42, y + 42 + 8, VGA_COLOR_BLACK);
     } else {
-        // Text doesn't fit, scroll it so the cursor is visible
-        int offset = text_width - max_visible_width;
+        // Text doesn't fit, need to scroll to keep cursor visible
+        static int scroll_offset = 0;
         
-        // Create a substring starting from the offset
-        char visible_text[MAX_DIALOG_INPUT_LEN + 1];
-        int visible_start = 0;
+        // Calculate where the cursor should be visible (with padding)
+        int padding = 10;
+        int min_cursor_x = padding;
+        int max_cursor_x = max_visible_width - padding;
         
-        // Find the starting character that will make the cursor visible
+        // Adjust scroll offset to keep cursor visible
+        if (cursor_char_width < scroll_offset + min_cursor_x) {
+            // Cursor is too far left, scroll left
+            scroll_offset = cursor_char_width - min_cursor_x;
+            if (scroll_offset < 0) scroll_offset = 0;
+        } else if (cursor_char_width > scroll_offset + max_cursor_x) {
+            // Cursor is too far right, scroll right
+            scroll_offset = cursor_char_width - max_cursor_x;
+        }
+        
+        // Clear the input box first to remove artifacts
+        gui_draw_rect(x + 11, y + 41, input_box_width - 2, 12, VGA_COLOR_WHITE);
+        
+        // Draw text with proper clipping
+        int draw_x = x + 12;
         int current_width = 0;
+        
         for (int i = 0; dialog_input[i] != '\0'; i++) {
-            current_width += char_widths[(unsigned char)dialog_input[i]] + 1;
-            if (current_width > offset) {
-                visible_start = i;
+            // Calculate this character's width
+            int char_width = char_widths[(unsigned char)dialog_input[i]] + 1;
+            
+            // Check if this character is visible (starts after scroll offset)
+            if (current_width + char_width > scroll_offset) {
+                // Character is at least partially visible
+                int char_x = draw_x + current_width - scroll_offset;
+                
+                // Only draw if within visible area
+                if (char_x < x + 12 + max_visible_width && char_x + char_width > x + 12) {
+                    gui_draw_char(char_x, y + 42, dialog_input[i], VGA_COLOR_BLACK);
+                }
+            }
+            
+            current_width += char_width;
+            
+            // Stop drawing if we're past the visible area
+            if (current_width - scroll_offset > max_visible_width) {
                 break;
             }
         }
         
-        // Draw the text starting from visible_start
-        gui_draw_text(x + 12, y + 42, &dialog_input[visible_start], VGA_COLOR_BLACK);
-        
-        // Draw cursor at the end
-        int cursor_x = x + 12 + (text_width - offset);
+        // Draw cursor at the correct position relative to the scroll
+        int cursor_x = x + 12 + (cursor_char_width - scroll_offset);
         gui_draw_vline(cursor_x, y + 42, y + 42 + 8, VGA_COLOR_BLACK);
     }
     
@@ -854,6 +892,12 @@ void update_mouse_cursor(void) {
     // Don't update cursor when dialog is active
     extern bool dialog_active;
     if (dialog_active) {
+        return;
+    }
+    
+    // Don't update cursor when editor is active
+    extern bool editor_active;
+    if (editor_active) {
         return;
     }
     

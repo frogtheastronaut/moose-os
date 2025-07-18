@@ -27,9 +27,6 @@ extern bool terminal_handlekey(unsigned char key, char scancode);
 bool dialog_active = false;
 bool explorer_active = false;
 bool caps = false;
-bool shift = false;
-
-// shift is nup
 static bool shift_pressed = false;
 
 // turn a scancode into a char
@@ -53,10 +50,10 @@ char scancode_to_char(unsigned char scancode, bool shift_pressed) {
     // numbers with or w/o shift
     else if (scancode >= 0x02 && scancode <= 0x0B) {
         if (shift_pressed) {
-            // Shift + number gives symbols
+            // symbol
             return ")!@#$%^&*("[scancode - 0x02];
         } else {
-            // Just numbers
+            // numbers
             return "1234567890"[scancode - 0x02];
         }
     }
@@ -64,7 +61,7 @@ char scancode_to_char(unsigned char scancode, bool shift_pressed) {
     else if (scancode == 0x39) {
         return ' ';
     }
-    // special, special ones
+    // misc
     else if (scancode == 0x0C) return shift_pressed ? '_' : '-';
     else if (scancode == 0x0D) return shift_pressed ? '+' : '=';
     else if (scancode == 0x1A) return shift_pressed ? '{' : '[';
@@ -77,39 +74,48 @@ char scancode_to_char(unsigned char scancode, bool shift_pressed) {
     else if (scancode == 0x34) return shift_pressed ? '>' : '.';
     else if (scancode == 0x35) return shift_pressed ? '?' : '/';
     
-    return 0; // not a character, GET OUT!!
+    return 0; // not a character 
 }
 
 void processKey(unsigned char key, char scancode) {
-    if (scancode < 0)
-        return;
+    unsigned char raw_scancode = (unsigned char)scancode;
+    bool key_released = (raw_scancode & 0x80) != 0;
+    unsigned char base_scancode = raw_scancode & 0x7F; 
         
-    // shift
-    if (scancode == LSHIFT_KEY_CODE || scancode == RSHIFT_KEY_CODE) {
-        shift = !shift;
-        shift_pressed = (key != 0);  // true for press, false for release
+    // shift - handle press and release properly
+    if (base_scancode == LSHIFT_KEY_CODE || base_scancode == RSHIFT_KEY_CODE) {
+        if (key_released) {
+            shift_pressed = false;
+        } else {
+            shift_pressed = true;
+        }
         return;
     }
     
-    // caps
-    if (scancode == CAPS_KEY_CODE) {
+    // Only process key presses, not releases (except for shift which we handled above)
+    if (key_released) {
+        return;
+    }
+    
+    // caps lock - only toggle on key press, not release
+    if (base_scancode == CAPS_KEY_CODE) {
         caps = !caps;
         return;
     }
     
-    // convert scancode to char
-    char character = scancode_to_char(scancode, shift_pressed);
+    // convert scancode to char using base scancode
+    char character = scancode_to_char(base_scancode, shift_pressed);
         
     // check terminal
     if (terminal_is_active()) {
-        if (terminal_handlekey(character, scancode)) {
+        if (terminal_handlekey(character, base_scancode)) {
             return;
         }
     }
 
     // check editor
     else if (editor_active) {
-        if (gui_handle_editor_key(character, scancode)) {
+        if (gui_handle_editor_key(character, base_scancode)) {
             return;
         }
     }
@@ -117,17 +123,17 @@ void processKey(unsigned char key, char scancode) {
     else if (explorer_active) {
         // explorer active, check dialog
         if (dialog_active) {
-            gui_handle_dialog_key(character, scancode);
+            gui_handle_dialog_key(character, base_scancode);
             return;
         }
         // nope just explorer
-        else if (gui_handle_explorer_key(character, scancode)) {
+        else if (gui_handle_explorer_key(character, base_scancode)) {
             return;
         }
     }
     // THEN we check the dock (because yes)
     else {
-        if (dock_handle_key(character, scancode)) {
+        if (dock_handle_key(character, base_scancode)) {
             return;
         }
     }

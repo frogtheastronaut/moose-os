@@ -227,11 +227,50 @@ bool gui_handle_dialog_key(unsigned char key, char scancode) {
         }
         return true;
     }
+    else if (scancode == ARROW_LEFT_KEY) {
+        // Handle left arrow - move cursor left
+        if (dialog_input_pos > 0) {
+            dialog_input_pos--;
+            // Redraw dialog with correct title based on dialog type
+            if (dialog_type == 0) {
+                gui_draw_dialog("Create Directory", "Enter directory name:");
+            } else if (dialog_type == 1) {
+                gui_draw_dialog("Create File", "Enter file name:");
+            } else {
+                gui_draw_dialog("New File", "Enter filename:");
+            }
+            // Ensure cursor is visible after dialog redraw
+            extern void gui_force_cursor_redraw(void);
+            gui_force_cursor_redraw();
+        }
+        return true;
+    }
+    else if (scancode == ARROW_RIGHT_KEY) {
+        // Handle right arrow - move cursor right
+        if (dialog_input_pos < strlen(dialog_input)) {
+            dialog_input_pos++;
+            // Redraw dialog with correct title based on dialog type
+            if (dialog_type == 0) {
+                gui_draw_dialog("Create Directory", "Enter directory name:");
+            } else if (dialog_type == 1) {
+                gui_draw_dialog("Create File", "Enter file name:");
+            } else {
+                gui_draw_dialog("New File", "Enter filename:");
+            }
+            // Ensure cursor is visible after dialog redraw
+            extern void gui_force_cursor_redraw(void);
+            gui_force_cursor_redraw();
+        }
+        return true;
+    }
     else if (scancode == BS_KEY_CODE) {
         // Handle backspace
         if (dialog_input_pos > 0) {
+            // Shift characters left from cursor position
+            for (int i = dialog_input_pos - 1; i < strlen(dialog_input); i++) {
+                dialog_input[i] = dialog_input[i + 1];
+            }
             dialog_input_pos--;
-            dialog_input[dialog_input_pos] = '\0';
             // Redraw dialog with correct title based on dialog type
             if (dialog_type == 0) {
                 gui_draw_dialog("Create Directory", "Enter directory name:");
@@ -248,10 +287,14 @@ bool gui_handle_dialog_key(unsigned char key, char scancode) {
     }
     else if (key >= 32 && key < 127) {
         // Handle printable characters
-        if (dialog_input_pos < 128) {
+        if (strlen(dialog_input) < 128) {
+            // Shift characters right from cursor position
+            for (int i = strlen(dialog_input); i >= dialog_input_pos; i--) {
+                dialog_input[i + 1] = dialog_input[i];
+            }
+            // Insert character at cursor position
             dialog_input[dialog_input_pos] = key;
             dialog_input_pos++;
-            dialog_input[dialog_input_pos] = '\0';
             // Redraw dialog with correct title based on dialog type
             if (dialog_type == 0) {
                 gui_draw_dialog("Create Directory", "Enter directory name:");
@@ -441,6 +484,9 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
             editor_active = false;
             explorer_active = true;
             dock_return();
+            // Re-enable mouse cursor when exiting editor
+            extern void gui_update_mouse_cursor(void);
+            gui_update_mouse_cursor();
             return true;
             
         case ENTER_KEY_CODE:
@@ -453,6 +499,12 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
                 editor_content[editor_cursor_pos] = '\n';
                 editor_cursor_pos++;
                 cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
+                
+                // Auto-scroll vertically to keep cursor visible
+                if (editor_cursor_line >= editor_scroll_line + EDITOR_LINES_VISIBLE) {
+                    editor_scroll_line = editor_cursor_line - EDITOR_LINES_VISIBLE + 1;
+                }
+                
                 editor_modified = true;
                 
                 // Auto-save
@@ -472,6 +524,12 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
                 }
                 editor_cursor_pos--;
                 cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
+                
+                // Auto-scroll vertically to keep cursor visible
+                if (editor_cursor_line < editor_scroll_line) {
+                    editor_scroll_line = editor_cursor_line;
+                }
+                
                 editor_modified = true;
                 
                 // Auto-save
@@ -493,6 +551,12 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
                     editor_cursor_col = line_length;
                 }
                 editor_cursor_pos = line_col_to_cursor_pos(editor_cursor_line, editor_cursor_col);
+                
+                // Auto-scroll vertically to keep cursor visible
+                if (editor_cursor_line < editor_scroll_line) {
+                    editor_scroll_line = editor_cursor_line;
+                }
+                
                 editor_draw();
             }
             return true;
@@ -508,25 +572,61 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
                     editor_cursor_col = line_length;
                 }
                 editor_cursor_pos = line_col_to_cursor_pos(editor_cursor_line, editor_cursor_col);
+                
+                // Auto-scroll vertically to keep cursor visible
+                if (editor_cursor_line >= editor_scroll_line + EDITOR_LINES_VISIBLE) {
+                    editor_scroll_line = editor_cursor_line - EDITOR_LINES_VISIBLE + 1;
+                }
+                
                 editor_draw();
             }
             return true;
             
         case ARROW_LEFT_KEY:
             // Move cursor left
-            if (editor_cursor_pos > 0) {
-                editor_cursor_pos--;
-                cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
+            if (editor_cursor_col > 0) {
+                editor_cursor_col--;
+                editor_cursor_pos = line_col_to_cursor_pos(editor_cursor_line, editor_cursor_col);
+                editor_draw();
+            } else if (editor_cursor_line > 0) {
+                // Move to end of previous line
+                editor_cursor_line--;
+                const char* line_start = get_line_start(editor_content, editor_cursor_line);
+                editor_cursor_col = get_line_length(line_start);
+                editor_cursor_pos = line_col_to_cursor_pos(editor_cursor_line, editor_cursor_col);
+                
+                // Auto-scroll vertically to keep cursor visible
+                if (editor_cursor_line < editor_scroll_line) {
+                    editor_scroll_line = editor_cursor_line;
+                }
+                
                 editor_draw();
             }
             return true;
             
         case ARROW_RIGHT_KEY:
             // Move cursor right
-            if (editor_cursor_pos < strlen(editor_content)) {
-                editor_cursor_pos++;
-                cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
-                editor_draw();
+            {
+                const char* line_start = get_line_start(editor_content, editor_cursor_line);
+                int line_length = get_line_length(line_start);
+                
+                if (editor_cursor_col < line_length) {
+                    editor_cursor_col++;
+                    editor_cursor_pos = line_col_to_cursor_pos(editor_cursor_line, editor_cursor_col);
+                    editor_draw();
+                } else if (editor_cursor_line < count_lines(editor_content) - 1) {
+                    // Move to beginning of next line
+                    editor_cursor_line++;
+                    editor_cursor_col = 0;
+                    editor_cursor_pos = line_col_to_cursor_pos(editor_cursor_line, editor_cursor_col);
+                    
+                    // Auto-scroll vertically to keep cursor visible
+                    if (editor_cursor_line >= editor_scroll_line + EDITOR_LINES_VISIBLE) {
+                        editor_scroll_line = editor_cursor_line - EDITOR_LINES_VISIBLE + 1;
+                    }
+                    
+                    editor_draw();
+                }
             }
             return true;
             
@@ -534,28 +634,27 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
             // Handle regular character input
             if (key >= 32 && key <= 126) { // Printable ASCII characters
                 if (strlen(editor_content) < MAX_CONTENT - 1) {
-                    // Check current line length before adding character
-                    const char* line_start = get_line_start(editor_content, editor_cursor_line);
-                    int line_length = get_line_length(line_start);
-                    
-                    // Only allow typing if we haven't reached the max line length
-                    if (line_length < EDITOR_MAX_CHARS_PER_LINE) {
-                        // Insert the character
-                        for (int i = strlen(editor_content); i >= editor_cursor_pos; i--) {
-                            editor_content[i + 1] = editor_content[i];
-                        }
-                        editor_content[editor_cursor_pos] = key;
-                        editor_cursor_pos++;
-                        cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
-                        editor_modified = true;
-                        
-                        // Auto-save
-                        filesys_editfile(editor_filename, editor_content);
-                        editor_modified = false; // Reset modified flag after saving
-                        
-                        editor_draw();
+                    // Insert the character without line length restriction
+                    // Let the display wrapping handle long lines
+                    for (int i = strlen(editor_content); i >= editor_cursor_pos; i--) {
+                        editor_content[i + 1] = editor_content[i];
                     }
-                    // If line is at max length, simply ignore the character (don't type it)
+                    editor_content[editor_cursor_pos] = key;
+                    editor_cursor_pos++;
+                    cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
+                    
+                    // Auto-scroll vertically to keep cursor visible
+                    if (editor_cursor_line >= editor_scroll_line + EDITOR_LINES_VISIBLE) {
+                        editor_scroll_line = editor_cursor_line - EDITOR_LINES_VISIBLE + 1;
+                    }
+                    
+                    editor_modified = true;
+                    
+                    // Auto-save
+                    filesys_editfile(editor_filename, editor_content);
+                    editor_modified = false; // Reset modified flag after saving
+                    
+                    editor_draw();
                 }
                 return true;
             }

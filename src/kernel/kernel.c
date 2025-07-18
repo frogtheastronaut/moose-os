@@ -18,6 +18,7 @@ simple code to run a simple kernel.
 */
 
 extern bool explorer_active;
+extern volatile uint32_t ticks;
 
 void init_filesys() {
     filesys_init();
@@ -33,43 +34,29 @@ void init_filesys() {
                             "- Press Enter to open selection\n"
                         "- Press Escape to exit\n"
                         "- 'D' to make folder, 'F' to make file.\n"
-                        "You are running MooseOS version 0.1.0. \nEnjoy!\n\n"
+                        "You are running MooseOS version 0.5BETA. \nEnjoy!\n\n"
                         "Copyright 2025 Ethan Zhang\n");
 }
 
 void dock() {
-    // Initialize mouse cursor on first run
     static bool first_run = true;
     static uint32_t last_cursor_update = 0;
     if (first_run) {
-        gui_update_mouse_cursor(); // Force initial mouse cursor draw
+        gui_update_mouse_cursor(); 
         first_run = false;
     }
     
     while (1) {
-        // Handle mouse input based on current active application (but not when dialog is active)
         if (dock_is_active()) {
-            // Handle mouse for dock when dock is active
             dock_handle_mouse();
         } else if (explorer_active) {
-            // Handle mouse for file explorer when explorer is active
             explorer_handle_mouse();
         }
-        // Note: Mouse input is disabled for editor, terminal, and dialogs
-        
-        // Throttle mouse cursor updates to prevent trails - only update every few ticks
-        // But keep cursor visible even when dialog is active
-        extern volatile uint32_t ticks;
-        if (ticks - last_cursor_update >= 2) { // Update every 20ms (more responsive)
+        if (ticks - last_cursor_update >= 2) {
             gui_update_mouse_cursor();
             last_cursor_update = ticks;
         }
-        
-        // SIMPLE: Just handle time updates without complex conditions
-        // This prevents any potential deadlock scenarios
         dock_update_time();
-        
-        // Always yield to maintain responsive multitasking
         task_yield();
     }
 }; 
@@ -80,11 +67,13 @@ void kernel_main(void)
     gui_init();
     idt_init();
     kb_init();
-    mouse_init();  // Initialize mouse support
-    // Set up PIT for timer interrupts (100Hz - original frequency)
-    outb(0x43, 0x36); // PIT command: channel 0, lo/hi byte, mode 3
-    outb(0x40, 11932 & 0xFF); // low byte (1193182 / 100)
-    outb(0x40, 11932 >> 8);   // high byte
+    mouse_init(); 
+
+    // yeah idk either. this just happens to work
+    outb(0x43, 0x36); 
+    outb(0x40, 11932 & 0xFF); 
+    outb(0x40, 11932 >> 8);   
+
     dock_init();
     rtc_init();
     init_filesys();
@@ -92,7 +81,6 @@ void kernel_main(void)
 
     // make dock
     task_create(dock);
-
     task_start();
-    while(1) {}
+    while(1) {} // ...
 }

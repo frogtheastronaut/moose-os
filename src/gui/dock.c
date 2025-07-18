@@ -537,21 +537,62 @@ bool dock_handle_key(unsigned char key, char scancode) {
             return true;
         }
         else if (scancode == BS_KEY_CODE) {
-            // backspace
+            // backspace - delete character and shift remaining text left
             if (dialog_input_pos > 0) {
                 dialog_input_pos--;
-                dialog_input[dialog_input_pos] = '\0';
+                
+                // Shift characters to the left to fill the gap
+                int input_len = 0;
+                while (input_len < 128 && dialog_input[input_len] != '\0') {
+                    input_len++;
+                }
+                
+                for (int i = dialog_input_pos; i < input_len; i++) {
+                    dialog_input[i] = dialog_input[i + 1];
+                }
+                
                 gui_draw_dialog("New File", "Enter filename:");
                 // Don't force cursor redraw during dialog - let dialog handle it
             }
             return true;
         }
+        else if (scancode == ARROW_LEFT_KEY) {
+            // left arrow - move cursor left
+            if (dialog_input_pos > 0) {
+                dialog_input_pos--;
+                gui_draw_dialog("New File", "Enter filename:");
+            }
+            return true;
+        }
+        else if (scancode == ARROW_RIGHT_KEY) {
+            // right arrow - move cursor right
+            int input_len = 0;
+            while (input_len < 128 && dialog_input[input_len] != '\0') {
+                input_len++;
+            }
+            if (dialog_input_pos < input_len) {
+                dialog_input_pos++;
+                gui_draw_dialog("New File", "Enter filename:");
+            }
+            return true;
+        }
         else if (key >= 32 && key < 127) {
-            // printable
-            if (dialog_input_pos < 128) {
+            // printable - insert character instead of overwriting
+            int input_len = 0;
+            while (input_len < 128 && dialog_input[input_len] != '\0') {
+                input_len++;
+            }
+            
+            if (input_len < 128) {
+                // Shift characters to the right to make room for the new character
+                for (int i = input_len; i > dialog_input_pos; i--) {
+                    dialog_input[i] = dialog_input[i - 1];
+                }
+                
+                // Insert the new character
                 dialog_input[dialog_input_pos] = key;
                 dialog_input_pos++;
-                dialog_input[dialog_input_pos] = '\0';
+                dialog_input[input_len + 1] = '\0';
                 gui_draw_dialog("New File", "Enter filename:");
                 // Don't force cursor redraw during dialog - let dialog handle it
             }
