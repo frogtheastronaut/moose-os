@@ -58,15 +58,16 @@ bool editor_modified = false; // Track if content has been modified
 #define EDITOR_START_Y 40        // Top margin
 #define EDITOR_WIDTH 290         // Editor content width
 
-// Mouse cursor state - moved here to be available globally
+// Mouse cursor state - simplified with background backup
 static int last_mouse_x = -1;
 static int last_mouse_y = -1;
-static uint8_t cursor_backup[8][8]; // Backup area under cursor (8x8)
-static bool cursor_visible = false;
+static uint8_t cursor_backup[8][8]; // Backup area under cursor
+static bool cursor_backup_valid = false;
 
 // Function declarations for mouse cursor functions
 void update_mouse_cursor(void);
 void gui_update_mouse_cursor(void);
+void gui_force_cursor_redraw(void);
 
 /**
  * Sets a single pixel at the specified coordinates
@@ -248,7 +249,6 @@ void gui_clear_screen(uint8_t color) {
     }
     
     // Always redraw mouse cursor after clearing screen
-    cursor_visible = false; // Force redraw
     gui_update_mouse_cursor();
 }
 
@@ -594,6 +594,8 @@ void gui_draw_dialog(const char* title, const char* prompt) {
     // Dialog dimensions
     int width = 200;
     int height = 80;
+    
+    // Calculate centered position
     int x = (SCREEN_WIDTH - width) / 2;
     int y = (SCREEN_HEIGHT - height) / 2;
     
@@ -656,6 +658,8 @@ void gui_draw_dialog(const char* title, const char* prompt) {
     // Draw keyboard shortcut text at the bottom
     gui_draw_text(x + 10, y + 62, "ENTER: OK", VGA_COLOR_DARK_GREY);
     gui_draw_text(x + width - 70, y + 62, "ESC: Cancel", VGA_COLOR_DARK_GREY);
+    
+    // No cursor redraw during dialog - cursor updates are disabled
 }
 
 /**
@@ -755,56 +759,6 @@ int line_col_to_cursor_pos(int line, int col) {
     return pos;
 }
 
-// Mouse cursor support
-
-/**
- * Save the area under the cursor
- */
-void save_cursor_background(int x, int y) {
-    // Add extra bounds checking to prevent corruption
-    if (x < -8 || y < -8 || x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) {
-        return; // Cursor completely off screen
-    }
-    
-    for (int j = 0; j < 8; j++) {
-        for (int i = 0; i < 8; i++) {
-            int screen_x = x + i;
-            int screen_y = y + j;
-            if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
-                screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
-                cursor_backup[j][i] = vga_buffer[screen_y * SCREEN_WIDTH + screen_x];
-            } else {
-                cursor_backup[j][i] = VGA_COLOR_BLACK; // Default background for off-screen areas
-            }
-        }
-    }
-}
-
-/**
- * Restore the area under the cursor
- */
-void restore_cursor_background(int x, int y) {
-    // Add extra bounds checking to prevent corruption
-    if (x < -8 || y < -8 || x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) {
-        return; // Cursor completely off screen
-    }
-    
-    for (int j = 0; j < 8; j++) {
-        for (int i = 0; i < 8; i++) {
-            int screen_x = x + i;
-            int screen_y = y + j;
-            if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
-                screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
-                // Additional safety check to prevent buffer overruns
-                int buffer_index = screen_y * SCREEN_WIDTH + screen_x;
-                if (buffer_index >= 0 && buffer_index < SCREEN_WIDTH * SCREEN_HEIGHT) {
-                    vga_buffer[buffer_index] = cursor_backup[j][i];
-                }
-            }
-        }
-    }
-}
-
 /**
  * Draw the mouse cursor at specified position
  */
@@ -817,19 +771,77 @@ void draw_mouse_cursor(int x, int y) {
                 screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
                 uint8_t pattern = cursor_icon[j][i];
                 if (pattern == 1) {
-                    // Additional safety check to prevent buffer overruns
-                    int buffer_index = screen_y * SCREEN_WIDTH + screen_x;
-                    if (buffer_index >= 0 && buffer_index < SCREEN_WIDTH * SCREEN_HEIGHT) {
-                        vga_buffer[buffer_index] = VGA_COLOR_BLACK;
-                    }
+                    vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOR_BLACK;
                 } else if (pattern == 2) {
-                    // Additional safety check to prevent buffer overruns
-                    int buffer_index = screen_y * SCREEN_WIDTH + screen_x;
-                    if (buffer_index >= 0 && buffer_index < SCREEN_WIDTH * SCREEN_HEIGHT) {
-                        vga_buffer[buffer_index] = VGA_COLOR_WHITE;
-                    }
+                    vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOR_WHITE;
                 }
                 // pattern == 0 means transparent, don't draw anything
+            }
+        }
+    }
+}
+
+/**
+ * Save the background under the cursor
+ */
+void save_cursor_background(int x, int y) {
+    if (x < 0 || y < 0) return;
+    
+    // Ensure we don't save invalid background
+    cursor_backup_valid = false;
+    
+    for (int j = 0; j < 8; j++) {
+        for (int i = 0; i < 8; i++) {
+            int screen_x = x + i;
+            int screen_y = y + j;
+            if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
+                screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
+                cursor_backup[j][i] = vga_buffer[screen_y * SCREEN_WIDTH + screen_x];
+            } else {
+                cursor_backup[j][i] = VGA_COLOR_LIGHT_GREY; // Default background for off-screen
+            }
+        }
+    }
+    cursor_backup_valid = true;
+}
+
+/**
+ * Restore the background under the cursor
+ */
+void restore_cursor_background(int x, int y) {
+    if (x < 0 || y < 0 || !cursor_backup_valid) return;
+    
+    for (int j = 0; j < 8; j++) {
+        for (int i = 0; i < 8; i++) {
+            int screen_x = x + i;
+            int screen_y = y + j;
+            if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
+                screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
+                vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = cursor_backup[j][i];
+            }
+        }
+    }
+    
+    // Invalidate backup after restoring to prevent double-restore
+    cursor_backup_valid = false;
+}
+
+/**
+ * Clear cursor area by redrawing a small background rectangle
+ */
+void clear_cursor_area(int x, int y) {
+    if (x < 0 || y < 0) return; // Don't clear if position is invalid
+    
+    // Clear a slightly larger area to ensure full cursor removal
+    for (int j = 0; j < 10; j++) {
+        for (int i = 0; i < 10; i++) {
+            int screen_x = x + i;
+            int screen_y = y + j;
+            if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
+                screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
+                // Use a simple background color - this will overwrite whatever was there
+                // but it's better than cursor trails
+                vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOR_LIGHT_GREY;
             }
         }
     }
@@ -839,9 +851,13 @@ void draw_mouse_cursor(int x, int y) {
  * Update mouse cursor position and display
  */
 void update_mouse_cursor(void) {
-    mouse_state_t* mouse = get_mouse_state();
+    // Don't update cursor when dialog is active
+    extern bool dialog_active;
+    if (dialog_active) {
+        return;
+    }
     
-    // Basic safety check
+    mouse_state_t* mouse = get_mouse_state();
     if (!mouse) return;
     
     // Scale mouse coordinates to VGA mode 13h (320x200)
@@ -854,23 +870,30 @@ void update_mouse_cursor(void) {
     if (cursor_y < 0) cursor_y = 0;
     if (cursor_y > SCREEN_HEIGHT - 8) cursor_y = SCREEN_HEIGHT - 8;
     
-    // Only update if cursor moved significantly or if cursor is not visible
-    int dx = cursor_x - last_mouse_x;
-    int dy = cursor_y - last_mouse_y;
-    if (dx < 0) dx = -dx;  // Manual abs() for dx
-    if (dy < 0) dy = -dy;  // Manual abs() for dy
-    int distance_moved = dx + dy;
-    if (!cursor_visible || distance_moved >= 2) {
-        // Restore previous cursor area if cursor was visible
-        if (cursor_visible && last_mouse_x >= 0 && last_mouse_y >= 0) {
+    // Only update if cursor moved
+    if (cursor_x != last_mouse_x || cursor_y != last_mouse_y) {
+        // Always restore previous cursor area if we have a valid backup
+        if (last_mouse_x >= 0 && last_mouse_y >= 0 && cursor_backup_valid) {
             restore_cursor_background(last_mouse_x, last_mouse_y);
+            cursor_backup_valid = false; // Invalidate after restoring to prevent double-restore
         }
         
-        // Save new background and draw cursor
+        // For high-speed movement, invalidate backup to force fresh background save
+        // This prevents artifacts without destroying background graphics
+        int dx = cursor_x - last_mouse_x;
+        int dy = cursor_y - last_mouse_y;
+        if (dx < 0) dx = -dx;
+        if (dy < 0) dy = -dy;
+        
+        if ((dx > 15 || dy > 15) && last_mouse_x >= 0 && last_mouse_y >= 0) {
+            // Large movement detected - just invalidate backup to ensure clean redraw
+            cursor_backup_valid = false;
+        }
+        
+        // Save background at new position and draw cursor
         save_cursor_background(cursor_x, cursor_y);
         draw_mouse_cursor(cursor_x, cursor_y);
         
-        cursor_visible = true;
         last_mouse_x = cursor_x;
         last_mouse_y = cursor_y;
     }
@@ -880,36 +903,43 @@ void update_mouse_cursor(void) {
  * Clear cursor from screen and reset cursor state
  */
 void gui_clear_mouse_cursor(void) {
-    // Modified: Don't actually clear the cursor to keep it always visible
-    // Just force a redraw at the current position to ensure it's visible
-    update_mouse_cursor();
+    // Restore background if we have a valid backup
+    if (last_mouse_x >= 0 && last_mouse_y >= 0 && cursor_backup_valid) {
+        restore_cursor_background(last_mouse_x, last_mouse_y);
+    }
+    
+    // Reset cursor position and backup state
+    last_mouse_x = -1;
+    last_mouse_y = -1;
+    cursor_backup_valid = false;
 }
 
 /**
  * Public interface for updating mouse cursor
  */
 void gui_update_mouse_cursor(void) {
-    update_mouse_cursor();
-    
-    // Ensure cursor is always visible when this function is called
-    if (!cursor_visible) {
-        mouse_state_t* mouse = get_mouse_state();
-        if (mouse) {
-            // Force cursor to be drawn at current mouse position
-            int cursor_x = (mouse->x_position * SCREEN_WIDTH) / 640;
-            int cursor_y = (mouse->y_position * SCREEN_HEIGHT) / 480;
-            
-            // Bounds check
-            if (cursor_x < 0) cursor_x = 0;
-            if (cursor_x > SCREEN_WIDTH - 8) cursor_x = SCREEN_WIDTH - 8;
-            if (cursor_y < 0) cursor_y = 0;
-            if (cursor_y > SCREEN_HEIGHT - 8) cursor_y = SCREEN_HEIGHT - 8;
-            
-            save_cursor_background(cursor_x, cursor_y);
-            draw_mouse_cursor(cursor_x, cursor_y);
-            cursor_visible = true;
-            last_mouse_x = cursor_x;
-            last_mouse_y = cursor_y;
-        }
+    // Don't update cursor when dialog is active
+    extern bool dialog_active;
+    if (dialog_active) {
+        return;
     }
+    
+    update_mouse_cursor();
+}
+
+/**
+ * Force mouse cursor to redraw (useful after screen updates)
+ */
+void gui_force_cursor_redraw(void) {
+    // Don't update cursor when dialog is active
+    extern bool dialog_active;
+    if (dialog_active) {
+        return;
+    }
+    
+    // Invalidate backup to force fresh save and redraw
+    cursor_backup_valid = false;
+    last_mouse_x = -1;
+    last_mouse_y = -1;
+    update_mouse_cursor();
 }

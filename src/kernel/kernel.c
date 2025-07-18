@@ -47,7 +47,7 @@ void dock() {
     }
     
     while (1) {
-        // Handle mouse input based on current active application
+        // Handle mouse input based on current active application (but not when dialog is active)
         if (dock_is_active()) {
             // Handle mouse for dock when dock is active
             dock_handle_mouse();
@@ -55,9 +55,10 @@ void dock() {
             // Handle mouse for file explorer when explorer is active
             explorer_handle_mouse();
         }
-        // Note: Mouse input is disabled for editor and terminal
+        // Note: Mouse input is disabled for editor, terminal, and dialogs
         
         // Throttle mouse cursor updates to prevent trails - only update every few ticks
+        // But keep cursor visible even when dialog is active
         extern volatile uint32_t ticks;
         if (ticks - last_cursor_update >= 2) { // Update every 20ms (more responsive)
             gui_update_mouse_cursor();

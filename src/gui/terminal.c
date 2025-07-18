@@ -465,10 +465,8 @@ void gui_draw_terminal() {
     editor_active = false;
     
     // Ensure mouse cursor is redrawn after all terminal elements
-    extern void gui_update_mouse_cursor(void);
-    extern bool cursor_visible;
-    cursor_visible = false; // Force redraw
-    gui_update_mouse_cursor();
+    extern void gui_force_cursor_redraw(void);
+    gui_force_cursor_redraw();
 }
 
 /**

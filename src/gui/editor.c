@@ -92,8 +92,8 @@ void editor_draw() {
     gui_draw_text(5, 192, status, VGA_COLOR_WHITE);
     
     // Make sure cursor is visible after redraw
-    cursor_visible = false;
-    gui_update_mouse_cursor();
+    extern void gui_force_cursor_redraw(void);
+    gui_force_cursor_redraw();
 }
 
 

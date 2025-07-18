@@ -135,10 +135,8 @@ void gui_draw_filesplorer() {
     explorer_active = true;
     
     // Ensure mouse cursor is redrawn after all explorer elements
-    extern void gui_update_mouse_cursor(void);
-    extern bool cursor_visible;
-    cursor_visible = false; // Force redraw
-    gui_update_mouse_cursor();
+    extern void gui_force_cursor_redraw(void);
+    gui_force_cursor_redraw();
 }
 /**
  * Create new directory or file based on dialog input
@@ -242,6 +240,9 @@ bool gui_handle_dialog_key(unsigned char key, char scancode) {
             } else {
                 gui_draw_dialog("New File", "Enter filename:");
             }
+            // Ensure cursor is visible after dialog redraw
+            extern void gui_force_cursor_redraw(void);
+            gui_force_cursor_redraw();
         }
         return true;
     }
@@ -259,6 +260,9 @@ bool gui_handle_dialog_key(unsigned char key, char scancode) {
             } else {
                 gui_draw_dialog("New File", "Enter filename:");
             }
+            // Ensure cursor is visible after dialog redraw
+            extern void gui_force_cursor_redraw(void);
+            gui_force_cursor_redraw();
         }
         return true;
     }
@@ -349,6 +353,9 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
             dialog_input[0] = '\0';
             dialog_input_pos = 0;
             gui_draw_dialog("Create Directory", "Enter directory name:");
+            // Ensure cursor is visible after dialog creation
+            extern void gui_force_cursor_redraw(void);
+            gui_force_cursor_redraw();
             return true;
 
         case 0x21: // 'F' key scancode should be 0x21 in your keyboard map
@@ -358,6 +365,9 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
             dialog_input[0] = '\0';
             dialog_input_pos = 0;
             gui_draw_dialog("Create File", "Enter file name:");
+            // Ensure cursor is visible after dialog creation
+            extern void gui_force_cursor_redraw(void);
+            gui_force_cursor_redraw();
             return true;
 
         case BS_KEY_CODE:
