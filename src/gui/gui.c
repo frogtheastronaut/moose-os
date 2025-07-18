@@ -758,21 +758,6 @@ int line_col_to_cursor_pos(int line, int col) {
 // Mouse cursor support
 
 /**
- * Simple arrow cursor pattern (8x8) - smaller cursor
- * 0 = transparent, 1 = black, 2 = white
- */
-static uint8_t cursor_pattern[8][8] = {
-    {1,0,0,0,0,0,0,0},
-    {1,1,0,0,0,0,0,0},
-    {1,2,1,0,0,0,0,0},
-    {1,2,2,1,0,0,0,0},
-    {1,2,2,2,1,0,0,0},
-    {1,2,1,1,1,0,0,0},
-    {1,1,0,1,2,1,0,0},
-    {0,0,0,0,1,1,0,0}
-};
-
-/**
  * Save the area under the cursor
  */
 void save_cursor_background(int x, int y) {
@@ -830,7 +815,7 @@ void draw_mouse_cursor(int x, int y) {
             int screen_y = y + j;
             if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
                 screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
-                uint8_t pattern = cursor_pattern[j][i];
+                uint8_t pattern = cursor_icon[j][i];
                 if (pattern == 1) {
                     // Additional safety check to prevent buffer overruns
                     int buffer_index = screen_y * SCREEN_WIDTH + screen_x;

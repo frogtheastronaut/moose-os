@@ -35,7 +35,7 @@ build-iso: build-kernel
 
 run-iso: build-iso
 	# Run the ISO in QEMU with 128MB RAM
-	qemu-system-i386 -cdrom bin/MooseOS.iso -m 128M
+	qemu-system-i386 -cdrom bin/MooseOS.iso -m 512M
 
 run-iso-fullscreen: build-iso
 	# Run the ISO in QEMU full screen with 128MB RAM

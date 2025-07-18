@@ -64,6 +64,17 @@ const uint8_t terminal_icon[16][16] = {
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 };
 
+// cursor
+const uint8_t cursor_icon[8][8] = {
+    {1,0,0,0,0,0,0,0},
+    {1,1,0,0,0,0,0,0},
+    {1,2,1,0,0,0,0,0},
+    {1,2,2,1,0,0,0,0},
+    {1,2,2,2,1,0,0,0},
+    {1,2,1,1,1,0,0,0},
+    {1,1,0,0,0,0,0,0},
+};
+
 // map
 const uint8_t icon_color_map[] = {
     VGA_COLOR_LIGHT_GREY,  // 0 = background (using light grey instead of transparent)
