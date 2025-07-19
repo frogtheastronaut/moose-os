@@ -17,11 +17,11 @@ extern bool explorer_active;
 extern bool editor_active;
 
 // external functions
-extern bool gui_handle_dialog_key(unsigned char key, char scancode);
+extern bool gui_handle_dialog_input(unsigned char key, char scancode);
 extern bool gui_handle_explorer_key(unsigned char key, char scancode);
 extern bool gui_handle_editor_key(unsigned char key, char scancode);
 extern bool dock_handle_key(unsigned char key, char scancode); 
-extern bool terminal_handlekey(unsigned char key, char scancode);
+extern bool term_handlekey(unsigned char key, char scancode);
 
 // set 'em all to false
 bool dialog_active = false;
@@ -92,7 +92,7 @@ void processKey(unsigned char key, char scancode) {
         return;
     }
     
-    // Only process key presses, not releases (except for shift which we handled above)
+    // dont process release keys
     if (key_released) {
         return;
     }
@@ -107,8 +107,8 @@ void processKey(unsigned char key, char scancode) {
     char character = scancode_to_char(base_scancode, shift_pressed);
         
     // check terminal
-    if (terminal_is_active()) {
-        if (terminal_handlekey(character, base_scancode)) {
+    if (term_isactive()) {
+        if (term_handlekey(character, base_scancode)) {
             return;
         }
     }
@@ -123,7 +123,7 @@ void processKey(unsigned char key, char scancode) {
     else if (explorer_active) {
         // explorer active, check dialog
         if (dialog_active) {
-            gui_handle_dialog_key(character, base_scancode);
+            gui_handle_dialog_input(character, base_scancode);
             return;
         }
         // nope just explorer

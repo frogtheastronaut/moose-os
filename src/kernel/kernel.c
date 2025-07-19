@@ -42,7 +42,7 @@ void dock() {
     static bool first_run = true;
     static uint32_t last_cursor_update = 0;
     if (first_run) {
-        gui_update_mouse_cursor(); 
+        gui_updatemouse(); 
         first_run = false;
     }
     
@@ -53,7 +53,7 @@ void dock() {
             explorer_handle_mouse();
         }
         if (ticks - last_cursor_update >= 2) {
-            gui_update_mouse_cursor();
+            gui_updatemouse();
             last_cursor_update = ticks;
         }
         dock_update_time();

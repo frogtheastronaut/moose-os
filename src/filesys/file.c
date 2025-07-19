@@ -3,6 +3,7 @@
     Copyright 2025 Ethan Zhang, All rights reserved.
 
     Deprecated content are commented, but not removed for nostalg- I mean, safety purposes.
+    Yes this is a REALLY old file. Be aware some comment styles don't really match up.
 */
 
 #include "../kernel/include/tty.h"

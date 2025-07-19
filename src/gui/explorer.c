@@ -8,41 +8,37 @@
 #include "include/dock.h"
 #include "../kernel/include/mouse.h"
 
+
+extern void draw_cursor(void);
+
 /**
- * Updated file explorer function that shows current selection
+ * draws filesplorer
  */
-void gui_draw_filesplorer() {
+void draw_filesplorer() {
     gui_init();
-    // Clear screen with a nice background color
-    gui_clear_screen(VGA_COLOR_LIGHT_GREY);
+    gui_clear(VGA_COLOR_LIGHT_GREY);
     
-    // Draw a file explorer window
-    gui_draw_window_box(10, 10, 300, 180, 
+    draw_windowbox(10, 10, 300, 180, 
                        VGA_COLOR_BLACK,
                        VGA_COLOR_WHITE,
                        VGA_COLOR_LIGHT_GREY);
     
-    // Add a title bar to the window
-    gui_draw_title_bar(10, 10, 300, 15, VGA_COLOR_BLUE);
+    // title bar
+    draw_title(10, 10, 300, 15, VGA_COLOR_BLUE);
     char path_text[64] = "File Explorer - ";
-    gui_draw_text(15, 13, path_text, VGA_COLOR_WHITE);
+    draw_text(15, 13, path_text, VGA_COLOR_WHITE);
     
-    // Display current directory path
+    // display cwd
     char full_path[128] = "";
     if (cwd == root) {
-        // We're at root directory
         copyStr(full_path, "/");
     } else {
-        // We're in a subdirectory - build path from bottom up
         File* node = cwd;
         
-        // Start with current directory
         copyStr(full_path, node->name);
         node = node->parent;
         
-        // Traverse up the directory tree
         while (node != NULL && node != root) {
-            // Prepend parent directory with slash
             char temp[128] = "";
             copyStr(temp, node->name);
             strcat(temp, "/");
@@ -52,160 +48,125 @@ void gui_draw_filesplorer() {
             node = node->parent;
         }
         
-        // Add leading slash for absolute path
         char temp[128] = "/";
         strcat(temp, full_path);
         copyStr(full_path, temp);
     }
     
-    // Draw the path with scrolling if needed
-    int path_x = 15 + gui_text_width(path_text);
-    int available_width = 300 - path_x - 10; // Width available for path display
-    gui_draw_scrolling_text(path_x, 13, full_path, available_width, VGA_COLOR_WHITE, VGA_COLOR_BLUE);
+    int path_x = 15 + get_textwidth(path_text);
+    int available_width = 300 - path_x - 10; 
+    draw_text_scroll(path_x, 13, full_path, available_width, VGA_COLOR_WHITE, VGA_COLOR_BLUE);
     
-    // Draw files and folders from the actual filesystem
     int x_pos = 30;
     int y_pos = 40;
-    int displayed_count = 0;  // This tracks the display position
+    int displayed_count = 0; 
     
-    // Draw parent directory if not at root
     if (cwd != root) {
-        // Use the is_selected parameter - this item is at visual position 0
-        gui_draw_file_item(x_pos, y_pos, "..", 1, current_selection == 0);
+        draw_file(x_pos, y_pos, "..", 1, current_selection == 0);
         x_pos += 70;
         displayed_count++;
         
-        // Start a new row if needed
         if (displayed_count % 4 == 0) {
             x_pos = 30;
             y_pos += 40;
         }
     }
     
-    // Draw actual files and folders
+    // draw files and folders
     for (int i = 0; i < cwd->folder.childCount && displayed_count < 12; i++) {
         File* child = cwd->folder.children[i];
-        
-        // Calculate selection index properly:
-        // If in root: selection index = the file index
-        // If in subfolder: selection index = file index + 1 (for ".." entry)
+
         int selection_index = i;
         if (cwd != root) {
-            selection_index = i + 1;  // Account for ".." entry
+            selection_index = i + 1;  // +1 bc of ".." folder 
         }
         
-        // Use the is_selected parameter
-        gui_draw_file_item(x_pos, y_pos, child->name, 
+        draw_file(x_pos, y_pos, child->name, 
                         (child->type == FOLDER_NODE), 
                         current_selection == selection_index);
         
-        x_pos += 70; // Move to the next position
+        x_pos += 70; 
         displayed_count++;
         
-        // Start a new row if needed
         if (displayed_count % 4 == 0) {
             x_pos = 30;
             y_pos += 40;
         }
     }
     
-    // Add a status bar at the bottom
-    gui_draw_rect(10, 175, 300, 15, VGA_COLOR_DARK_GREY);
+    // bottom status bar
+    draw_rect(10, 175, 300, 15, VGA_COLOR_DARK_GREY);
     
-    // Display number of items
-    char count_str[16]; // Buffer for the count
-    int_to_str(cwd->folder.childCount, count_str, sizeof(count_str));
+    // item count
+    char count_str[16]; 
+    int2str(cwd->folder.childCount, count_str, sizeof(count_str));
     
     char status_text[32] = "";
     copyStr(status_text, count_str);
     
-    // Append " items" to the count
     if (cwd->folder.childCount == 1) {
         strcat(status_text, " item");
     } else {
         strcat(status_text, " items");
     }
     
-    gui_draw_text(15, 178, status_text, VGA_COLOR_WHITE);
-    
-    // Display keyboard controls in status bar
-    //gui_draw_text(210, 178, "ARROWS:Move ENTER:Open", VGA_COLOR_WHITE);
-    
-    // Set explorer as active
+    draw_text(15, 178, status_text, VGA_COLOR_WHITE);
+    // set explorer as active
     explorer_active = true;
     
-    // Ensure mouse cursor is redrawn after all explorer elements
-    extern void gui_force_cursor_redraw(void);
-    gui_force_cursor_redraw();
+    draw_cursor();
 }
 /**
- * Create new directory or file based on dialog input
+ * create item
  */
 void dialog_create_item() {
     if (dialog_input[0] != '\0') {
-        // Store the current number of items before we create the new one
         int previous_item_count = cwd->folder.childCount;
         
         if (dialog_type == 0) {
-            // Create directory
+            // create directory
             filesys_mkdir(dialog_input);
         } else {
-            // Create file
+            // create file
             filesys_mkfile(dialog_input, "");
         }
         
-        // If a new item was actually created, the count will have increased
         if (cwd->folder.childCount > previous_item_count) {
-            // Calculate the selection index for the newly created item
-            // The newly created item is always the last item in the children array
             if (cwd != root) {
-                // In a subdirectory: The new item's index is childCount - 1 (last item)
-                // But we need to add 1 for the ".." entry at the beginning
-                current_selection = (cwd->folder.childCount - 1) + 1;
+                current_selection = (cwd->folder.childCount - 1) + 1; // +1 bc of ".." folder
             } else {
-                // In root, no ".." entry, so last item index is just childCount - 1
                 current_selection = cwd->folder.childCount - 1;
             }
             
-            // Make sure selection doesn't exceed the visible items limit (12)
             int max_visible = 12;
             if (cwd != root) {
-                // If we're in a subdirectory, account for ".." taking one slot
                 max_visible = 11;
             }
             
-            // If we exceed the visible count, just select the first item
             if (current_selection >= max_visible) {
                 current_selection = 0;
             }
         } else {
-            // No new item was created (maybe due to duplicate name)
-            // Just reset selection to the first item
+            // reset if item creation failed/no new item created
             current_selection = 0;
         }
-        
-        // Redraw the file explorer to show the new item
-        gui_draw_filesplorer();
+        draw_filesplorer();
     }
 }
 /**
- * Handle keyboard input for the dialog box
+ * handle keyboard input
  */
-bool gui_handle_dialog_key(unsigned char key, char scancode) {
+bool gui_handle_dialog_input(unsigned char key, char scancode) {
     if (!dialog_active) return false;
     
-    // Handle special keys
     if (scancode == ENTER_KEY_CODE) {
-        // User pressed Enter - handle based on dialog type
         dialog_active = false;
         
         if (dialog_type == DIALOG_TYPE_NEW_FILE) {
-            // This is a new file dialog from dock
             dock_mkopen_file();
         } else {
-            // Regular directory/file creation dialog
             dialog_create_item();
-            gui_draw_filesplorer();  // Redraw explorer after item creation
+            draw_filesplorer();  // redraw
         }
         
         dialog_input[0] = '\0';
@@ -213,114 +174,95 @@ bool gui_handle_dialog_key(unsigned char key, char scancode) {
         return true;
     } 
     else if (scancode == ESC_KEY_CODE) {
-        // User pressed Escape - cancel
         dialog_active = false;
         dialog_input[0] = '\0';
         dialog_input_pos = 0;
         
         if (dialog_type == DIALOG_TYPE_NEW_FILE) {
-            // Return to dock if canceling new file dialog
+
             dock_return();
         } else {
-            // Return to explorer for other dialogs
-            gui_draw_filesplorer();
+            draw_filesplorer();
         }
         return true;
     }
     else if (scancode == ARROW_LEFT_KEY) {
-        // Handle left arrow - move cursor left
         if (dialog_input_pos > 0) {
             dialog_input_pos--;
-            // Redraw dialog with correct title based on dialog type
             if (dialog_type == 0) {
-                gui_draw_dialog("Create Directory", "Enter directory name:");
+                draw_dialog("Create Directory", "Enter directory name:");
             } else if (dialog_type == 1) {
-                gui_draw_dialog("Create File", "Enter file name:");
+                draw_dialog("Create File", "Enter file name:");
             } else {
-                gui_draw_dialog("New File", "Enter filename:");
+                draw_dialog("New File", "Enter filename:");
             }
-            // Ensure cursor is visible after dialog redraw
-            extern void gui_force_cursor_redraw(void);
-            gui_force_cursor_redraw();
+            
+            draw_cursor();
         }
         return true;
     }
     else if (scancode == ARROW_RIGHT_KEY) {
-        // Handle right arrow - move cursor right
         if (dialog_input_pos < strlen(dialog_input)) {
             dialog_input_pos++;
-            // Redraw dialog with correct title based on dialog type
             if (dialog_type == 0) {
-                gui_draw_dialog("Create Directory", "Enter directory name:");
+                draw_dialog("Create Directory", "Enter directory name:");
             } else if (dialog_type == 1) {
-                gui_draw_dialog("Create File", "Enter file name:");
+                draw_dialog("Create File", "Enter file name:");
             } else {
-                gui_draw_dialog("New File", "Enter filename:");
+                draw_dialog("New File", "Enter filename:");
             }
-            // Ensure cursor is visible after dialog redraw
-            extern void gui_force_cursor_redraw(void);
-            gui_force_cursor_redraw();
+            
+            draw_cursor();
         }
         return true;
     }
     else if (scancode == BS_KEY_CODE) {
-        // Handle backspace
+        // backspace
         if (dialog_input_pos > 0) {
-            // Shift characters left from cursor position
             for (int i = dialog_input_pos - 1; i < strlen(dialog_input); i++) {
                 dialog_input[i] = dialog_input[i + 1];
             }
             dialog_input_pos--;
-            // Redraw dialog with correct title based on dialog type
             if (dialog_type == 0) {
-                gui_draw_dialog("Create Directory", "Enter directory name:");
+                draw_dialog("Create Directory", "Enter directory name:");
             } else if (dialog_type == 1) {
-                gui_draw_dialog("Create File", "Enter file name:");
+                draw_dialog("Create File", "Enter file name:");
             } else {
-                gui_draw_dialog("New File", "Enter filename:");
+                draw_dialog("New File", "Enter filename:");
             }
-            // Ensure cursor is visible after dialog redraw
-            extern void gui_force_cursor_redraw(void);
-            gui_force_cursor_redraw();
+            
+            draw_cursor();
         }
         return true;
     }
     else if (key >= 32 && key < 127) {
-        // Handle printable characters
         if (strlen(dialog_input) < 128) {
-            // Shift characters right from cursor position
             for (int i = strlen(dialog_input); i >= dialog_input_pos; i--) {
                 dialog_input[i + 1] = dialog_input[i];
             }
-            // Insert character at cursor position
             dialog_input[dialog_input_pos] = key;
             dialog_input_pos++;
-            // Redraw dialog with correct title based on dialog type
             if (dialog_type == 0) {
-                gui_draw_dialog("Create Directory", "Enter directory name:");
+                draw_dialog("Create Directory", "Enter directory name:");
             } else if (dialog_type == 1) {
-                gui_draw_dialog("Create File", "Enter file name:");
+                draw_dialog("Create File", "Enter file name:");
             } else {
-                gui_draw_dialog("New File", "Enter filename:");
+                draw_dialog("New File", "Enter filename:");
             }
-            // Ensure cursor is visible after dialog redraw
-            extern void gui_force_cursor_redraw(void);
-            gui_force_cursor_redraw();
+            
+            draw_cursor();
         }
         return true;
     }
     
     return false;
 }
-/**
- * Process keyboard input for file explorer
- * 
- * @return true if the key was handled, false otherwise
- */
+/*
+    handle explorer input
+*/
 bool gui_handle_explorer_key(unsigned char key, char scancode) {
-    // If dialog is active, let the dialog handle the key
     if (dialog_active) {
-        return gui_handle_dialog_key(key, scancode);
+        return gui_handle_dialog_input(key, scancode);
     }
     
     if (!explorer_active) return false;
@@ -360,28 +302,23 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
             break;
             
         case ENTER_KEY_CODE:
-            // Navigate to folder or open file
             if (cwd != root && current_selection == 0) {
-                // Go to parent directory
                 filesys_cd("..");
                 current_selection = 0;
-                gui_draw_filesplorer(); // Redraw the whole UI
+                draw_filesplorer();
                 return true;
             } else {
-                // Determine actual index in children array
                 int actual_index = current_selection;
-                if (cwd != root) actual_index -= 1;  // Account for ".." entry
+                if (cwd != root) actual_index -= 1;  // account for ".." entry
                 
                 if (actual_index >= 0 && actual_index < cwd->folder.childCount) {
                     File* child = cwd->folder.children[actual_index];
                     if (child->type == FOLDER_NODE) {
-                        // Navigate to folder
                         filesys_cd(child->name);
                         current_selection = 0;
-                        gui_draw_filesplorer(); // Redraw the whole UI
+                        draw_filesplorer();
                         return true;
                     } else {
-                        // Open file in text editor
                         editor_open(child->name);
                         return true;
                     }
@@ -389,82 +326,71 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
             }
             break;
             
-        case 0x20: // 'D' key scancode should be 0x20 in your keyboard map
-            // Show directory creation dialog
+        case 0x20:
             dialog_active = true;
-            dialog_type = 0; // Directory
+            dialog_type = 0; 
             dialog_input[0] = '\0';
             dialog_input_pos = 0;
-            gui_draw_dialog("Create Directory", "Enter directory name:");
-            // Ensure cursor is visible after dialog creation
-            extern void gui_force_cursor_redraw(void);
-            gui_force_cursor_redraw();
+            draw_dialog("Create Directory", "Enter directory name:");
+            
+            draw_cursor();
             return true;
 
-        case 0x21: // 'F' key scancode should be 0x21 in your keyboard map
-            // Show file creation dialog
+        case 0x21:
             dialog_active = true;
             dialog_type = 1; // File
             dialog_input[0] = '\0';
             dialog_input_pos = 0;
-            gui_draw_dialog("Create File", "Enter file name:");
-            // Ensure cursor is visible after dialog creation
-            extern void gui_force_cursor_redraw(void);
-            gui_force_cursor_redraw();
+            draw_dialog("Create File", "Enter file name:");
+            draw_cursor();
             return true;
 
         case BS_KEY_CODE:
-            // Delete the currently selected item (except ".." which can't be deleted)
             if (cwd != root && current_selection == 0) {
-                // Can't delete the ".." entry
+                // can't delete the ".." entry
                 return true;
             } else {
-                // Determine actual index in children array
                 int actual_index = current_selection;
-                if (cwd != root) actual_index -= 1;  // Account for ".." entry
-                
+                if (cwd != root) actual_index -= 1;  // account for ".." entry
+
                 if (actual_index >= 0 && actual_index < cwd->folder.childCount) {
                     File* child = cwd->folder.children[actual_index];
                     
                     if (child->type == FOLDER_NODE) {
-                        // Delete folder
+                        // delete folder
                         filesys_rmdir(child->name);
                     } else {
-                        // Delete file
+                        // delete file
                         filesys_rm(child->name);
                     }
                     
-                    // If there are still items left after deletion, ensure selection is within bounds
                     if (cwd->folder.childCount > 0) {
-                        // If we deleted the last item, move selection to the previous item
                         if (current_selection >= cwd->folder.childCount + (cwd != root ? 1 : 0)) {
                             current_selection--;
                         }
                     } else {
-                        // No items left, reset selection to 0
                         current_selection = 0;
                     }
                     
-                    // Redraw the file explorer to reflect the changes
-                    gui_draw_filesplorer();
+                    // redraw
+                    draw_filesplorer();
                     return true;
                 }
             }
             break;
 
         case ESC_KEY_CODE:
-            // Return to dock when ESC is pressed
+            // return to dock
             dock_return();
             return true;
             
         default:
-            // Not a key we handle
+            // not a handlable key
             return false;
     }
     
-    // If we get here, we changed the selection
     if (previous_selection != current_selection) {
-        gui_draw_filesplorer(); // Redraw the whole UI
+        draw_filesplorer();
         
         return true; 
 
@@ -472,188 +398,139 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
 }
 
 /**
- * Handle keyboard input for the text editor
+ * handle editor input
  */
 bool gui_handle_editor_key(unsigned char key, char scancode) {
     if (!editor_active) return false;
     
-    // Handle special keys
     switch (scancode) {
         case ESC_KEY_CODE:
-            // Close editor and return to file explorer
             editor_active = false;
             explorer_active = true;
             dock_return();
-            // Re-enable mouse cursor when exiting editor
-            extern void gui_update_mouse_cursor(void);
-            gui_update_mouse_cursor();
+            extern void gui_updatemouse(void);
+            gui_updatemouse();
             return true;
             
         case ENTER_KEY_CODE:
-            // Insert newline
             if (strlen(editor_content) < MAX_CONTENT - 1) {
-                // Shift content to the right
                 for (int i = strlen(editor_content); i >= editor_cursor_pos; i--) {
                     editor_content[i + 1] = editor_content[i];
                 }
                 editor_content[editor_cursor_pos] = '\n';
                 editor_cursor_pos++;
-                cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
-                
-                // Auto-scroll vertically to keep cursor visible
+                cursorpos2linecol(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
                 if (editor_cursor_line >= editor_scroll_line + EDITOR_LINES_VISIBLE) {
                     editor_scroll_line = editor_cursor_line - EDITOR_LINES_VISIBLE + 1;
                 }
-                
                 editor_modified = true;
-                
-                // Auto-save
                 filesys_editfile(editor_filename, editor_content);
-                editor_modified = false; // Reset modified flag after saving
-                
+                editor_modified = false;
                 editor_draw();
             }
             return true;
             
         case BS_KEY_CODE:
-            // Backspace - delete character before cursor
             if (editor_cursor_pos > 0) {
-                // Shift content to the left
                 for (int i = editor_cursor_pos; i <= strlen(editor_content); i++) {
                     editor_content[i - 1] = editor_content[i];
                 }
                 editor_cursor_pos--;
-                cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
-                
-                // Auto-scroll vertically to keep cursor visible
+                cursorpos2linecol(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
                 if (editor_cursor_line < editor_scroll_line) {
                     editor_scroll_line = editor_cursor_line;
                 }
-                
                 editor_modified = true;
-                
-                // Auto-save
                 filesys_editfile(editor_filename, editor_content);
-                editor_modified = false; // Reset modified flag after saving
-                
+                editor_modified = false;
                 editor_draw();
             }
             return true;
             
         case ARROW_UP_KEY:
-            // Move cursor up one line
             if (editor_cursor_line > 0) {
                 editor_cursor_line--;
-                // Try to maintain column position
                 const char* line_start = get_line_start(editor_content, editor_cursor_line);
-                int line_length = get_line_length(line_start);
+                int line_length = len_line(line_start);
                 if (editor_cursor_col > line_length) {
                     editor_cursor_col = line_length;
                 }
-                editor_cursor_pos = line_col_to_cursor_pos(editor_cursor_line, editor_cursor_col);
-                
-                // Auto-scroll vertically to keep cursor visible
+                editor_cursor_pos = linecol2cursorpos(editor_cursor_line, editor_cursor_col);
                 if (editor_cursor_line < editor_scroll_line) {
                     editor_scroll_line = editor_cursor_line;
                 }
-                
                 editor_draw();
             }
             return true;
             
         case ARROW_DOWN_KEY:
-            // Move cursor down one line
             if (editor_cursor_line < count_lines(editor_content) - 1) {
                 editor_cursor_line++;
-                // Try to maintain column position
                 const char* line_start = get_line_start(editor_content, editor_cursor_line);
-                int line_length = get_line_length(line_start);
+                int line_length = len_line(line_start);
                 if (editor_cursor_col > line_length) {
                     editor_cursor_col = line_length;
                 }
-                editor_cursor_pos = line_col_to_cursor_pos(editor_cursor_line, editor_cursor_col);
-                
-                // Auto-scroll vertically to keep cursor visible
+                editor_cursor_pos = linecol2cursorpos(editor_cursor_line, editor_cursor_col);
                 if (editor_cursor_line >= editor_scroll_line + EDITOR_LINES_VISIBLE) {
                     editor_scroll_line = editor_cursor_line - EDITOR_LINES_VISIBLE + 1;
                 }
-                
                 editor_draw();
             }
             return true;
             
         case ARROW_LEFT_KEY:
-            // Move cursor left
             if (editor_cursor_col > 0) {
                 editor_cursor_col--;
-                editor_cursor_pos = line_col_to_cursor_pos(editor_cursor_line, editor_cursor_col);
+                editor_cursor_pos = linecol2cursorpos(editor_cursor_line, editor_cursor_col);
                 editor_draw();
             } else if (editor_cursor_line > 0) {
-                // Move to end of previous line
                 editor_cursor_line--;
                 const char* line_start = get_line_start(editor_content, editor_cursor_line);
-                editor_cursor_col = get_line_length(line_start);
-                editor_cursor_pos = line_col_to_cursor_pos(editor_cursor_line, editor_cursor_col);
-                
-                // Auto-scroll vertically to keep cursor visible
+                editor_cursor_col = len_line(line_start);
+                editor_cursor_pos = linecol2cursorpos(editor_cursor_line, editor_cursor_col);
                 if (editor_cursor_line < editor_scroll_line) {
                     editor_scroll_line = editor_cursor_line;
                 }
-                
                 editor_draw();
             }
             return true;
             
         case ARROW_RIGHT_KEY:
-            // Move cursor right
             {
                 const char* line_start = get_line_start(editor_content, editor_cursor_line);
-                int line_length = get_line_length(line_start);
-                
+                int line_length = len_line(line_start);
                 if (editor_cursor_col < line_length) {
                     editor_cursor_col++;
-                    editor_cursor_pos = line_col_to_cursor_pos(editor_cursor_line, editor_cursor_col);
+                    editor_cursor_pos = linecol2cursorpos(editor_cursor_line, editor_cursor_col);
                     editor_draw();
                 } else if (editor_cursor_line < count_lines(editor_content) - 1) {
-                    // Move to beginning of next line
                     editor_cursor_line++;
                     editor_cursor_col = 0;
-                    editor_cursor_pos = line_col_to_cursor_pos(editor_cursor_line, editor_cursor_col);
-                    
-                    // Auto-scroll vertically to keep cursor visible
+                    editor_cursor_pos = linecol2cursorpos(editor_cursor_line, editor_cursor_col);
                     if (editor_cursor_line >= editor_scroll_line + EDITOR_LINES_VISIBLE) {
                         editor_scroll_line = editor_cursor_line - EDITOR_LINES_VISIBLE + 1;
                     }
-                    
                     editor_draw();
                 }
             }
             return true;
             
         default:
-            // Handle regular character input
-            if (key >= 32 && key <= 126) { // Printable ASCII characters
+            if (key >= 32 && key <= 126) {
                 if (strlen(editor_content) < MAX_CONTENT - 1) {
-                    // Insert the character without line length restriction
-                    // Let the display wrapping handle long lines
                     for (int i = strlen(editor_content); i >= editor_cursor_pos; i--) {
                         editor_content[i + 1] = editor_content[i];
                     }
                     editor_content[editor_cursor_pos] = key;
                     editor_cursor_pos++;
-                    cursor_pos_to_line_col(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
-                    
-                    // Auto-scroll vertically to keep cursor visible
+                    cursorpos2linecol(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
                     if (editor_cursor_line >= editor_scroll_line + EDITOR_LINES_VISIBLE) {
                         editor_scroll_line = editor_cursor_line - EDITOR_LINES_VISIBLE + 1;
                     }
-                    
                     editor_modified = true;
-                    
-                    // Auto-save
                     filesys_editfile(editor_filename, editor_content);
-                    editor_modified = false; // Reset modified flag after saving
-                    
+                    editor_modified = false;
                     editor_draw();
                 }
                 return true;
@@ -665,14 +542,13 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
 }
 
 /**
- * Handle mouse clicks in file explorer
+ * handle mouse clicks
  */
-static bool explorer_handle_mouse_click(int mouse_x, int mouse_y) {
+static bool explorer_handle_click(int mouse_x, int mouse_y) {
+    // yes its this again...
     if (!explorer_active || dialog_active) {
         return false;
     }
-    
-    // File display area starts at position (30, 40) with 70-pixel spacing
     int start_x = 30;
     int start_y = 40;
     int item_spacing_x = 70;  
@@ -681,46 +557,39 @@ static bool explorer_handle_mouse_click(int mouse_x, int mouse_y) {
     int item_height = 40;
     int items_per_row = 4;
     
-    // Calculate total items including ".." if not at root
+
     int total_items = cwd->folder.childCount;
     if (cwd != root) total_items++; // Account for ".." folder
     
-    // Check if click is within the file display area bounds
+
     if (mouse_x < start_x || mouse_y < start_y) {
         return false;
     }
     
-    // Calculate which row and column was clicked
     int click_col = (mouse_x - start_x) / item_spacing_x;
     int click_row = (mouse_y - start_y) / item_spacing_y;
     
-    // Ensure click is within valid column bounds
     if (click_col >= items_per_row) {
         return false;
     }
     
-    // Calculate the selection index
     int clicked_selection = click_row * items_per_row + click_col;
     
-    // Check if the selection is within valid bounds
     if (clicked_selection >= total_items) {
         return false;
     }
     
-    // Check if click is within the actual item boundaries
     int item_x = start_x + (click_col * item_spacing_x);
     int item_y = start_y + (click_row * item_spacing_y);
     
     if (mouse_x >= item_x && mouse_x < item_x + item_width &&
         mouse_y >= item_y && mouse_y < item_y + item_height) {
         
-        // Valid click on an item
         int previous_selection = current_selection;
         current_selection = clicked_selection;
         
-        // Redraw if selection changed
         if (previous_selection != current_selection) {
-            gui_draw_filesplorer();
+            draw_filesplorer();
         }
         
         return true;
@@ -730,7 +599,7 @@ static bool explorer_handle_mouse_click(int mouse_x, int mouse_y) {
 }
 
 /**
- * Handle mouse input for file explorer
+ * handle mouse input for file explorer
  */
 bool explorer_handle_mouse() {
     static bool last_left_state = false;
@@ -744,20 +613,16 @@ bool explorer_handle_mouse() {
         return false;
     }
     
-    // Scale mouse coordinates to VGA mode 13h (320x200)
+
     int mouse_x = (mouse->x_position * SCREEN_WIDTH) / 640;
     int mouse_y = (mouse->y_position * SCREEN_HEIGHT) / 480;
     
-    // Check for left mouse button click
     if (mouse->left_button) {
-        // Prevent multiple triggers by checking if this is a new click
         if (!last_left_state) {
-            // New click detected
             last_left_state = true;
-            return explorer_handle_mouse_click(mouse_x, mouse_y);
+            return explorer_handle_click(mouse_x, mouse_y);
         }
     } else {
-        // Reset click state when button is released
         last_left_state = false;
     }
     

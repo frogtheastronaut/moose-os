@@ -21,7 +21,9 @@
 
 // externs
 extern void editor_open(const char* filename);
-extern void gui_draw_filesplorer();
+extern void draw_filesplorer();
+extern void draw_cursor(void);
+extern void gui_clearmouse(void);
 
 // interns (badum tsss)
 #define SCREEN_WIDTH 320
@@ -69,7 +71,7 @@ extern bool dialog_active;
 extern char dialog_input[129];
 extern int dialog_input_pos;
 extern int dialog_type;
-extern void gui_draw_dialog(const char* title, const char* prompt);
+extern void draw_dialog(const char* title, const char* prompt);
 extern bool explorer_active;
 extern bool editor_active;
 extern bool terminal_active;
@@ -93,14 +95,14 @@ static bool dock_handle_mouse_click(int mouse_x, int mouse_y);
 /**
  * draw file explorer
  */
-static void draw_window_border() {
-    gui_draw_window_box(WINDOW_X, WINDOW_Y, WINDOW_WIDTH, WINDOW_HEIGHT, 
+static void draw_windowborder() {
+    draw_windowbox(WINDOW_X, WINDOW_Y, WINDOW_WIDTH, WINDOW_HEIGHT, 
                        VGA_COLOR_BLACK,
                        VGA_COLOR_WHITE,
                        VGA_COLOR_LIGHT_GREY);
     
-    gui_draw_title_bar(WINDOW_X, WINDOW_Y, WINDOW_WIDTH, 15, VGA_COLOR_BLUE);
-    gui_draw_text(WINDOW_X + 5, WINDOW_Y + 3, "Welcome to MooseOS", VGA_COLOR_WHITE);
+    draw_title(WINDOW_X, WINDOW_Y, WINDOW_WIDTH, 15, VGA_COLOR_BLUE);
+    draw_text(WINDOW_X + 5, WINDOW_Y + 3, "Welcome to MooseOS", VGA_COLOR_WHITE);
 }
 
 /**
@@ -122,16 +124,13 @@ static void dock_draw_icon(int x, int y, uint8_t bg_color, int app_index) {
             icon_bitmap = file_icon;
             break;
     }
-    
-    // Optimized drawing - use fewer pixel operations
     for (int row = 0; row < 16; row++) {
         for (int col = 0; col < 16; col++) {
             uint8_t pixel = icon_bitmap[row][col];
             
-            // Skip transparent pixels when background matches to save operations
             if (pixel == 0) {
                 if (bg_color == WINDOW_BACKGROUND) {
-                    continue; // Skip setting pixel if it's already the right color
+                    continue;
                 }
                 gui_set_pixel(x + col, y + row, bg_color);
             } else {
@@ -148,7 +147,7 @@ static void dock_draw_app(int app_index, const char* filename, int x, int y) {
     bool is_selected = (app_index == selected_app);
     
     // selection area
-    int text_width = gui_text_width(filename);
+    int text_width = get_textwidth(filename);
     // commented out uses text width for selection_width
     // int selection_width = (text_width > ICON_SIZE) ? text_width : ICON_SIZE;
     int selection_width = 70;
@@ -161,7 +160,7 @@ static void dock_draw_app(int app_index, const char* filename, int x, int y) {
     // selection background
     if (is_selected) {
         // im blue
-        gui_draw_rect(selection_x - 2, selection_y - 2, selection_width + 4, selection_height + 4, SELECTION_COLOR);
+        draw_rect(selection_x - 2, selection_y - 2, selection_width + 4, selection_height + 4, SELECTION_COLOR);
     }
     
     // icon has correct bg
@@ -175,7 +174,7 @@ static void dock_draw_app(int app_index, const char* filename, int x, int y) {
     int text_y = y + ICON_SIZE + 2;
     
     uint8_t text_color = is_selected ? SELECTION_TEXT_COLOR : FILE_TEXT_COLOR;
-    gui_draw_text(text_x, text_y, filename, text_color);
+    draw_text(text_x, text_y, filename, text_color);
 }
 
 /**
@@ -197,13 +196,13 @@ static void dock_draw_apps() {
 }
 
 /**
- * time displaydsdf - optimized for performance
+ * time displaydsdf
  */
-static void dock_draw_time() {
+static void draw_time() {
     static rtc_time last_time = {0};
     
     // get current time
-    rtc_time current_time = rtc_get_time();
+    rtc_time current_time = rtc_gettime();
     
     // Only redraw if seconds actually changed to reduce unnecessary redraws
     if (current_time.seconds == last_time.seconds && 
@@ -277,21 +276,21 @@ static void dock_draw_time() {
     int status_bar_y = WINDOW_Y + WINDOW_HEIGHT - status_bar_height - 8;
     
     // bar background
-    gui_draw_rect(status_bar_x, status_bar_y, status_bar_width, status_bar_height, VGA_COLOR_LIGHT_GREY);
-    gui_draw_hline(status_bar_x, status_bar_x + status_bar_width - 1, status_bar_y, VGA_COLOR_DARK_GREY);
+    draw_rect(status_bar_x, status_bar_y, status_bar_width, status_bar_height, VGA_COLOR_LIGHT_GREY);
+    draw_line_hrzt(status_bar_x, status_bar_x + status_bar_width - 1, status_bar_y, VGA_COLOR_DARK_GREY);
     
     // text
-    gui_draw_text(status_bar_x + 5, status_bar_y + 3, time_str, VGA_COLOR_BLACK);
+    draw_text(status_bar_x + 5, status_bar_y + 3, time_str, VGA_COLOR_BLACK);
 }
 
 /*
     force dock redraw
 */
-static void dock_draw_time_forced() {
+static void draw_time_forced() {
     static rtc_time last_time = {0};
     
     // get current time
-    rtc_time current_time = rtc_get_time();
+    rtc_time current_time = rtc_gettime();
 
     
     last_time = current_time;
@@ -356,11 +355,11 @@ static void dock_draw_time_forced() {
     int status_bar_y = WINDOW_Y + WINDOW_HEIGHT - status_bar_height - 8;
     
     // bar background
-    gui_draw_rect(status_bar_x, status_bar_y, status_bar_width, status_bar_height, VGA_COLOR_LIGHT_GREY);
-    gui_draw_hline(status_bar_x, status_bar_x + status_bar_width - 1, status_bar_y, VGA_COLOR_DARK_GREY);
+    draw_rect(status_bar_x, status_bar_y, status_bar_width, status_bar_height, VGA_COLOR_LIGHT_GREY);
+    draw_line_hrzt(status_bar_x, status_bar_x + status_bar_width - 1, status_bar_y, VGA_COLOR_DARK_GREY);
     
     // text
-    gui_draw_text(status_bar_x + 5, status_bar_y + 3, time_str, VGA_COLOR_BLACK);
+    draw_text(status_bar_x + 5, status_bar_y + 3, time_str, VGA_COLOR_BLACK);
 }
 
 /**
@@ -368,10 +367,10 @@ static void dock_draw_time_forced() {
  */
 static void dock_draw_window() {
     // clear screen
-    gui_clear_screen(VGA_COLOR_LIGHT_GREY);
+    gui_clear(VGA_COLOR_LIGHT_GREY);
     
     // draw window
-    draw_window_border();
+    draw_windowborder();
     
     // draw files
     dock_draw_apps();
@@ -379,38 +378,28 @@ static void dock_draw_window() {
     // reset time cache
     last_time_str[0] = '\0';
     // draw time
-    dock_draw_time();
+    draw_time();
 }
 
 /**
- * Main function to draw the complete file explorer style dock
+ * draws dock
  */
-void gui_draw_dock() {
-    // Clear any cursor artifacts when drawing dock
-    extern void gui_clear_mouse_cursor(void);
-    gui_clear_mouse_cursor();
+void draw_dock() {
+    // just the usual
     
-    // Initialize VGA if needed
+    gui_clearmouse();
     gui_init();
     
-    // Reset time cache for full redraw
     last_time_str[0] = '\0';
-    
-    // Draw the complete interface
     dock_draw_window();
-    
-    // Always update time display
-    dock_draw_time();
-    
-    // Set dock as active
+    draw_time();
     dialog_active = false;
     explorer_active = false;
     editor_active = false;
-    
-    // Ensure mouse cursor is redrawn after all dock elements (but not during dialogs)
+    terminal_active = false;
     if (!dialog_active) {
-        extern void gui_force_cursor_redraw(void);
-        gui_force_cursor_redraw();
+        
+        draw_cursor();
     }
 }
 
@@ -418,36 +407,33 @@ void gui_draw_dock() {
  * Handle mouse clicks on dock apps
  */
 static bool dock_handle_mouse_click(int mouse_x, int mouse_y) {
-    // Only handle clicks when dock is active and no dialog is open
     if (!dock_is_active()) {
         return false;
     }
     
-    // Calculate app positions same as in dock_draw_apps()
     int start_x = FILE_AREA_X + 20;
     int start_y = FILE_AREA_Y;
     
-    // Define click areas for each app (icon + text area)
-    int app_positions[4][4]; // [app_index][x, y, width, height]
+    int app_positions[4][4];
     
-    // App 0: File Explorer
+    // file explorer
     app_positions[0][0] = start_x - 35;  // x (centered around icon)
     app_positions[0][1] = start_y - 2;   // y
     app_positions[0][2] = 70;            // width
     app_positions[0][3] = 32;            // height (icon + text)
     
-    // App 1: Text Editor  
+    // text editor
     app_positions[1][0] = start_x + FILE_SPACING_X - 35;
     app_positions[1][1] = start_y - 2;
     app_positions[1][2] = 70;
     app_positions[1][3] = 32;
-    
-    // App 2: Terminal
+
+    // terminal
     app_positions[2][0] = start_x + FILE_SPACING_X * 2 - 35;
     app_positions[2][1] = start_y - 2;
     app_positions[2][2] = 70;
     app_positions[2][3] = 32;
-    // Check if click is within any app area
+    // check for clicks
     for (int i = 0; i < total_apps; i++) {
         int x = app_positions[i][0];
         int y = app_positions[i][1];
@@ -456,17 +442,14 @@ static bool dock_handle_mouse_click(int mouse_x, int mouse_y) {
         
         if (mouse_x >= x && mouse_x < x + w && 
             mouse_y >= y && mouse_y < y + h) {
-            // Click detected on app i
             int previous_selection = selected_app;
             selected_app = i;
             
-            // Redraw if selection changed
             if (previous_selection != selected_app) {
-                gui_draw_dock();
-                dock_draw_time_forced(); // Force time redraw
+                draw_dock();
+                draw_time_forced(); 
             }
             
-            // Launch the selected app
             launch_selected_app();
             return true;
         }
@@ -479,30 +462,25 @@ static bool dock_handle_mouse_click(int mouse_x, int mouse_y) {
  * launch selected app
  */
 static void launch_selected_app() {
-    // Clear cursor artifacts before launching any application
-    extern void gui_clear_mouse_cursor(void);
-    gui_clear_mouse_cursor();
+    
+    gui_clearmouse();
     
     switch (selected_app) {
         case 0:
-            // Launch File Explorer
             explorer_active = true;
             editor_active = false;
-            gui_draw_filesplorer();
+            draw_filesplorer();
             break;
             
         case 1:
-            // Launch Text Editor - show dialog to get filename
             dialog_active = true;
             dialog_type = DIALOG_TYPE_NEW_FILE;
             dialog_input[0] = '\0';
             dialog_input_pos = 0;
-            gui_draw_dialog("New File", "Enter filename:");
-            // Don't force cursor redraw during dialog - let dialog handle it
+            draw_dialog("New File", "Enter filename:");
             break;
             
         case 2:
-            // Launch Terminal
             terminal_active = true;
             explorer_active = false;
             editor_active = false;
@@ -521,7 +499,6 @@ static void launch_selected_app() {
 bool dock_handle_key(unsigned char key, char scancode) {
     if (dialog_active && dialog_type == DIALOG_TYPE_NEW_FILE) {
         if (scancode == ENTER_KEY_CODE) {
-            // user pressed Enter - create file and open editor
             dialog_active = false;
             dock_mkopen_file();
             dialog_input[0] = '\0';
@@ -529,19 +506,16 @@ bool dock_handle_key(unsigned char key, char scancode) {
             return true;
         } 
         else if (scancode == ESC_KEY_CODE) {
-            // user pressed Esc - cancel and return to dock
             dialog_active = false;
             dialog_input[0] = '\0';
             dialog_input_pos = 0;
-            gui_draw_dock();
+            draw_dock();
             return true;
         }
         else if (scancode == BS_KEY_CODE) {
-            // backspace - delete character and shift remaining text left
             if (dialog_input_pos > 0) {
                 dialog_input_pos--;
                 
-                // Shift characters to the left to fill the gap
                 int input_len = 0;
                 while (input_len < 128 && dialog_input[input_len] != '\0') {
                     input_len++;
@@ -551,8 +525,7 @@ bool dock_handle_key(unsigned char key, char scancode) {
                     dialog_input[i] = dialog_input[i + 1];
                 }
                 
-                gui_draw_dialog("New File", "Enter filename:");
-                // Don't force cursor redraw during dialog - let dialog handle it
+                draw_dialog("New File", "Enter filename:");
             }
             return true;
         }
@@ -560,7 +533,7 @@ bool dock_handle_key(unsigned char key, char scancode) {
             // left arrow - move cursor left
             if (dialog_input_pos > 0) {
                 dialog_input_pos--;
-                gui_draw_dialog("New File", "Enter filename:");
+                draw_dialog("New File", "Enter filename:");
             }
             return true;
         }
@@ -572,7 +545,7 @@ bool dock_handle_key(unsigned char key, char scancode) {
             }
             if (dialog_input_pos < input_len) {
                 dialog_input_pos++;
-                gui_draw_dialog("New File", "Enter filename:");
+                draw_dialog("New File", "Enter filename:");
             }
             return true;
         }
@@ -584,17 +557,14 @@ bool dock_handle_key(unsigned char key, char scancode) {
             }
             
             if (input_len < 128) {
-                // Shift characters to the right to make room for the new character
                 for (int i = input_len; i > dialog_input_pos; i--) {
                     dialog_input[i] = dialog_input[i - 1];
                 }
                 
-                // Insert the new character
                 dialog_input[dialog_input_pos] = key;
                 dialog_input_pos++;
                 dialog_input[input_len + 1] = '\0';
-                gui_draw_dialog("New File", "Enter filename:");
-                // Don't force cursor redraw during dialog - let dialog handle it
+                draw_dialog("New File", "Enter filename:");
             }
             return true;
         }
@@ -642,19 +612,17 @@ bool dock_handle_key(unsigned char key, char scancode) {
             break;
             
         case ENTER_KEY_CODE:
-            // Launch selected application
+            // launch application
             launch_selected_app();
             return true;
             
         default:
-            // Don't redraw for every key - only for specific keys that matter
             return false;
     }
     
-    // Only redraw if selection actually changed
     if (previous_selection != selected_app) {
-        gui_draw_dock();  // Full redraw only when selection changed
-        dock_draw_time_forced();
+        draw_dock();  // redraw
+        draw_time_forced();
     }
     
     return true;
@@ -665,7 +633,7 @@ bool dock_handle_key(unsigned char key, char scancode) {
  */
 void dock_init() {
     selected_app = 0;
-    gui_draw_dock();
+    draw_dock();
 }
 
 /**
@@ -679,16 +647,15 @@ bool dock_is_active() {
  * go back to dock
  */
 void dock_return() {
-    // Clear any cursor artifacts when returning to dock
-    extern void gui_clear_mouse_cursor(void);
-    gui_clear_mouse_cursor();
+    
+    gui_clearmouse();
     
     explorer_active = false;
     editor_active = false;
     terminal_active = false;
     dialog_active = false;
     selected_app = 0;
-    gui_draw_dock();
+    draw_dock();
 }
 
 /**
@@ -698,7 +665,7 @@ void dock_set_selection(int app_index) {
     if (app_index >= 0 && app_index < total_apps) {
         selected_app = app_index;
         if (dock_is_active()) {
-            gui_draw_dock();
+            draw_dock();
         }
     }
 }
@@ -723,7 +690,7 @@ void dock_mkopen_file() {
         editor_open(dialog_input);
     } else {
         // no filename, go back!!
-        gui_draw_dock();
+        draw_dock();
     }
 }
 
@@ -742,20 +709,17 @@ bool dock_handle_mouse() {
         return false;
     }
     
-    // Scale mouse coordinates to VGA mode 13h (320x200)
     int mouse_x = (mouse->x_position * SCREEN_WIDTH) / 640;
     int mouse_y = (mouse->y_position * SCREEN_HEIGHT) / 480;
     
-    // Check for left mouse button click
     if (mouse->left_button) {
-        // Prevent multiple triggers by checking if this is a new click
         if (!last_left_state) {
-            // New click detected
+            // click detected
             last_left_state = true;
             return dock_handle_mouse_click(mouse_x, mouse_y);
         }
     } else {
-        // Reset click state when button is released
+        // reset state when released
         last_left_state = false;
     }
     
@@ -763,26 +727,23 @@ bool dock_handle_mouse() {
 }
 
 /**
- * update time - ULTRA OPTIMIZED for maximum performance
+ * update time
  */
 void dock_update_time() {
     static uint32_t last_time_update = 0;
     static uint32_t last_mouse_recovery = 0;
     
-    // MAXIMUM PERFORMANCE: Update time very infrequently
     #define TIME_UPDATE_FREQUENCY 2000
     
     if (dock_is_active() && (ticks - last_time_update >= TIME_UPDATE_FREQUENCY)) {
-        dock_draw_time();
+        draw_time();
         last_time_update = ticks;
     }
     
-    // MOUSE FREEZE RECOVERY: Periodic check to ensure cursor visibility
-    if (ticks - last_mouse_recovery >= 500) { // Every 5 seconds - less frequent since main loop handles it
-        // Don't update cursor position when dialog is active
+    if (ticks - last_mouse_recovery >= 500) { 
         if (!dialog_active) {
-            extern void gui_update_mouse_cursor(void);
-            gui_update_mouse_cursor();
+            extern void gui_updatemouse(void);
+            gui_updatemouse();
         }
         last_mouse_recovery = ticks;
     }
