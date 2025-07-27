@@ -10,6 +10,19 @@ This is a hobby project of mine. Hopefully it can be of use to you.
 
 Enjoy!
 
+=====================================================================
+Changes since last release
+- Shift key support
+- Mouse Cursor
+- Removed Pong
+- Text Editor improved
+Oh yeah, and I turned it into an ISO.
+
+Current issues
+(I am trying my best to fix these issues)
+- Laggy
+    -  Lag is sometimes known to leave cursor artifacts.
+
 Current Features:
 - (Retro-themed) GUI
     VGA Graphics!
@@ -39,11 +52,7 @@ Current Features:
 Please see the README.md located in the bin/ directory.
 
 [How to build]
-To build this code on a Mac, you can run this:
-brew install i386-elf-binutils qemu nasm
-and then you can run
-make buildrun
-to build and run MooseOS.
+To be added
 
 
 
