@@ -38,7 +38,7 @@ typedef struct {
 } rtc_time;
 
 // read from RTC register
-uint8_t read_rtc_register(uint8_t reg) {
+uint8_t rtc_readregister(uint8_t reg) {
     outb(RTC_INDEX_PORT, reg);
     return inb(RTC_DATA_PORT);
 }
@@ -50,19 +50,19 @@ int rtc_is_updating(void) {
 }
 
 // get timne (its literally called that)
-rtc_time rtc_get_time(void) {
+rtc_time rtc_gettime(void) {
     rtc_time time;
     
     // wait for rtc to stop updating
     while (rtc_is_updating());
     
     // GET GET GET!!!
-    time.seconds = read_rtc_register(RTC_SECONDS);
-    time.minutes = read_rtc_register(RTC_MINUTES);
-    time.hours   = read_rtc_register(RTC_HOURS);
-    time.day     = read_rtc_register(RTC_DAY);
-    time.month   = read_rtc_register(RTC_MONTH);
-    time.year    = read_rtc_register(RTC_YEAR);
+    time.seconds = rtc_readregister(RTC_SECONDS);
+    time.minutes = rtc_readregister(RTC_MINUTES);
+    time.hours   = rtc_readregister(RTC_HOURS);
+    time.day     = rtc_readregister(RTC_DAY);
+    time.month   = rtc_readregister(RTC_MONTH);
+    time.year    = rtc_readregister(RTC_YEAR);
 
     int hours = (int)time.hours + timezone_offset;
 
@@ -145,6 +145,6 @@ void rtc_init(void) {
     sti();
     
     // verify rtc is working
-    rtc_time test_time = rtc_get_time();
+    rtc_time test_time = rtc_gettime();
 }
 

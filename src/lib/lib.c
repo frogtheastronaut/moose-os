@@ -7,6 +7,8 @@
 #include <stdint.h>
 
 #define MAX_NAME_LEN 128
+#define MAX_PARTS 10
+#define MAX_PART_LEN 32
 
 
 // don't worry, i don't get this either
@@ -85,19 +87,14 @@ size_t strlen(const char* str)
 	return len;
 }
 
-
-
-
-#define MAX_PARTS 10
-#define MAX_PART_LEN 32
 int split_string(const char *input, char delimiter, char output[MAX_PARTS][MAX_PART_LEN]) {
-    int part = 0;    // Index for output array
-    int i = 0;       // Index in input string
-    int j = 0;       // Index in current output part
+    int part = 0;   
+    int i = 0;      
+    int j = 0;       
 
     while (input[i] != '\0') {
         if (input[i] == delimiter) {
-            output[part][j] = '\0'; // Null-terminate the current string
+            output[part][j] = '\0'; // null terminate
             part++;
             if (part >= MAX_PARTS) break;
             j = 0;
@@ -110,55 +107,41 @@ int split_string(const char *input, char delimiter, char output[MAX_PARTS][MAX_P
         i++;
     }
 
-    output[part][j] = '\0'; // Null-terminate the last part
-    return part + 1; // Return number of parts found
+    output[part][j] = '\0'; // nulls terminates
+    return part + 1; // returns number of parts found
 }
 
-/**
- * Simple integer to string conversion function
- * 
- * @param num The integer to convert
- * @param buffer The output buffer
- * @param buffer_size Size of the buffer
- * @return The length of the resulting string
- */
-int int_to_str(int num, char* buffer, int buffer_size) {
-    // Handle edge cases
+int int2str(int num, char* buffer, int buffer_size) {
     if (buffer_size <= 1) {
         if (buffer_size == 1) buffer[0] = '\0';
         return 0;
     }
     
-    // Handle negative numbers
     int is_negative = 0;
     if (num < 0) {
         is_negative = 1;
         num = -num;
     }
     
-    // Find end of buffer for reverse writing
     int i = 0;
     
-    // Handle special case of 0
+
     if (num == 0) {
         buffer[i++] = '0';
     } else {
-        // Convert digits
         while (num > 0 && i < buffer_size - 1) {
             buffer[i++] = '0' + (num % 10);
             num /= 10;
         }
     }
     
-    // Add negative sign if needed
     if (is_negative && i < buffer_size - 1) {
         buffer[i++] = '-';
     }
     
-    // Null-terminate the string
     buffer[i] = '\0';
     
-    // Reverse the string
+    // reverse string
     int start = 0;
     int end = i - 1;
     while (start < end) {
@@ -172,107 +155,61 @@ int int_to_str(int num, char* buffer, int buffer_size) {
     return i;
 }
 
-/**
- * Concatenates source string to destination string
- * 
- * @param dest The destination string
- * @param src The source string to append to dest
- * @return Pointer to the destination string
- */
 char* strcat(char* dest, const char* src) {
-    // Find the end of the destination string
     int dest_len = 0;
     while (dest[dest_len] != '\0') {
         dest_len++;
     }
     
-    // Copy the source string to the end of the destination string
     int i = 0;
     while (src[i] != '\0') {
         dest[dest_len + i] = src[i];
         i++;
     }
     
-    // Null-terminate the concatenated string
     dest[dest_len + i] = '\0';
     
     return dest;
 }
 
-/**
- * Read a byte from an I/O port
- * 
- * @param port The port number to read from
- * @return The byte value read from the port
- */
 uint8_t inb(uint16_t port) {
     uint8_t result;
     asm volatile("inb %1, %0" : "=a"(result) : "Nd"(port));
     return result;
 }
 
-/**
- * Write a byte to an I/O port
- * 
- * @param port The port number to write to
- * @param data The byte value to write to the port
- */
 void outb(uint16_t port, uint8_t data) {
     asm volatile("outb %0, %1" : : "a"(data), "Nd"(port));
 }
 
-/**
- * Disable interrupts
- */
 void cli(void) {
     asm volatile("cli");
 }
 
-/**
- * Enable interrupts
- */
 void sti(void) {
     asm volatile("sti");
 }
 
-/**
- * Strip leading whitespace from a string
- */
-static const char* strip_leading_spaces(const char* str) {
-    while (*str == ' ' || *str == '\t') {
-        str++;
-    }
-    return str;
-}
-
-/**
- * Strip leading and trailing whitespace from a string
- * Returns a pointer to a static buffer with the trimmed string
- */
 const char* strip_whitespace(const char* str) {
     static char trimmed[MAX_NAME_LEN];
     int start = 0;
     int end;
     int len = strlen(str);
     
-    // Find first non-whitespace character
     while (start < len && (str[start] == ' ' || str[start] == '\t')) {
         start++;
     }
     
-    // If string is all whitespace
     if (start >= len) {
         trimmed[0] = '\0';
         return trimmed;
     }
     
-    // Find last non-whitespace character
     end = len - 1;
     while (end >= start && (str[end] == ' ' || str[end] == '\t')) {
         end--;
     }
     
-    // Copy trimmed string
     int i;
     for (i = 0; i <= end - start; i++) {
         trimmed[i] = str[start + i];

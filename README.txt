@@ -31,8 +31,6 @@ Current Features:
         time (get date and time) 
         and settimezone (change the time zone, eg. settimezone 10 to set timezone to UTC+10). 
     Press Esc to exit.
-- Pong (game)
-    W and S to move, you win after getting 11 points. Press Esc to exit, and Space to pause the game.
 - Date and Time
     UTC time is shown by default. Use the terminal settimezone command to set your timezone.
     The time is always shown in the dock.
