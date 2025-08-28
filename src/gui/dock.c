@@ -35,10 +35,6 @@ extern void draw_cursor(void);
 extern void gui_clearmouse(void);
 
 // interns (badum tsss)
-#define SCREEN_WIDTH 320
-#define SCREEN_HEIGHT 200
-
-
 #define WINDOW_WIDTH SCREEN_WIDTH    
 #define WINDOW_HEIGHT SCREEN_HEIGHT   
 #define WINDOW_X 0
@@ -106,8 +102,8 @@ static bool dock_handle_mouse_click(int mouse_x, int mouse_y);
  */
 static void draw_windowborder() {
     draw_windowbox(WINDOW_X, WINDOW_Y, WINDOW_WIDTH, WINDOW_HEIGHT, 
-                       VGA_COLOR_BLACK,
-                       VGA_COLOR_WHITE,
+                       VGA_COLOR_LIGHT_GREY,
+                       VGA_COLOR_LIGHT_GREY,
                        VGA_COLOR_LIGHT_GREY);
     
     draw_title(WINDOW_X, WINDOW_Y, WINDOW_WIDTH, 15, VGA_COLOR_BLUE);

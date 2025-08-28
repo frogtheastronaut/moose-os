@@ -35,11 +35,11 @@ extern void dock_return(void);
 #define TERMINAL_X 0
 #define TERMINAL_Y 0
 
-// display area
-#define TERM_AREA_X (TERMINAL_X + 8)
-#define TERM_AREA_Y (TERMINAL_Y + 28)
-#define TERM_AREA_WIDTH (TERMINAL_WIDTH - 16)
-#define TERM_AREA_HEIGHT (TERMINAL_HEIGHT - 36)
+// display area - full screen without title bar
+#define TERM_AREA_X 0
+#define TERM_AREA_Y 0  
+#define TERM_AREA_WIDTH TERMINAL_WIDTH
+#define TERM_AREA_HEIGHT TERMINAL_HEIGHT
 
 // colors
 #define TERM_BG_COLOR VGA_COLOR_BLACK
@@ -56,7 +56,6 @@ static char command_buffer[MAX_COMMAND_LEN + 1] = "";
 static int command_pos = 0;
 static char terminal_lines[MAX_LINES][CHARS_PER_LINE + 1];
 static int current_line = 0;
-static int scroll_offset = 0;
 static bool terminal_active = false;
 
 // more externs. 
@@ -68,12 +67,11 @@ extern File* cwd;
 
 extern void draw_cursor(void);
 
-void terminal_init() {
+void clear_terminal() {
     for (int i = 0; i < MAX_LINES; i++) {
         terminal_lines[i][0] = '\0';
     }
     current_line = 0;
-    scroll_offset = 0;
     command_buffer[0] = '\0';
     command_pos = 0;
 }
@@ -146,7 +144,6 @@ static void term_exec_cmd(const char* cmd) {
     // help
     if (strEqual(cmd, "help")) {
         terminal_print("Welcome to the MooseOS Terminal");
-        terminal_print("help - Show this help");
         terminal_print("ls - List files");
         terminal_print("cd <dir> - Change directory");
         terminal_print("mkdir <name> - Create directory");
@@ -271,7 +268,7 @@ static void term_exec_cmd(const char* cmd) {
     }
     // clear term
     else if (strEqual(cmd, "clear")) {
-        terminal_init();
+        clear_terminal();
     }
     // show time/date
     else if (strEqual(cmd, "time")) {
@@ -392,12 +389,8 @@ static void term_exec_cmd(const char* cmd) {
  */
 static void terminal_draw_win() {
     gui_clear(VGA_COLOR_LIGHT_GREY);
-    draw_windowbox(TERMINAL_X, TERMINAL_Y, TERMINAL_WIDTH, TERMINAL_HEIGHT,
-                       VGA_COLOR_BLACK, VGA_COLOR_WHITE, VGA_COLOR_LIGHT_GREY);
-    draw_title(TERMINAL_X, TERMINAL_Y, TERMINAL_WIDTH, 15, VGA_COLOR_BLUE);
-    draw_text(TERMINAL_X + 5, TERMINAL_Y + 3, "MooseOS Terminal", VGA_COLOR_WHITE);
+    // Full screen terminal - no window box or title bar
     draw_rect(TERM_AREA_X, TERM_AREA_Y, TERM_AREA_WIDTH, TERM_AREA_HEIGHT, TERM_BG_COLOR);
-    draw_rectoutline(TERM_AREA_X - 1, TERM_AREA_Y - 1, TERM_AREA_WIDTH + 2, TERM_AREA_HEIGHT + 2, VGA_COLOR_DARK_GREY);
 }
 
 /**
@@ -486,9 +479,10 @@ bool term_handlekey(unsigned char key, char scancode) {
  * init
  */
 void term_init() {
-    terminal_init();
+    clear_terminal();
     terminal_print("Welcome to MooseOS Terminal");
     terminal_print("Type 'help' for available commands");
+    terminal_print("Press [ESC] to exit");
 }
 
 /**

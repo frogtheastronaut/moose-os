@@ -8,7 +8,6 @@
 #include "include/dock.h"
 #include "../kernel/include/mouse.h"
 
-
 extern void draw_cursor(void);
 
 /**
@@ -19,8 +18,8 @@ void draw_filesplorer() {
     gui_clear(VGA_COLOR_LIGHT_GREY);
     
     draw_windowbox(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 
-                       VGA_COLOR_BLACK,
-                       VGA_COLOR_WHITE,
+                       VGA_COLOR_LIGHT_GREY,
+                       VGA_COLOR_LIGHT_GREY,
                        VGA_COLOR_LIGHT_GREY);
     
     // title bar
@@ -94,10 +93,7 @@ void draw_filesplorer() {
         }
     }
     
-    // bottom status bar
-    draw_rect(10, 175, 300, 15, VGA_COLOR_DARK_GREY);
-    
-    // item count
+    // item count - no background rectangle, just black text at bottom
     char count_str[16]; 
     int2str(cwd->folder.childCount, count_str, sizeof(count_str));
     
@@ -110,7 +106,7 @@ void draw_filesplorer() {
         strcat(status_text, " items");
     }
     
-    draw_text(15, 185, status_text, VGA_COLOR_WHITE);
+    draw_text(15, SCREEN_HEIGHT - 15, status_text, VGA_COLOR_BLACK); // Bottom of screen with black text
     // set explorer as active
     explorer_active = true;
     

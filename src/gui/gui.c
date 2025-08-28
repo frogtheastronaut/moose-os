@@ -20,7 +20,6 @@ typedef unsigned short uint16_t;
 typedef short int16_t;
 
 static uint8_t* vga_buffer = (uint8_t*)0xA0000;
-#define EDITOR_MAX_CHARS_PER_LINE 40  // Increased for full screen
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 200
 
@@ -32,11 +31,6 @@ extern bool explorer_active;
 char dialog_input[MAX_DIALOG_INPUT_LEN + 1] = "";
 int dialog_input_pos = 0;
 int dialog_type = 0;
-
-int path_scroll_offset = 0;
-uint32_t last_scroll_time = 0;
-#define SCROLL_DELAY 15
-#define PATH_MAX_WIDTH 160
 
 bool editor_active = false;
 char editor_content[MAX_CONTENT] = "";
