@@ -3,8 +3,10 @@
     Copyright 2025 Ethan Zhang, All rights reserved.
 */
 
-#include <stdint.h>
 #include "../lib/lib.h"
+
+typedef unsigned short uint16_t;
+typedef short int16_t;
 
 // some ports
 #define RTC_INDEX_PORT 0x70

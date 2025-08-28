@@ -1,3 +1,4 @@
+
 /*
     Moose Operating System
     Copyright 2025 Ethan Zhang, All rights reserved.
@@ -11,11 +12,19 @@
 #include "../lib/lib.h"
 #include "../time/rtc.h"
 
+#ifndef __cplusplus
+#ifndef bool
+#define bool _Bool
+#define true 1
+#define false 0
+#endif
+#endif
+
 // externs
 extern void copyStr(char* dest, const char* src);
 extern int strEqual(const char* a, const char* b);
 extern int msnprintf(char *buffer, int size, const char *format, ...);
-extern size_t strlen(const char* str);
+
 extern char* strcat(char* dest, const char* src);
 extern const char* strip_whitespace(const char* str);
 extern void dock_return(void); 

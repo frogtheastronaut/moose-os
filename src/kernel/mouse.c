@@ -156,6 +156,12 @@ void mouse_handler_main(void) {
                 mouse_state.y_movement |= 0xFFFFFF00;
             }
 
+            #define MAX_MOUSE_SPEED 5
+            if (mouse_state.x_movement > MAX_MOUSE_SPEED) mouse_state.x_movement = MAX_MOUSE_SPEED;
+            if (mouse_state.x_movement < -MAX_MOUSE_SPEED) mouse_state.x_movement = -MAX_MOUSE_SPEED;
+            if (mouse_state.y_movement > MAX_MOUSE_SPEED) mouse_state.y_movement = MAX_MOUSE_SPEED;
+            if (mouse_state.y_movement < -MAX_MOUSE_SPEED) mouse_state.y_movement = -MAX_MOUSE_SPEED;
+
             // update position
             mouse_state.x_position += mouse_state.x_movement;
             mouse_state.y_position -= mouse_state.y_movement; // Y is inverted
@@ -170,6 +176,7 @@ void mouse_handler_main(void) {
             extern volatile uint32_t ticks;
             extern void gui_updatemouse(void);
             
+            // Update cursor every few ticks for more stable movement
             if (ticks - last_cursor_update >= 1) {
                 gui_updatemouse();
                 last_cursor_update = ticks;

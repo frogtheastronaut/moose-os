@@ -1,11 +1,11 @@
+
 /*
     Moose Operating System
     Copyright 2025 Ethan Zhang, All rights reserved.
 */
 
 // lots and lots of includes
-#include <stdint.h>
-#include <stddef.h>
+
 #include "../kernel/include/vga.h"
 #include "../kernel/include/mouse.h"
 #include "../kernel/include/task.h"
@@ -18,6 +18,15 @@
 #include "../time/rtc.h"
 
 // defines
+#ifndef __cplusplus
+#ifndef bool
+#define bool _Bool
+#define true 1
+#define false 0
+#endif
+#endif
+typedef unsigned short uint16_t;
+typedef short int16_t;
 
 // externs
 extern void editor_open(const char* filename);

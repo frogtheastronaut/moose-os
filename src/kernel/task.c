@@ -1,6 +1,6 @@
 // includes
-#include <stddef.h>
-#include <stdint.h>
+typedef unsigned short uint16_t;
+typedef short int16_t;
 
 // defs
 #define MAX_TASKS 8
@@ -73,7 +73,7 @@ int task_create(void (*entry)(void)) {
     tasks[id].entry = entry;
     tasks[id].state = TASK_READY;
     uint32_t* stack_top = (uint32_t*)(tasks[id].stack + STACK_SIZE);
-    *(--stack_top) = (uint32_t)entry; 
+    *(--stack_top) = (uint32_t)(uintptr_t)entry; 
     for (int i = 0; i < 4; ++i) *(--stack_top) = 0;
     tasks[id].stack_ptr = stack_top;
     return id;

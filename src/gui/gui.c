@@ -1,5 +1,3 @@
-#include <stdint.h>
-#include <stddef.h>
 #include "../kernel/include/vga.h"
 #include "include/images.h"
 #include "include/fontdef.h"
@@ -8,6 +6,18 @@
 #include "../kernel/include/keyboard.h" 
 #include "../lib/lib.h"
 #include "../kernel/include/mouse.h"
+
+#ifndef __cplusplus
+#ifndef bool
+#define bool _Bool
+#define true 1
+#define false 0
+#endif
+#endif
+
+
+typedef unsigned short uint16_t;
+typedef short int16_t;
 
 static uint8_t* vga_buffer = (uint8_t*)0xA0000;
 #define EDITOR_MAX_CHARS_PER_LINE 35 
@@ -46,8 +56,6 @@ bool editor_modified = false;
 
 static int last_mouse_x = -1;
 static int last_mouse_y = -1;
-static uint8_t cursor_backup[8][8];
-static bool cursor_backup_valid = false;
 
 void update_mouse(void);
 void gui_updatemouse(void);
@@ -593,7 +601,20 @@ int linecol2cursorpos(int line, int col) {
     return pos;
 }
 
+// Cursor tracking structure
+typedef struct {
+    int x, y;
+    uint8_t original_color;
+    bool is_modified;
+} cursor_pixel_t;
+
+static cursor_pixel_t cursor_pixels[64]; // Max 8x8 = 64 pixels
+static int num_cursor_pixels = 0;
+
 void draw_mouse(int x, int y) {
+    // Clear previous pixel tracking
+    num_cursor_pixels = 0;
+    
     for (int j = 0; j < 8; j++) {
         for (int i = 0; i < 8; i++) {
             int screen_x = x + i;
@@ -601,70 +622,35 @@ void draw_mouse(int x, int y) {
             if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
                 screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
                 uint8_t pattern = cursor_icon[j][i];
-                if (pattern == 1) {
-                    vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOR_BLACK;
-                } else if (pattern == 2) {
-                    vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOR_WHITE;
+                // Only draw and track non-transparent pixels
+                if (pattern == 1 || pattern == 2) {
+                    // Save original pixel
+                    cursor_pixels[num_cursor_pixels].x = screen_x;
+                    cursor_pixels[num_cursor_pixels].y = screen_y;
+                    cursor_pixels[num_cursor_pixels].original_color = vga_buffer[screen_y * SCREEN_WIDTH + screen_x];
+                    cursor_pixels[num_cursor_pixels].is_modified = true;
+                    num_cursor_pixels++;
+                    
+                    // Draw cursor pixel
+                    if (pattern == 1) {
+                        vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOR_BLACK;
+                    } else if (pattern == 2) {
+                        vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOR_WHITE;
+                    }
                 }
-                
             }
         }
     }
 }
 
-void save_cursor_bkg(int x, int y) {
-    if (x < 0 || y < 0) return;
-    
-    
-    cursor_backup_valid = false;
-    
-    for (int j = 0; j < 8; j++) {
-        for (int i = 0; i < 8; i++) {
-            int screen_x = x + i;
-            int screen_y = y + j;
-            if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
-                screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
-                cursor_backup[j][i] = vga_buffer[screen_y * SCREEN_WIDTH + screen_x];
-            } else {
-                cursor_backup[j][i] = VGA_COLOR_LIGHT_GREY; 
-            }
+void restore_cursor_pixels(void) {
+    // Restore only the pixels that were actually modified
+    for (int i = 0; i < num_cursor_pixels; i++) {
+        if (cursor_pixels[i].is_modified) {
+            vga_buffer[cursor_pixels[i].y * SCREEN_WIDTH + cursor_pixels[i].x] = cursor_pixels[i].original_color;
         }
     }
-    cursor_backup_valid = true;
-}
-
-void restore_cursor_bkg(int x, int y) {
-    if (x < 0 || y < 0 || !cursor_backup_valid) return;
-    
-    for (int j = 0; j < 8; j++) {
-        for (int i = 0; i < 8; i++) {
-            int screen_x = x + i;
-            int screen_y = y + j;
-            if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
-                screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
-                vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = cursor_backup[j][i];
-            }
-        }
-    }
-    
-    
-    cursor_backup_valid = false;
-}
-
-void clear_cursor_area(int x, int y) {
-    if (x < 0 || y < 0) return; 
-    for (int j = 0; j < 10; j++) {
-        for (int i = 0; i < 10; i++) {
-            int screen_x = x + i;
-            int screen_y = y + j;
-            if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
-                screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
-                
-                
-                vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOR_LIGHT_GREY;
-            }
-        }
-    }
+    num_cursor_pixels = 0;
 }
 
 void update_mouse(void) {
@@ -683,55 +669,42 @@ void update_mouse(void) {
     mouse_state_t* mouse = get_mouse_state();
     if (!mouse) return;
     
-    
+    // Convert mouse coordinates to screen coordinates with proper bounds checking
     int cursor_x = (mouse->x_position * SCREEN_WIDTH) / 640;
     int cursor_y = (mouse->y_position * SCREEN_HEIGHT) / 480;
     
-    
+    // Ensure cursor stays completely within screen bounds (account for 8x8 cursor size)
     if (cursor_x < 0) cursor_x = 0;
     if (cursor_x > SCREEN_WIDTH - 8) cursor_x = SCREEN_WIDTH - 8;
     if (cursor_y < 0) cursor_y = 0;
     if (cursor_y > SCREEN_HEIGHT - 8) cursor_y = SCREEN_HEIGHT - 8;
     
-    
+    // Only update if cursor actually moved
     if (cursor_x != last_mouse_x || cursor_y != last_mouse_y) {
         
-        if (last_mouse_x >= 0 && last_mouse_y >= 0 && cursor_backup_valid) {
-            restore_cursor_bkg(last_mouse_x, last_mouse_y);
-            cursor_backup_valid = false; 
+        // Restore pixels from previous cursor position
+        if (last_mouse_x >= 0 && last_mouse_y >= 0) {
+            restore_cursor_pixels();
         }
         
-        
-        
-        int dx = cursor_x - last_mouse_x;
-        int dy = cursor_y - last_mouse_y;
-        if (dx < 0) dx = -dx;
-        if (dy < 0) dy = -dy;
-        
-        if ((dx > 15 || dy > 15) && last_mouse_x >= 0 && last_mouse_y >= 0) {
-            
-            cursor_backup_valid = false;
-        }
-        
-        
-        save_cursor_bkg(cursor_x, cursor_y);
+        // Draw cursor at new position (this will save the pixels automatically)
         draw_mouse(cursor_x, cursor_y);
         
+        // Update position tracking
         last_mouse_x = cursor_x;
         last_mouse_y = cursor_y;
     }
 }
 
 void gui_clearmouse(void) {
-    
-    if (last_mouse_x >= 0 && last_mouse_y >= 0 && cursor_backup_valid) {
-        restore_cursor_bkg(last_mouse_x, last_mouse_y);
+    // Restore any cursor pixels that are currently drawn
+    if (last_mouse_x >= 0 && last_mouse_y >= 0) {
+        restore_cursor_pixels();
     }
     
-    
+    // Reset position tracking
     last_mouse_x = -1;
     last_mouse_y = -1;
-    cursor_backup_valid = false;
 }
 
 void gui_updatemouse(void) {
@@ -749,7 +722,6 @@ void draw_cursor(void) {
     if (dialog_active) {
         return;
     }
-    cursor_backup_valid = false;
     last_mouse_x = -1;
     last_mouse_y = -1;
     update_mouse();

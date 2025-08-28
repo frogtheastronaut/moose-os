@@ -3,8 +3,8 @@
     Copyright 2025 Ethan Zhang, All rights reserved.
 */
 
-#include <stdio.h>
-#include <stdint.h>
+
+#include "lib.h"
 
 #define MAX_NAME_LEN 128
 #define MAX_PARTS 10
@@ -39,6 +39,23 @@ int strEqual(const char* a, const char* b) {
     return a[i] == b[i];
 }
 // snprintf but its mine HAHAHAHA
+#include <stddef.h>
+#ifndef MOOSEOS_TYPES_H
+#define MOOSEOS_TYPES_H
+
+#ifndef __cplusplus
+#ifndef bool
+#define bool _Bool
+#define true 1
+#define false 0
+#endif
+#endif
+#include <stddef.h>
+typedef unsigned short uint16_t;
+typedef short int16_t;
+
+#endif // MOOSEOS_TYPES_H
+
 int msnprintf(char *buffer, int size, const char *format, ...) {
     va_list args;
     va_start(args, format);

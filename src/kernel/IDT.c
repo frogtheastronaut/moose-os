@@ -73,13 +73,13 @@ void gdt_encode(int num, unsigned long base, unsigned long limit, unsigned char 
 // init gdt
 void gdt_init() {
     gdt_ptr.limit = (sizeof(struct GDT_entry) * 3) - 1;
-    gdt_ptr.base = (unsigned int)&GDT;
+    gdt_ptr.base = (unsigned int)(uintptr_t)&GDT;
 
     gdt_encode(0, 0, 0, 0, 0);                // Null 
     gdt_encode(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); // Code 
     gdt_encode(2, 0, 0xFFFFFFFF, 0x92, 0xCF); // Data
 
-    load_gdt((unsigned int)&gdt_ptr);
+    load_gdt((unsigned int)(uintptr_t)&gdt_ptr);
 }
 
 // init, innit?

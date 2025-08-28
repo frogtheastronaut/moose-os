@@ -1,3 +1,4 @@
+
 /*
     Moose Operating System & SimpleM
     Copyright 2025 Ethan Zhang, All rights reserved.
@@ -6,17 +7,27 @@
 	Nevertheless, I will keep it for reference.
 */
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdio.h>
+
+
 #include "include/vga.h"
 #include "../lib/lib.h"
+
+#ifndef __cplusplus
+#ifndef bool
+#define bool _Bool
+#define true 1
+#define false 0
+#endif
+#endif
+
+typedef unsigned short uint16_t;
+typedef short int16_t;
 
 #define VGA_WIDTH   80
 #define VGA_HEIGHT  25
 #define VGA_MEMORY  0xB8000 
+
+
 
 size_t terminal_row;
 size_t terminal_column;
