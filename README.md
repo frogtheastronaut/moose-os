@@ -31,7 +31,7 @@ Oh yeah, and I turned it into an ISO.
 
 - *(Retro-themed) GUI*\
 VGA Graphics!
-- *Keyboard support*\
+- *Keyboard support*
 - *File Explorer*\
 Press 'D' in the file explorer to make a folder, and press 'F' to make a file.
 Press 'Enter' to open a file/folder, and use arrow keys to change selection. Press Esc to exit.
@@ -39,8 +39,15 @@ Press 'Enter' to open a file/folder, and use arrow keys to change selection. Pre
 The Text Editor auto saves your work, so just enter the file name in the dialog, and press
 Esc when you want to exit.
 - *Terminal*\
-Terminal commands are:\ `ls` (list directory),\ `cd` (change directory),\ `mkdir` (make directory),\ `touch` (make file), \
-`cat` (read file),\ `clear` (clear terminal),\ `time` (get date and time) and\ `settimezone` (change the time zone, eg. `settimezone 10` to set timezone to UTC+10). Press Esc to exit.
+Terminal commands are: \
+`ls` (list directory),\
+`cd` (change directory),\
+`mkdir` (make directory),\
+`touch` (make file), \
+`cat` (read file),\
+`clear` (clear terminal),\
+`time` (get date and time) and\
+`settimezone` (change the time zone, eg. `settimezone 10` to set timezone to UTC+10). Press Esc to exit.
 - *Date and Time*\
 UTC time is shown by default. Use the terminal `settimezone` command to set your timezone.
 The time is always shown in the dock.
@@ -51,8 +58,4 @@ Please see the README.md located in the bin/ directory.
 
 ## How to build
 
-To be added. 
-
-
-
-
+To be added. For now, just run the project.
