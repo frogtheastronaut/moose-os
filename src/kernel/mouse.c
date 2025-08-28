@@ -1,9 +1,7 @@
 /*
-    MooseOS Mouse Support
+    MooseOS Mouse
     Copyright 2025 Ethan Zhang
 */
-
-
 typedef struct {
     unsigned char left_button;
     unsigned char right_button;
@@ -164,7 +162,7 @@ void mouse_handler_main(void) {
 
             // update position
             mouse_state.x_position += mouse_state.x_movement;
-            mouse_state.y_position -= mouse_state.y_movement; // Y is inverted
+            mouse_state.y_position -= mouse_state.y_movement;
 
             // keep mouse within bounds
             if (mouse_state.x_position < 0) mouse_state.x_position = 0;
@@ -176,7 +174,6 @@ void mouse_handler_main(void) {
             extern volatile uint32_t ticks;
             extern void gui_updatemouse(void);
             
-            // Update cursor every few ticks for more stable movement
             if (ticks - last_cursor_update >= 1) {
                 gui_updatemouse();
                 last_cursor_update = ticks;

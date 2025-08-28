@@ -20,7 +20,7 @@ typedef unsigned short uint16_t;
 typedef short int16_t;
 
 static uint8_t* vga_buffer = (uint8_t*)0xA0000;
-#define EDITOR_MAX_CHARS_PER_LINE 35 
+#define EDITOR_MAX_CHARS_PER_LINE 40  // Increased for full screen
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 200
 
@@ -47,12 +47,13 @@ int editor_cursor_line = 0;
 int editor_cursor_col = 0;
 bool editor_modified = false;
 
-#define EDITOR_LINES_VISIBLE 15
+#define EDITOR_LINES_VISIBLE 14  // Full screen minus title and status bar
 #define EDITOR_LINE_HEIGHT 12
 #define EDITOR_CHAR_WIDTH 8
-#define EDITOR_START_X 15
-#define EDITOR_START_Y 40
-#define EDITOR_WIDTH 290
+#define EDITOR_START_X 0
+#define EDITOR_START_Y 20
+#define EDITOR_WIDTH SCREEN_WIDTH
+#define EDITOR_LINE_NUM_WIDTH 45  // Proportional line number area
 
 static int last_mouse_x = -1;
 static int last_mouse_y = -1;
@@ -570,9 +571,17 @@ int len_line(const char* line_start) {
 }
 
 void cursorpos2linecol(int pos, int* line, int* col) {
+    *line = 0;  // Reset to 0
+    *col = 0;   // Reset to 0
+    
+    // Bounds check
+    if (pos < 0) pos = 0;
+    if (pos > strlen(editor_content)) pos = strlen(editor_content);
+    
     for (int i = 0; i < pos && editor_content[i]; i++) {
         if (editor_content[i] == '\n') {
             (*line)++;
+            *col = 0;  // Reset column on new line
         } else {
             (*col)++;
         }
@@ -583,7 +592,11 @@ int linecol2cursorpos(int line, int col) {
     int pos = 0;
     int current_line = 0;
     
+    // Bounds check
+    if (line < 0) line = 0;
+    if (col < 0) col = 0;
     
+    // Find the start of the target line
     while (current_line < line && editor_content[pos]) {
         if (editor_content[pos] == '\n') {
             current_line++;
@@ -591,7 +604,7 @@ int linecol2cursorpos(int line, int col) {
         pos++;
     }
     
-    
+    // Move to the target column within the line
     int current_col = 0;
     while (current_col < col && editor_content[pos] && editor_content[pos] != '\n') {
         pos++;
@@ -608,11 +621,10 @@ typedef struct {
     bool is_modified;
 } cursor_pixel_t;
 
-static cursor_pixel_t cursor_pixels[64]; // Max 8x8 = 64 pixels
+static cursor_pixel_t cursor_pixels[64];
 static int num_cursor_pixels = 0;
 
 void draw_mouse(int x, int y) {
-    // Clear previous pixel tracking
     num_cursor_pixels = 0;
     
     for (int j = 0; j < 8; j++) {
@@ -644,7 +656,6 @@ void draw_mouse(int x, int y) {
 }
 
 void restore_cursor_pixels(void) {
-    // Restore only the pixels that were actually modified
     for (int i = 0; i < num_cursor_pixels; i++) {
         if (cursor_pixels[i].is_modified) {
             vga_buffer[cursor_pixels[i].y * SCREEN_WIDTH + cursor_pixels[i].x] = cursor_pixels[i].original_color;
@@ -669,40 +680,35 @@ void update_mouse(void) {
     mouse_state_t* mouse = get_mouse_state();
     if (!mouse) return;
     
-    // Convert mouse coordinates to screen coordinates with proper bounds checking
     int cursor_x = (mouse->x_position * SCREEN_WIDTH) / 640;
     int cursor_y = (mouse->y_position * SCREEN_HEIGHT) / 480;
     
-    // Ensure cursor stays completely within screen bounds (account for 8x8 cursor size)
     if (cursor_x < 0) cursor_x = 0;
     if (cursor_x > SCREEN_WIDTH - 8) cursor_x = SCREEN_WIDTH - 8;
     if (cursor_y < 0) cursor_y = 0;
     if (cursor_y > SCREEN_HEIGHT - 8) cursor_y = SCREEN_HEIGHT - 8;
     
-    // Only update if cursor actually moved
+    // only update if moved
     if (cursor_x != last_mouse_x || cursor_y != last_mouse_y) {
         
-        // Restore pixels from previous cursor position
         if (last_mouse_x >= 0 && last_mouse_y >= 0) {
             restore_cursor_pixels();
         }
         
-        // Draw cursor at new position (this will save the pixels automatically)
+        // draw cursor at new pos
         draw_mouse(cursor_x, cursor_y);
         
-        // Update position tracking
+        // update position
         last_mouse_x = cursor_x;
         last_mouse_y = cursor_y;
     }
 }
 
 void gui_clearmouse(void) {
-    // Restore any cursor pixels that are currently drawn
     if (last_mouse_x >= 0 && last_mouse_y >= 0) {
         restore_cursor_pixels();
     }
     
-    // Reset position tracking
     last_mouse_x = -1;
     last_mouse_y = -1;
 }

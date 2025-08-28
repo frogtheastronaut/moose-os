@@ -18,15 +18,15 @@ void draw_filesplorer() {
     gui_init();
     gui_clear(VGA_COLOR_LIGHT_GREY);
     
-    draw_windowbox(10, 10, 300, 180, 
+    draw_windowbox(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 
                        VGA_COLOR_BLACK,
                        VGA_COLOR_WHITE,
                        VGA_COLOR_LIGHT_GREY);
     
     // title bar
-    draw_title(10, 10, 300, 15, VGA_COLOR_BLUE);
+    draw_title(0, 0, SCREEN_WIDTH, 20, VGA_COLOR_BLUE);
     char path_text[64] = "File Explorer - ";
-    draw_text(15, 13, path_text, VGA_COLOR_WHITE);
+    draw_text(10, 6, path_text, VGA_COLOR_WHITE);
     
     // display cwd
     char full_path[128] = "";
@@ -53,27 +53,27 @@ void draw_filesplorer() {
         copyStr(full_path, temp);
     }
     
-    int path_x = 15 + get_textwidth(path_text);
-    int available_width = 300 - path_x - 10; 
-    draw_text_scroll(path_x, 13, full_path, available_width, VGA_COLOR_WHITE, VGA_COLOR_BLUE);
+    int path_x = 10 + get_textwidth(path_text);
+    int available_width = SCREEN_WIDTH - path_x - 10; 
+    draw_text_scroll(path_x, 6, full_path, available_width, VGA_COLOR_WHITE, VGA_COLOR_BLUE);
     
-    int x_pos = 30;
-    int y_pos = 40;
+    int x_pos = 20;
+    int y_pos = 30;
     int displayed_count = 0; 
     
     if (cwd != root) {
         draw_file(x_pos, y_pos, "..", 1, current_selection == 0);
-        x_pos += 70;
+        x_pos += 70; // Back to original spacing for 4 items per row
         displayed_count++;
         
-        if (displayed_count % 4 == 0) {
-            x_pos = 30;
+        if (displayed_count % 4 == 0) { // 4 items per row
+            x_pos = 20;
             y_pos += 40;
         }
     }
     
     // draw files and folders
-    for (int i = 0; i < cwd->folder.childCount && displayed_count < 12; i++) {
+    for (int i = 0; i < cwd->folder.childCount && displayed_count < 16; i++) { // 4 rows of 4 items each
         File* child = cwd->folder.children[i];
 
         int selection_index = i;
@@ -85,11 +85,11 @@ void draw_filesplorer() {
                         (child->type == FOLDER_NODE), 
                         current_selection == selection_index);
         
-        x_pos += 70; 
+        x_pos += 70; // Back to original spacing for 4 items per row
         displayed_count++;
         
-        if (displayed_count % 4 == 0) {
-            x_pos = 30;
+        if (displayed_count % 4 == 0) { // 4 items per row
+            x_pos = 20;
             y_pos += 40;
         }
     }
@@ -110,7 +110,7 @@ void draw_filesplorer() {
         strcat(status_text, " items");
     }
     
-    draw_text(15, 178, status_text, VGA_COLOR_WHITE);
+    draw_text(15, 185, status_text, VGA_COLOR_WHITE);
     // set explorer as active
     explorer_active = true;
     
@@ -267,7 +267,7 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
     
     if (!explorer_active) return false;
     
-    int items_per_row = 4;
+    int items_per_row = 4; // 4 items per row for proper spacing
     int total_items = cwd->folder.childCount;
     if (cwd != root) total_items++; // Account for ".." folder
     
@@ -555,7 +555,7 @@ static bool explorer_handle_click(int mouse_x, int mouse_y) {
     int item_spacing_y = 40;
     int item_width = 60;
     int item_height = 40;
-    int items_per_row = 4;
+    int items_per_row = 4; // 4 items per row for proper spacing
     
 
     int total_items = cwd->folder.childCount;

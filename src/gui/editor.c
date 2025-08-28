@@ -29,15 +29,15 @@ void editor_draw() {
     draw_text_scroll(filename_x, 6, editor_filename, max_filename_width, VGA_COLOR_WHITE, VGA_COLOR_BLUE);
 
     
-    // draw numbers
-    draw_rect(10, 40, 25, 150, VGA_COLOR_LIGHT_GREY);
-    draw_line_vert(35, 40, 190, VGA_COLOR_DARK_GREY);
+    // draw numbers area (line numbers) - proportional to screen width
+    draw_rect(0, 20, EDITOR_LINE_NUM_WIDTH, SCREEN_HEIGHT - 20, VGA_COLOR_LIGHT_GREY);
+    draw_line_vert(EDITOR_LINE_NUM_WIDTH, 20, SCREEN_HEIGHT, VGA_COLOR_DARK_GREY);
     
     // draw content with scrolling
     int y_pos = EDITOR_START_Y + 5;
-    int max_lines = EDITOR_LINES_VISIBLE - 3;  
+    int max_lines = EDITOR_LINES_VISIBLE;  // Use full screen capacity
     int total_lines = count_lines(editor_content);
-    int editor_width = EDITOR_WIDTH - 50; 
+    int editor_width = EDITOR_WIDTH - EDITOR_LINE_NUM_WIDTH - 10; // Full width minus line numbers and padding 
     
 
     if (editor_scroll_line >= total_lines) {
@@ -60,12 +60,12 @@ void editor_draw() {
             // draw line number
             char line_num[8];
             int2str(line + 1, line_num, sizeof(line_num));
-            draw_text(12, y_pos, line_num, VGA_COLOR_DARK_GREY);
+            draw_text(10, y_pos, line_num, VGA_COLOR_DARK_GREY);
             
             // draw cursor if it's on this empty line
             if (line == editor_cursor_line && editor_cursor_col == 0) {
-                int cursor_x = EDITOR_START_X + 25;
-                draw_line_vert(cursor_x, y_pos, y_pos + 8, VGA_COLOR_BLACK);
+                int cursor_x = EDITOR_LINE_NUM_WIDTH + 5; // Start after line numbers
+                draw_line_vert(cursor_x, y_pos, y_pos + 8, VGA_COLOR_BLUE);
             }
             
             y_pos += EDITOR_LINE_HEIGHT;
@@ -80,7 +80,7 @@ void editor_draw() {
             if (line_start_col == 0) {
                 char line_num[8];
                 int2str(line + 1, line_num, sizeof(line_num));
-                draw_text(12, y_pos, line_num, VGA_COLOR_DARK_GREY);
+                draw_text(10, y_pos, line_num, VGA_COLOR_DARK_GREY);
             }
             
             int chars_that_fit = 0;
@@ -111,30 +111,34 @@ void editor_draw() {
             }
             line_buffer[chars_to_draw] = '\0';
             
-            // draw line content
-            draw_text(EDITOR_START_X + 25, y_pos, line_buffer, VGA_COLOR_BLACK);
+            // draw line content - start after line numbers
+            draw_text(EDITOR_LINE_NUM_WIDTH + 5, y_pos, line_buffer, VGA_COLOR_BLACK);
             
             // draw cursor if it's on this line segment
             if (line == editor_cursor_line) {
-                int cursor_x = EDITOR_START_X + 25;
-                bool draw_cursor = false;
+                int cursor_x = EDITOR_LINE_NUM_WIDTH + 5; // Start after line numbers
                 
+                // Check if cursor should be drawn in this line segment
+                // Use < instead of <= to avoid cursor duplication at wrap boundaries
                 if (editor_cursor_col >= line_start_col && 
-                    editor_cursor_col <= line_start_col + chars_that_fit) {
+                    editor_cursor_col < line_start_col + chars_that_fit) {
                     int cursor_col_in_segment = editor_cursor_col - line_start_col;
                     
-                    if (cursor_col_in_segment > chars_to_draw) {
-                        cursor_col_in_segment = chars_to_draw;
-                    }
-                    
-                    for (int i = 0; i < cursor_col_in_segment; i++) {
+                    // Calculate cursor position using proper character widths
+                    for (int i = 0; i < cursor_col_in_segment && i < chars_to_draw; i++) {
                         cursor_x += char_widths[(unsigned char)line_buffer[i]] + 1;
                     }
-                    draw_cursor = true;
+                    
+                    draw_line_vert(cursor_x, y_pos, y_pos + 8, VGA_COLOR_BLUE);
                 }
-                
-                if (draw_cursor) {
-                    draw_line_vert(cursor_x, y_pos, y_pos + 8, VGA_COLOR_BLACK);
+                // Special case: cursor at the very end of the line (not a wrap)
+                else if (editor_cursor_col == line_start_col + chars_that_fit && 
+                         line_start_col + chars_that_fit >= line_length) {
+                    // Only draw if this is truly the end of the line content
+                    for (int i = 0; i < chars_to_draw; i++) {
+                        cursor_x += char_widths[(unsigned char)line_buffer[i]] + 1;
+                    }
+                    draw_line_vert(cursor_x, y_pos, y_pos + 8, VGA_COLOR_BLUE);
                 }
             }
             
@@ -166,7 +170,7 @@ void editor_draw() {
     strcat(status, ", Col: ");
     strcat(status, col_str);
     
-    draw_text(5, 192, status, VGA_COLOR_WHITE);
+    draw_text(5, SCREEN_HEIGHT - 8, status, VGA_COLOR_WHITE); // Bottom of screen
 }
 
 
@@ -217,7 +221,7 @@ void editor_open(const char* filename) {
  */
 int calculate_cursor_screen_line() {
     int screen_line = 0;
-    int editor_width = EDITOR_WIDTH - 50;
+    int editor_width = EDITOR_WIDTH - EDITOR_LINE_NUM_WIDTH - 10; // Proportional width
     
     for (int line = 0; line < editor_cursor_line; line++) {
         const char* line_start = get_line_start(editor_content, line);
@@ -296,7 +300,7 @@ int calculate_cursor_screen_line() {
 int calculate_total_screen_lines() {
     int screen_lines = 0;
     int total_lines = count_lines(editor_content);
-    int editor_width = EDITOR_WIDTH - 50; 
+    int editor_width = EDITOR_WIDTH - EDITOR_LINE_NUM_WIDTH - 10; // Proportional width
     
     for (int line = 0; line < total_lines; line++) {
         const char* line_start = get_line_start(editor_content, line);
@@ -338,11 +342,16 @@ int calculate_total_screen_lines() {
  * ensure cursor is visible
  */
 void editor_ensure_cvis() {
-    int max_lines = EDITOR_LINES_VISIBLE - 3;  
+    // Don't scroll if we're at the very beginning
+    if (editor_cursor_line == 0 && editor_cursor_col == 0 && editor_scroll_line == 0) {
+        return;
+    }
+    
+    int max_lines = EDITOR_LINES_VISIBLE; // Use full screen capacity
     int cursor_screen_line = calculate_cursor_screen_line();
     
     int scroll_screen_line = 0;
-    int editor_width = EDITOR_WIDTH - 50;
+    int editor_width = EDITOR_WIDTH - EDITOR_LINE_NUM_WIDTH - 10; // Proportional width
     
     for (int line = 0; line < editor_scroll_line; line++) {
         const char* line_start = get_line_start(editor_content, line);

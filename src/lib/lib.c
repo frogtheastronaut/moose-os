@@ -40,21 +40,8 @@ int strEqual(const char* a, const char* b) {
 }
 // snprintf but its mine HAHAHAHA
 #include <stddef.h>
-#ifndef MOOSEOS_TYPES_H
-#define MOOSEOS_TYPES_H
-
-#ifndef __cplusplus
-#ifndef bool
-#define bool _Bool
-#define true 1
-#define false 0
-#endif
-#endif
-#include <stddef.h>
 typedef unsigned short uint16_t;
 typedef short int16_t;
-
-#endif // MOOSEOS_TYPES_H
 
 int msnprintf(char *buffer, int size, const char *format, ...) {
     va_list args;

@@ -39,10 +39,10 @@ extern void gui_clearmouse(void);
 #define SCREEN_HEIGHT 200
 
 
-#define WINDOW_WIDTH 300    
-#define WINDOW_HEIGHT 180   
-#define WINDOW_X ((SCREEN_WIDTH - WINDOW_WIDTH) / 2)
-#define WINDOW_Y ((SCREEN_HEIGHT - WINDOW_HEIGHT) / 2)
+#define WINDOW_WIDTH SCREEN_WIDTH    
+#define WINDOW_HEIGHT SCREEN_HEIGHT   
+#define WINDOW_X 0
+#define WINDOW_Y 0
 
 // title bar height lmao
 #define TITLE_BAR_HEIGHT 20

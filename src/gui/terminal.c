@@ -30,10 +30,10 @@ extern const char* strip_whitespace(const char* str);
 extern void dock_return(void); 
 
 // defs
-#define TERMINAL_WIDTH 300
-#define TERMINAL_HEIGHT 180
-#define TERMINAL_X ((SCREEN_WIDTH - TERMINAL_WIDTH) / 2)
-#define TERMINAL_Y ((SCREEN_HEIGHT - TERMINAL_HEIGHT) / 2)
+#define TERMINAL_WIDTH SCREEN_WIDTH
+#define TERMINAL_HEIGHT SCREEN_HEIGHT
+#define TERMINAL_X 0
+#define TERMINAL_Y 0
 
 // display area
 #define TERM_AREA_X (TERMINAL_X + 8)
