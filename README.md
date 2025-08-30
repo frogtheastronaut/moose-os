@@ -1,61 +1,79 @@
-# The MOOSE Operating System
+# Project Title
 
-![MOOSE Logo](./resources/MOOSE%20logo.png)
+![Moose Logo](resources/MOOSE%20logo.png)
+MOOSE is a 80s-style operating system, currently designed to run on virtual machines.
 
-## Welcome
+## Getting Started
 
-Hi, welcome to the MOOSE OS project!
-MOOSE stands for 'Making Our Operating System Exist'.
-This project has a few features, and I am adding more.
+As of writing, these instructions assume you are running MacOS with Homebrew installed. Feel free to adjust these commands so they can work on your Operating System. We are using Linux binutils, so Linux users can skip some of the prequisites.
 
-This is a hobby project of mine. Hopefully it can be of use to you.
+### Prerequisites
 
-Enjoy! - Ethan Z
+Please install Homebrew, then install the following dependencies.
 
-## Changes since last release
+First, ap NativeOS' i386 elf toolchain and install it. This is used to link and compile the project.
 
-- Shift key support
-- Mouse Cursor
-- Removed Pong
-- Text Editor improved\
-Oh yeah, and I turned it into an ISO.
+```shell
+brew tap nativeos/i386-elf-toolchain
+brew install nativeos/i386-elf-toolchain/i386-elf-binutils
+brew install nativeos/i386-elf-toolchain/i386-elf-gcc
+```
 
-## Current issues
+Next, install QEMU and NASM. QEMU is used to test the operating system in a virtual environment, and NASM is used to compile ASM files.
 
-(I am trying my best to fix these issues)
+Finally, install GRUB. We use GRUB to make the ISO.
 
-- Laggy
-  - Lag is sometimes known to crash.
+```shell
+brew install i686-elf-grub
+```
 
-## Current Features
+### Installing
 
-- *(Retro-themed) GUI*\
-VGA Graphics!
-- *Keyboard support*
-- *File Explorer*\
-Press 'D' in the file explorer to make a folder, and press 'F' to make a file.
-Press 'Enter' to open a file/folder, and use arrow keys to change selection. Press Esc to exit.
-- *Text Editor*\
-The Text Editor auto saves your work, so just enter the file name in the dialog, and press
-Esc when you want to exit.
-- *Terminal*\
-Terminal commands are: \
-`ls` (list directory),\
-`cd` (change directory),\
-`mkdir` (make directory),\
-`touch` (make file), \
-`cat` (read file),\
-`clear` (clear terminal),\
-`time` (get date and time) and\
-`settimezone` (change the time zone, eg. `settimezone 10` to set timezone to UTC+10). Press Esc to exit.
-- *Date and Time*\
-UTC time is shown by default. Use the terminal `settimezone` command to set your timezone.
-The time is always shown in the dock.
+Since MOOSE has not yet been tested on a real device, here are the steps to install MOOSE on QEMU. Again, these instructions are for MacOS. Please adjust for your Operating System.
 
-## How to run
+First, clone the repository.
 
-Please see the README.md located in the bin/ directory.
+```shell
+git clone https://github.com/frogtheastronaut/moose-os.git
+cd moose-os
+```
 
-## How to build
+Then, build the OS. This step is optional as there is most likely a pre-built binary in the bin/ directory. (MooseOS.iso)
 
-To be added. For now, just run the project.
+```shell
+make build-iso
+```
+
+Then lastly, you can run the ISO file.
+
+```shell
+make run-iso
+
+# Or, to run the ISO fullscreen
+make run-iso-fullscreen
+```
+
+Once it loads, select MOOSE, press Enter, and then MooseOS should load. You can move your cursor around, and type something to test the operating system.
+
+## Built With
+
+* [Make](https://www.gnu.org/software/make/) - Runs Makefiles.
+* [Homebrew](https://brew.sh/) - Install Dependencies
+
+## Contributing
+
+Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+
+## Versioning
+
+We use [SemVer](http://semver.org/) for versioning.
+
+## Authors
+
+* **Ethan Zhang** - *Initial work* - [frogtheastronaut](https://github.com/frogtheastronaut)
+
+We will add contributors once we get contribution.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE) file for details
