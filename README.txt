@@ -1,59 +1,95 @@
-The Moose Operating System
+Note: this is a .txt version of README.md. Please read that instead.
+====================
+MOOSE Operating System
+====================
 
-GITHUB LINK HERE: https://github.com/frogtheastronaut/moose-os (all other files found there)
-SOM LINK HERE: https://summer.hackclub.com/projects/555 (has Devlog and general project info)
-
-Hi, welcome to the MOOSE OS project!
-This project has a few features, and I am adding more.
-
-This is a hobby project of mine. Hopefully it can be of use to you.
-
-Enjoy!
-
-=====================================================================
-Changes since last release
-- Shift key support
-- Mouse Cursor
-- Removed Pong
-- Text Editor improved
-Oh yeah, and I turned it into an ISO.
-
-Current issues
-(I am trying my best to fix these issues)
-- Laggy
-    -  Lag is sometimes known to leave cursor artifacts.
-
-Current Features:
-- (Retro-themed) GUI
-    VGA Graphics!
-- Keyboard support
-- File Explorer
-    Press 'D' in the file explorer to make a folder, and press 'F' to make a file.
-    Press 'Enter' to open a file/folder, and use arrow keys to change selection. Press Esc to exit.
-- Text Editor
-    The Text Editor auto saves your work, so just enter the file name in the dialog, and press
-    Esc when you want to exit. 
-- Terminal
-    Terminal commands are: 
-        ls (list directory), 
-        cd (change directory), 
-        mkdir (make directory), 
-        touch (make file), 
-        cat (read file), 
-        clear (clear terminal), 
-        time (get date and time) 
-        and settimezone (change the time zone, eg. settimezone 10 to set timezone to UTC+10). 
-    Press Esc to exit.
-- Date and Time
-    UTC time is shown by default. Use the terminal settimezone command to set your timezone.
-    The time is always shown in the dock.
-
-[How to run]
-Please see the README.md located in the bin/ directory.
-
-[How to build]
-To be added
+MOOSE is a 80s-style operating system, currently designed to run on virtual machines.
 
 
+====================
+Getting Started
+====================
+
+As of writing, these instructions assume you are running MacOS with Homebrew installed. Feel free to adjust these commands so they can work on your Operating System. We are using Linux binutils, so Linux users can skip some of the prequisites.
 
 
+====================
+Prerequisites
+====================
+
+Please install Homebrew, then install the following dependencies.
+
+First, ap NativeOS' i386 elf toolchain and install it. This is used to link and compile the project.
+
+brew tap nativeos/i386-elf-toolchain
+brew install nativeos/i386-elf-toolchain/i386-elf-binutils
+brew install nativeos/i386-elf-toolchain/i386-elf-gcc
+
+Next, install QEMU and NASM. QEMU is used to test the operating system in a virtual environment, and NASM is used to compile ASM files.
+
+Finally, install GRUB. We use GRUB to make the ISO.
+
+brew install i686-elf-grub
+
+
+====================
+Installing
+====================
+
+Since MOOSE has not yet been tested on a real device, here are the steps to install MOOSE on QEMU. Again, these instructions are for MacOS. Please adjust for your Operating System.
+
+First, clone the repository.
+
+git clone https://github.com/frogtheastronaut/moose-os.git
+cd moose-os
+
+Then, build the OS. This step is optional as there is most likely a pre-built binary in the bin/ directory. (MooseOS.iso)
+
+make build-iso
+
+Then lastly, you can run the ISO file.
+
+make run-iso
+
+Or, to run the ISO fullscreen
+make run-iso-fullscreen
+
+Once it loads, select MOOSE, press Enter, and then MooseOS should load. You can move your cursor around, and type something to test the operating system.
+
+
+====================
+Built With
+====================
+
+- Make - Runs Makefiles.
+- Homebrew - Install Dependencies
+
+
+====================
+Contributing
+====================
+
+Please read CONTRIBUTING.md for details on our code of conduct, and the process for submitting pull requests to us.
+
+
+====================
+Versioning
+====================
+
+We use SemVer for versioning.
+
+
+====================
+Authors
+====================
+
+- Ethan Zhang - Initial work - frogtheastronaut
+
+We will add contributors once we get contribution.
+
+
+====================
+License
+====================
+
+This project is licensed under the MIT License - see the LICENSE file for details
