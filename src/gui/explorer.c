@@ -3,12 +3,7 @@
     Copyright 2025 Ethan Zhang, All rights reserved.
 */
 
-#include "include/gui.h"
-#include "include/editor.h"
-#include "include/dock.h"
-#include "../kernel/include/mouse.h"
-
-extern void draw_cursor(void);
+#include "include/explorer.h"
 
 /**
  * draws filesplorer

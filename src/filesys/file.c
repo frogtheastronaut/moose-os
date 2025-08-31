@@ -6,41 +6,7 @@
 */
 
 // Includes
-#include "../kernel/include/tty.h"
-#include "../lib/lib.h"
-
-// Definitions
-#define MAX_NAME_LEN 128
-#define MAX_CONTENT 4096
-#define MAX_CHILDREN 4096
-#define MAX_NODES 4096
-
-// Nodes can either be Files or Folders
-typedef enum {
-    FILE_NODE,
-    FOLDER_NODE
-} NodeType;
-
-// File contains:
-// Name ( @todo Remove limitations)
-// Its type (file/folder)
-// Its parent folder
-// Its content ( @todo Remove limitations)
-// Children, and childcount ( @todo Same as above)
-typedef struct File {
-    char name[MAX_NAME_LEN];
-    NodeType type;
-    struct File* parent;
-    union {
-        struct {
-            char content[MAX_CONTENT];
-        } file;
-        struct {
-            struct File* children[MAX_CHILDREN];
-            int childCount;
-        } folder;
-    };
-} File;
+#include "file.h"
 
 // This is the filesystem ( @todo Remove limitations)
 File filesys[MAX_NODES];

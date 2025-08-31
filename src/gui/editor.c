@@ -3,10 +3,7 @@
     Copyright 2025 Ethan Zhang, All rights reserved.
 */
 
-#include "include/gui.h"
-
-extern bool terminal_active;
-void editor_ensure_cvis();
+#include "include/editor.h"
 
 /**
  * draw editor

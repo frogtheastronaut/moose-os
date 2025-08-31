@@ -1,38 +1,13 @@
-#include "../kernel/include/vga.h"
-#include "include/images.h"
-#include "include/fontdef.h"
-#include "../kernel/include/keydef.h"
-#include "../filesys/file.h"
-#include "../kernel/include/keyboard.h" 
-#include "../lib/lib.h"
-#include "../kernel/include/mouse.h"
-
-#ifndef __cplusplus
-#ifndef bool
-#define bool _Bool
-#define true 1
-#define false 0
-#endif
-#endif
-
-
-typedef unsigned short uint16_t;
-typedef short int16_t;
+#include "include/gui.h"
 
 static uint8_t* vga_buffer = (uint8_t*)0xA0000;
-#define SCREEN_WIDTH 320
-#define SCREEN_HEIGHT 200
 
 int current_selection = 0;
 
-#define MAX_DIALOG_INPUT_LEN 128
-extern bool dialog_active;
-extern bool explorer_active;
 char dialog_input[MAX_DIALOG_INPUT_LEN + 1] = "";
 int dialog_input_pos = 0;
 int dialog_type = 0;
 
-bool editor_active = false;
 char editor_content[MAX_CONTENT] = "";
 char editor_filename[MAX_NAME_LEN] = "";
 int editor_cursor_pos = 0;
@@ -41,20 +16,8 @@ int editor_cursor_line = 0;
 int editor_cursor_col = 0;
 bool editor_modified = false;
 
-#define EDITOR_LINES_VISIBLE 14  // Full screen minus title and status bar
-#define EDITOR_LINE_HEIGHT 12
-#define EDITOR_CHAR_WIDTH 8
-#define EDITOR_START_X 0
-#define EDITOR_START_Y 20
-#define EDITOR_WIDTH SCREEN_WIDTH
-#define EDITOR_LINE_NUM_WIDTH 45  // Proportional line number area
-
 static int last_mouse_x = -1;
 static int last_mouse_y = -1;
-
-void update_mouse(void);
-void gui_updatemouse(void);
-void draw_cursor(void);
 
 void gui_set_pixel(int x, int y, uint8_t color) {
     if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT) {

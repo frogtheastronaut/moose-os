@@ -1,29 +1,4 @@
-// includes
-typedef unsigned short uint16_t;
-typedef short int16_t;
-
-// defs
-#define MAX_TASKS 8
-#define STACK_SIZE 4096
-
-// task states
-typedef enum {
-    TASK_READY,
-    TASK_RUNNING,
-    TASK_FINISHED
-} task_state;
-
-typedef struct {
-    uint32_t* stack_ptr;
-    void (*entry)(void);
-    task_state state;
-    uint8_t stack[STACK_SIZE];
-} task;
-
-void task_init();
-int task_create(void (*entry)(void));
-void task_yield();
-void task_schedule();
+#include "include/task.h"
 
 static task tasks[MAX_TASKS];
 static int current_task = -1;
@@ -39,9 +14,6 @@ void task_init() {
     current_task = -1;
     num_tasks = 0;
 }
-
-
-extern void task_switch(uint32_t **old_sp, uint32_t *new_sp);
 
 // it TICKS
 void task_tick() {

@@ -3,38 +3,13 @@
     Copyright 2025 Ethan Zhang, All rights reserved.
 */
 
-#include "include/tty.h"
-#include "include/keyboard.h"
-#include "../gui/include/gui.h"
-#include "../gui/include/dock.h"
-#include "../gui/include/terminal.h"
-#include "include/keydef.h"
+#include "include/keyhandler.h"
+static bool shift_pressed = false;
 
-#ifndef __cplusplus
-#ifndef bool
-#define bool _Bool
-#define true 1
-#define false 0
-#endif
-#endif
-
-// external vars (dock.c)
-extern bool dialog_active;
-extern bool explorer_active;
-extern bool editor_active;
-
-// external functions
-extern bool gui_handle_dialog_input(unsigned char key, char scancode);
-extern bool gui_handle_explorer_key(unsigned char key, char scancode);
-extern bool gui_handle_editor_key(unsigned char key, char scancode);
-extern bool dock_handle_key(unsigned char key, char scancode); 
-extern bool term_handlekey(unsigned char key, char scancode);
-
-// set 'em all to false
 bool dialog_active = false;
 bool explorer_active = false;
+bool editor_active = false;
 bool caps = false;
-static bool shift_pressed = false;
 
 // turn a scancode into a char
 char scancode_to_char(unsigned char scancode, bool shift_pressed) {

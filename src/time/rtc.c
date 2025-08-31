@@ -3,41 +3,13 @@
     Copyright 2025 Ethan Zhang, All rights reserved.
 */
 
-#include "../lib/lib.h"
-
-typedef unsigned short uint16_t;
-typedef short int16_t;
-
-// some ports
-#define RTC_INDEX_PORT 0x70
-#define RTC_DATA_PORT  0x71
-#define RTC_STATUS_C    0x0C
-
-// register addresses 
-#define RTC_SECONDS     0x00
-#define RTC_MINUTES     0x02
-#define RTC_HOURS       0x04
-#define RTC_DAY         0x07
-#define RTC_MONTH       0x08
-#define RTC_YEAR        0x09
-#define RTC_STATUS_A    0x0A
-#define RTC_STATUS_B    0x0B
+#include "rtc.h"
 
 static const uint8_t days_in_month[13] = {
     0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 // timezone offset
-static int timezone_offset = 0;  // UTC +0
-
-// this is rtc_time
-typedef struct {
-    uint8_t seconds;
-    uint8_t minutes;
-    uint8_t hours;
-    uint8_t day;
-    uint8_t month;
-    uint8_t year;
-} rtc_time;
+int timezone_offset = 0;  // UTC +0
 
 // read from RTC register
 uint8_t rtc_readregister(uint8_t reg) {

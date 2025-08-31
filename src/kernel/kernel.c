@@ -2,7 +2,15 @@
     Moose Operating System
     Copyright 2025 Ethan Zhang, All rights reserved.
 */
-#include "include/tty.h"
+
+/*
+
+simple code to run a simple OS
+ - MooseOS guy 
+ (Do not remove)
+*/
+
+// #include "include/tty.h"
 #include "include/IDT.h"
 #include "include/task.h"
 #include "include/mouse.h"
@@ -11,11 +19,7 @@
 #include "../gui/include/gui.h"
 #include "../gui/include/dock.h"
 #include "../time/rtc.h"
-/*
 
-simple code to run a simple kernel. 
- - MooseOS guy
-*/
 
 extern bool explorer_active;
 extern volatile uint32_t ticks;
