@@ -1,5 +1,11 @@
 #include "include/fontdef.h"
 
+/**
+ * This is the system MOOSE font
+ *
+ * @todo: Add other fonts. This is not an immediate priority.
+ */
+
 const uint8_t system_font[256][8] = {
     // Space 
     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
@@ -89,8 +95,6 @@ const uint8_t system_font[256][8] = {
     [43] = {0x00, 0x10, 0x10, 0x7C, 0x10, 0x10, 0x00, 0x00},   // +
     [45] = {0x00, 0x00, 0x00, 0x3E, 0x00, 0x00, 0x00, 0x00},   // -
     [61] = {0x00, 0x00, 0x3E, 0x00, 0x3E, 0x00, 0x00, 0x00},   // =
-    
-    // Shifted number row symbols
     [41] = {0x20, 0x10, 0x08, 0x08, 0x08, 0x10, 0x20, 0x00},   // )
     [64] = {0x38, 0x44, 0x5C, 0x54, 0x5C, 0x40, 0x38, 0x00},   // @
     [35] = {0x14, 0x14, 0x7F, 0x14, 0x7F, 0x14, 0x14, 0x00},   // #
@@ -100,8 +104,6 @@ const uint8_t system_font[256][8] = {
     [38] = {0x30, 0x48, 0x30, 0x56, 0x88, 0x88, 0x76, 0x00},   // &
     [42] = {0x00, 0x44, 0x28, 0x10, 0x28, 0x44, 0x00, 0x00},   // *
     [40] = {0x04, 0x08, 0x10, 0x10, 0x10, 0x08, 0x04, 0x00},   // (
-    
-    // Shifted punctuation
     [95] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7F, 0x00},   // _
     [43] = {0x00, 0x10, 0x10, 0x7C, 0x10, 0x10, 0x00, 0x00},   // +
     [123] = {0x06, 0x08, 0x08, 0x30, 0x08, 0x08, 0x06, 0x00},  // {
@@ -120,12 +122,11 @@ const uint8_t system_font[256][8] = {
 
 };
 
-// Character widths for proportional spacing (values 0-8)
 const uint8_t char_widths[256] = {
     // Default width (for undefined characters)
     [0 ... 255] = 6,
     
-    // Space is narrower than other characters
+    // Space
     [32] = 4,
     
     // Punctuation
@@ -162,12 +163,11 @@ const uint8_t char_widths[256] = {
     [125] = 5, // }
     [126] = 6, // ~
     
-    // Numbers - consistent width
-    // Add width for forward slash
+    // Numbers
     [47] = 5, // /
     [48 ... 57] = 6, // 0-9
     
-    // Uppercase letters - variable widths
+    // Uppercase letters
     [65] = 6, // A
     [66] = 6, // B
     [67] = 6, // C
@@ -194,8 +194,8 @@ const uint8_t char_widths[256] = {
     [88] = 6, // X
     [89] = 8, // Y
     [90] = 6, // Z
-    
-    // Lowercase letters - variable widths
+
+    // Lowercase letters
     [97] = 6,  // a
     [98] = 6,  // b
     [99] = 5,  // c

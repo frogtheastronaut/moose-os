@@ -1,14 +1,17 @@
-/*
-    Moose Operating System
-    Copyright 2025 Ethan Zhang, All rights reserved.
-*/
+/**
+ * Moose Operating System
+ * Copyright (c) 2025 Ethan Zhang.
+ * 
+ * @todo: If we ever make it so we can change the folder/file icon size, 
+ *        we would need to update this code. We wouldn't be considering this as an immediate priority.
+ */
 
 #include "include/explorer.h"
 
 /**
- * draws filesplorer
+ * Draw file explorer
  */
-void draw_filesplorer() {
+void draw_explorer() {
     gui_init();
     gui_clear(VGA_COLOR_LIGHT_GREY);
     
@@ -17,12 +20,12 @@ void draw_filesplorer() {
                        VGA_COLOR_LIGHT_GREY,
                        VGA_COLOR_LIGHT_GREY);
     
-    // title bar
+    // Title bar
     draw_title(0, 0, SCREEN_WIDTH, 20, VGA_COLOR_BLUE);
     char path_text[64] = "File Explorer - ";
     draw_text(10, 6, path_text, VGA_COLOR_WHITE);
-    
-    // display cwd
+
+    // Display cwd
     char full_path[128] = "";
     if (cwd == root) {
         copyStr(full_path, "/");
@@ -57,7 +60,7 @@ void draw_filesplorer() {
     
     if (cwd != root) {
         draw_file(x_pos, y_pos, "..", 1, current_selection == 0);
-        x_pos += 70; // Back to original spacing for 4 items per row
+        x_pos += 70;
         displayed_count++;
         
         if (displayed_count % 4 == 0) { // 4 items per row
@@ -78,17 +81,17 @@ void draw_filesplorer() {
         draw_file(x_pos, y_pos, child->name, 
                         (child->type == FOLDER_NODE), 
                         current_selection == selection_index);
-        
-        x_pos += 70; // Back to original spacing for 4 items per row
+
+        x_pos += 70;
         displayed_count++;
-        
+
         if (displayed_count % 4 == 0) { // 4 items per row
             x_pos = 20;
             y_pos += 40;
         }
     }
-    
-    // item count - no background rectangle, just black text at bottom
+
+    // Item count
     char count_str[16]; 
     int2str(cwd->folder.childCount, count_str, sizeof(count_str));
     
@@ -101,24 +104,23 @@ void draw_filesplorer() {
         strcat(status_text, " items");
     }
     
-    draw_text(15, SCREEN_HEIGHT - 15, status_text, VGA_COLOR_BLACK); // Bottom of screen with black text
-    // set explorer as active
+    draw_text(15, SCREEN_HEIGHT - 15, status_text, VGA_COLOR_BLACK);
     explorer_active = true;
     
     draw_cursor();
 }
 /**
- * create item
+ * Create an item
  */
 void dialog_create_item() {
     if (dialog_input[0] != '\0') {
         int previous_item_count = cwd->folder.childCount;
         
         if (dialog_type == 0) {
-            // create directory
+            // Create directory
             filesys_mkdir(dialog_input);
         } else {
-            // create file
+            // Create file
             filesys_mkfile(dialog_input, "");
         }
         
@@ -138,14 +140,14 @@ void dialog_create_item() {
                 current_selection = 0;
             }
         } else {
-            // reset if item creation failed/no new item created
+            // Reset if item creation failed/no new item created
             current_selection = 0;
         }
-        draw_filesplorer();
+        draw_explorer();
     }
 }
 /**
- * handle keyboard input
+ * Handle keyboard input for dialog
  */
 bool gui_handle_dialog_input(unsigned char key, char scancode) {
     if (!dialog_active) return false;
@@ -157,7 +159,7 @@ bool gui_handle_dialog_input(unsigned char key, char scancode) {
             dock_mkopen_file();
         } else {
             dialog_create_item();
-            draw_filesplorer();  // redraw
+            draw_explorer();  // Redraw
         }
         
         dialog_input[0] = '\0';
@@ -173,7 +175,7 @@ bool gui_handle_dialog_input(unsigned char key, char scancode) {
 
             dock_return();
         } else {
-            draw_filesplorer();
+            draw_explorer();
         }
         return true;
     }
@@ -208,7 +210,6 @@ bool gui_handle_dialog_input(unsigned char key, char scancode) {
         return true;
     }
     else if (scancode == BS_KEY_CODE) {
-        // backspace
         if (dialog_input_pos > 0) {
             for (int i = dialog_input_pos - 1; i < strlen(dialog_input); i++) {
                 dialog_input[i] = dialog_input[i + 1];
@@ -249,8 +250,8 @@ bool gui_handle_dialog_input(unsigned char key, char scancode) {
     return false;
 }
 /*
-    handle explorer input
-*/
+ * Handle explorer key inputs
+ */
 bool gui_handle_explorer_key(unsigned char key, char scancode) {
     if (dialog_active) {
         return gui_handle_dialog_input(key, scancode);
@@ -258,11 +259,11 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
     
     if (!explorer_active) return false;
     
-    int items_per_row = 4; // 4 items per row for proper spacing
+    int items_per_row = 4;
     int total_items = cwd->folder.childCount;
     if (cwd != root) total_items++; // Account for ".." folder
     
-    // Track previous selection to know what to redraw
+    // Update previous selection
     int previous_selection = current_selection;
     
     // Process key input
@@ -296,7 +297,7 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
             if (cwd != root && current_selection == 0) {
                 filesys_cd("..");
                 current_selection = 0;
-                draw_filesplorer();
+                draw_explorer();
                 return true;
             } else {
                 int actual_index = current_selection;
@@ -307,7 +308,7 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
                     if (child->type == FOLDER_NODE) {
                         filesys_cd(child->name);
                         current_selection = 0;
-                        draw_filesplorer();
+                        draw_explorer();
                         return true;
                     } else {
                         editor_open(child->name);
@@ -348,10 +349,10 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
                     File* child = cwd->folder.children[actual_index];
                     
                     if (child->type == FOLDER_NODE) {
-                        // delete folder
+                        // Delete folder
                         filesys_rmdir(child->name);
                     } else {
-                        // delete file
+                        // Delete file
                         filesys_rm(child->name);
                     }
                     
@@ -363,25 +364,24 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
                         current_selection = 0;
                     }
                     
-                    // redraw
-                    draw_filesplorer();
+                    draw_explorer();
                     return true;
                 }
             }
             break;
 
         case ESC_KEY_CODE:
-            // return to dock
+            // Return to dock
             dock_return();
             return true;
             
         default:
-            // not a handlable key
+            // Not a handleable key
             return false;
     }
     
     if (previous_selection != current_selection) {
-        draw_filesplorer();
+        draw_explorer();
         
         return true; 
 
@@ -389,7 +389,7 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
 }
 
 /**
- * handle editor input
+ * Handle editor input
  */
 bool gui_handle_editor_key(unsigned char key, char scancode) {
     if (!editor_active) return false;
@@ -533,10 +533,9 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
 }
 
 /**
- * handle mouse clicks
+ * Handle mouse clicks in the explorer
  */
 static bool explorer_handle_click(int mouse_x, int mouse_y) {
-    // yes its this again...
     if (!explorer_active || dialog_active) {
         return false;
     }
@@ -546,11 +545,11 @@ static bool explorer_handle_click(int mouse_x, int mouse_y) {
     int item_spacing_y = 40;
     int item_width = 60;
     int item_height = 40;
-    int items_per_row = 4; // 4 items per row for proper spacing
+    int items_per_row = 4;
     
 
     int total_items = cwd->folder.childCount;
-    if (cwd != root) total_items++; // Account for ".." folder
+    if (cwd != root) total_items++;
     
 
     if (mouse_x < start_x || mouse_y < start_y) {
@@ -580,7 +579,7 @@ static bool explorer_handle_click(int mouse_x, int mouse_y) {
         current_selection = clicked_selection;
         
         if (previous_selection != current_selection) {
-            draw_filesplorer();
+            draw_explorer();
         }
         
         return true;
@@ -590,7 +589,7 @@ static bool explorer_handle_click(int mouse_x, int mouse_y) {
 }
 
 /**
- * handle mouse input for file explorer
+ * Handle mouse input for file explorer
  */
 bool explorer_handle_mouse() {
     static bool last_left_state = false;

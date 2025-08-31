@@ -1,6 +1,6 @@
 /*
 	SimpleM
-	Copyright 2025 Ethan Zhang
+	Copyright (c) 2025 Ethan Zhang
 */
 #ifndef KEYBOARD_H
 #define KEYBOARD_H

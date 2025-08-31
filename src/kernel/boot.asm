@@ -1,5 +1,5 @@
 ; MooseOS
-; Copyright 2025 Ethan Zhang, all rights reserved.
+; Copyright (c) 2025 Ethan Zhang.
 
 bits 32
 ; multiboot spec

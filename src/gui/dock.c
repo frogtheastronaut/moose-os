@@ -1,27 +1,24 @@
-
-/*
+/**
     Moose Operating System
-    Copyright 2025 Ethan Zhang, All rights reserved.
-*/
+    Copyright (c) 2025 Ethan Zhang.
 
-// lots and lots of includes
+    @todo: Add custom apps. This would require a MOOSE implementation of a scripting language.
+*/
 
 #include "include/dock.h"
 
-// vars
+// Variables
 static int selected_app = 0;  // 0 = File Explorer, 1 = Text Editor, 2 = Terminal
 static const int total_apps = 3;  
 static uint32_t last_time_update = 0;  // last update
-static char last_time_str[32] = "";    // last time as in time time
+static char last_time_str[32] = ""; // Time cache (string)
 
-// func decs
+// Function declarations
 static void launch_selected_app(void);
-void handle_shutdown(void);
-void dock_mkopen_file(void);
 static bool dock_handle_mouse_click(int mouse_x, int mouse_y);
 
 /**
- * draw file explorer
+ * Draw file explorer window border
  */
 static void draw_windowborder() {
     draw_windowbox(WINDOW_X, WINDOW_Y, WINDOW_WIDTH, WINDOW_HEIGHT, 
@@ -30,28 +27,30 @@ static void draw_windowborder() {
                        VGA_COLOR_LIGHT_GREY);
     
     draw_title(WINDOW_X, WINDOW_Y, WINDOW_WIDTH, 15, VGA_COLOR_BLUE);
+    /** @todo: Either remove the Welcome to MooseOS or replace it with something different */
     draw_text(WINDOW_X + 5, WINDOW_Y + 3, "Welcome to MooseOS", VGA_COLOR_WHITE);
 }
 
 /**
- * draw icon
+ * Draw dock icons
+ * @return nothing
  */
 static void dock_draw_icon(int x, int y, uint8_t bg_color, int app_index) {
     const uint8_t (*icon_bitmap)[16];
     
-    // app is...
     switch (app_index) {
-        case 0: // fexploprer
+        case 0: // File Explorer
             icon_bitmap = folder_icon;
             break;
-        case 2: // temriasndfal
+        case 2: // Terminal
             icon_bitmap = terminal_icon;
             break;
-        case 1: // ted
+        case 1: // Text Editor
         default:
-            icon_bitmap = file_icon;
+            icon_bitmap = file_icon; // Default is file icon
             break;
     }
+    // Draws the bitmap
     for (int row = 0; row < 16; row++) {
         for (int col = 0; col < 16; col++) {
             uint8_t pixel = icon_bitmap[row][col];
@@ -69,67 +68,73 @@ static void dock_draw_icon(int x, int y, uint8_t bg_color, int app_index) {
 }
 
 /**
- * draw app
+ * Draw app
  */
 static void dock_draw_app(int app_index, const char* filename, int x, int y) {
     bool is_selected = (app_index == selected_app);
     
-    // selection area
+    // Selection Area
     int text_width = get_textwidth(filename);
-    // commented out uses text width for selection_width
+    // Commented out line uses text width for selection_width
     // int selection_width = (text_width > ICON_SIZE) ? text_width : ICON_SIZE;
     int selection_width = 70;
     int selection_height = ICON_SIZE + 12; // Icon + text height
-    
-    // selection rectangle
+
+    // Selection rectangle
     int selection_x = x - (selection_width - ICON_SIZE) / 2;
     int selection_y = y;
     
-    // selection background
+    // Selection background
     if (is_selected) {
         // im blue
         draw_rect(selection_x - 2, selection_y - 2, selection_width + 4, selection_height + 4, SELECTION_COLOR);
     }
     
-    // icon has correct bg
+    // Icon background
+    // Either selection color or window background
     uint8_t icon_bg = is_selected ? SELECTION_COLOR : WINDOW_BACKGROUND;
     
-    // draw icon
+    // Draw icon
     dock_draw_icon(x, y, icon_bg, app_index);
-    
-    // draw filename
+
+    // Draw filename
     int text_x = x + (ICON_SIZE / 2) - (text_width / 2);
     int text_y = y + ICON_SIZE + 2;
     
+    // Text colour
+    // Either Selection color or File color
     uint8_t text_color = is_selected ? SELECTION_TEXT_COLOR : FILE_TEXT_COLOR;
+
+    // Draw text
     draw_text(text_x, text_y, filename, text_color);
 }
 
 /**
- * draw all files
+ * Draw all files
+ * @todo: If we add drawing custom apps, we would need to change this
  */
 static void dock_draw_apps() {
-    // start
+    // Starting position
     int start_x = FILE_AREA_X + 20;
     int start_y = FILE_AREA_Y;
     
-    // filexpseort
+    // Draw apps
     dock_draw_app(0, "File Explorer", start_x, start_y);
-    
-    // ted
+
     dock_draw_app(1, "Text Editor", start_x + FILE_SPACING_X, start_y);
     
-    // terminal
     dock_draw_app(2, "Terminal", start_x + FILE_SPACING_X * 2, start_y);
 }
 
 /**
- * time displaydsdf
+ * Draw time
+ * 
+ * @todo: implement a faster drawing method
  */
 static void draw_time() {
     static rtc_time last_time = {0};
     
-    // get current time
+    // Get current time using rtc.c
     rtc_time current_time = rtc_gettime();
     
     // Only redraw if seconds actually changed to reduce unnecessary redraws
@@ -139,12 +144,12 @@ static void draw_time() {
         current_time.day == last_time.day &&
         current_time.month == last_time.month &&
         current_time.year == last_time.year) {
-        return; // No time change, skip expensive redraw
+        return; // No time change, skip redraw
     }
     
     last_time = current_time;
     
-    // time, in format HH:MM:SS DD/MM/YYYY UTC±X
+    // Time, in format HH:MM:SS DD/MM/YYYY UTC±X
     char time_str[32];
     time_str[0] = '0' + (current_time.hours / 10);
     time_str[1] = '0' + (current_time.hours % 10);
@@ -156,7 +161,7 @@ static void draw_time() {
     time_str[7] = '0' + (current_time.seconds % 10);
     time_str[8] = ' ';
     
-    // add date (DD/MM/YYYY format)
+    // Add date (DD/MM/YYYY format)
     time_str[9] = '0' + (current_time.day / 10);
     time_str[10] = '0' + (current_time.day % 10);
     time_str[11] = '/';
@@ -168,7 +173,7 @@ static void draw_time() {
     time_str[17] = '0' + (current_time.year / 10);
     time_str[18] = '0' + (current_time.year % 10);
     
-    // timezone - simplified
+    // Timezone
     int offset = timezone_offset; // from rtc.c
     time_str[19] = ' ';
     time_str[20] = 'U';
@@ -196,34 +201,35 @@ static void draw_time() {
             time_str[26] = '\0';
         }
     }
-    
-    // status bar
+
+    // Status bar
     int status_bar_width = WINDOW_WIDTH - 16;
     int status_bar_height = 15;
     int status_bar_x = WINDOW_X + 8;
     int status_bar_y = WINDOW_Y + WINDOW_HEIGHT - status_bar_height - 8;
-    
-    // bar background
+
+    // Status bar background
     draw_rect(status_bar_x, status_bar_y, status_bar_width, status_bar_height, VGA_COLOR_LIGHT_GREY);
-    draw_line_hrzt(status_bar_x, status_bar_x + status_bar_width - 1, status_bar_y, VGA_COLOR_DARK_GREY);
-    
-    // text
+    draw_line_horizontal(status_bar_x, status_bar_x + status_bar_width - 1, status_bar_y, VGA_COLOR_DARK_GREY);
+
+    // Draw status bar text
     draw_text(status_bar_x + 5, status_bar_y + 3, time_str, VGA_COLOR_BLACK);
 }
 
 /*
-    force dock redraw
-*/
+ * Force redraw of time
+ * Same as draw_time(), but ignores last_time cache
+ */
 static void draw_time_forced() {
     static rtc_time last_time = {0};
-    
-    // get current time
+
+    // Get current time using rtc.c
     rtc_time current_time = rtc_gettime();
 
     
     last_time = current_time;
     
-    // time, in format HH:MM:SS DD/MM/YYYY UTC±X
+    // Time, in format HH:MM:SS DD/MM/YYYY UTC±X
     char time_str[32];
     time_str[0] = '0' + (current_time.hours / 10);
     time_str[1] = '0' + (current_time.hours % 10);
@@ -235,7 +241,7 @@ static void draw_time_forced() {
     time_str[7] = '0' + (current_time.seconds % 10);
     time_str[8] = ' ';
     
-    // add date (DD/MM/YYYY format)
+    // Add date (DD/MM/YYYY format)
     time_str[9] = '0' + (current_time.day / 10);
     time_str[10] = '0' + (current_time.day % 10);
     time_str[11] = '/';
@@ -246,8 +252,8 @@ static void draw_time_forced() {
     time_str[16] = '0';
     time_str[17] = '0' + (current_time.year / 10);
     time_str[18] = '0' + (current_time.year % 10);
-    
-    // timezone - simplified
+
+    // Timezone
     int offset = timezone_offset; // from rtc.c
     time_str[19] = ' ';
     time_str[20] = 'U';
@@ -275,58 +281,59 @@ static void draw_time_forced() {
             time_str[26] = '\0';
         }
     }
-    
-    // status bar
+
+    // Status bar
     int status_bar_width = WINDOW_WIDTH - 16;
     int status_bar_height = 15;
     int status_bar_x = WINDOW_X + 8;
     int status_bar_y = WINDOW_Y + WINDOW_HEIGHT - status_bar_height - 8;
-    
-    // bar background
+
+    // Status bar background
     draw_rect(status_bar_x, status_bar_y, status_bar_width, status_bar_height, VGA_COLOR_LIGHT_GREY);
-    draw_line_hrzt(status_bar_x, status_bar_x + status_bar_width - 1, status_bar_y, VGA_COLOR_DARK_GREY);
-    
-    // text
+    draw_line_horizontal(status_bar_x, status_bar_x + status_bar_width - 1, status_bar_y, VGA_COLOR_DARK_GREY);
+
+    // Draw status bar text
     draw_text(status_bar_x + 5, status_bar_y + 3, time_str, VGA_COLOR_BLACK);
 }
 
 /**
- *  draw dock
+ *  Draw dock window
  */
 static void dock_draw_window() {
-    // clear screen
+    // Clear screen
     gui_clear(VGA_COLOR_LIGHT_GREY);
-    
-    // draw window
+
+    // Draw window border
     draw_windowborder();
-    
-    // draw files
+
+    // Draw files
     dock_draw_apps();
-    
-    // reset time cache
+
+    // Reset time cache
     last_time_str[0] = '\0';
-    // draw time
+    // Draw time
     draw_time();
 }
 
 /**
- * draws dock
+ * Draws dock window
  */
 void draw_dock() {
-    // just the usual
-    
+
     gui_clearmouse();
     gui_init();
     
     last_time_str[0] = '\0';
     dock_draw_window();
     draw_time();
+
+    // Sets all app states to false
     dialog_active = false;
     explorer_active = false;
     editor_active = false;
     terminal_active = false;
     if (!dialog_active) {
-        
+        // Draw dialog if cursor is not active
         draw_cursor();
     }
 }
@@ -343,25 +350,26 @@ static bool dock_handle_mouse_click(int mouse_x, int mouse_y) {
     int start_y = FILE_AREA_Y;
     
     int app_positions[4][4];
-    
-    // file explorer
+
+    // File explorer
     app_positions[0][0] = start_x - 35;  // x (centered around icon)
     app_positions[0][1] = start_y - 2;   // y
     app_positions[0][2] = 70;            // width
     app_positions[0][3] = 32;            // height (icon + text)
-    
-    // text editor
+
+    // Text editor
     app_positions[1][0] = start_x + FILE_SPACING_X - 35;
     app_positions[1][1] = start_y - 2;
     app_positions[1][2] = 70;
     app_positions[1][3] = 32;
 
-    // terminal
+    // Terminal
     app_positions[2][0] = start_x + FILE_SPACING_X * 2 - 35;
     app_positions[2][1] = start_y - 2;
     app_positions[2][2] = 70;
     app_positions[2][3] = 32;
-    // check for clicks
+
+    // Check for clicks
     for (int i = 0; i < total_apps; i++) {
         int x = app_positions[i][0];
         int y = app_positions[i][1];
@@ -377,7 +385,7 @@ static bool dock_handle_mouse_click(int mouse_x, int mouse_y) {
                 draw_dock();
                 draw_time_forced(); 
             }
-            
+            // Launch app
             launch_selected_app();
             return true;
         }
@@ -387,28 +395,28 @@ static bool dock_handle_mouse_click(int mouse_x, int mouse_y) {
 }
 
 /**
- * launch selected app
+ * Launch selected app
  */
 static void launch_selected_app() {
     
     gui_clearmouse();
     
     switch (selected_app) {
-        case 0:
+        case 0: // File explorer
             explorer_active = true;
             editor_active = false;
-            draw_filesplorer();
+            draw_explorer();
             break;
-            
-        case 1:
+
+        case 1: // Text editor
             dialog_active = true;
             dialog_type = DIALOG_TYPE_NEW_FILE;
             dialog_input[0] = '\0';
             dialog_input_pos = 0;
             draw_dialog("New File", "Enter filename:");
             break;
-            
-        case 2:
+
+        case 2: // Terminal
             terminal_active = true;
             explorer_active = false;
             editor_active = false;
@@ -422,7 +430,7 @@ static void launch_selected_app() {
 }
 
 /**
- * handle key
+ * Handle key interrupts
  */
 bool dock_handle_key(unsigned char key, char scancode) {
     if (dialog_active && dialog_type == DIALOG_TYPE_NEW_FILE) {
@@ -458,7 +466,7 @@ bool dock_handle_key(unsigned char key, char scancode) {
             return true;
         }
         else if (scancode == ARROW_LEFT_KEY) {
-            // left arrow - move cursor left
+            // Move cursor left
             if (dialog_input_pos > 0) {
                 dialog_input_pos--;
                 draw_dialog("New File", "Enter filename:");
@@ -466,7 +474,7 @@ bool dock_handle_key(unsigned char key, char scancode) {
             return true;
         }
         else if (scancode == ARROW_RIGHT_KEY) {
-            // right arrow - move cursor right
+            // Move cursor right
             int input_len = 0;
             while (input_len < 128 && dialog_input[input_len] != '\0') {
                 input_len++;
@@ -478,7 +486,7 @@ bool dock_handle_key(unsigned char key, char scancode) {
             return true;
         }
         else if (key >= 32 && key < 127) {
-            // printable - insert character instead of overwriting
+            // Printable character
             int input_len = 0;
             while (input_len < 128 && dialog_input[input_len] != '\0') {
                 input_len++;
@@ -498,17 +506,17 @@ bool dock_handle_key(unsigned char key, char scancode) {
         }
         return true;
     }
-    
-    // if we have a dialog and in dock, we handle it
+
+    // If we have a dialog and in dock, we handle it
     if (explorer_active || editor_active || terminal_active) {
         return false;
     }
-    // change selected app to prev
+    // Change selected app to previous app
     int previous_selection = selected_app;
     
     switch (scancode) {
         case ARROW_LEFT_KEY:
-            // left
+            // Move cursor left
             if (selected_app > 0) {
                 selected_app--;
             } else {
@@ -517,7 +525,7 @@ bool dock_handle_key(unsigned char key, char scancode) {
             break;
             
         case ARROW_RIGHT_KEY:
-            // right
+            // Move cursor right
             if (selected_app < total_apps - 1) {
                 selected_app++;
             } else {
@@ -526,21 +534,21 @@ bool dock_handle_key(unsigned char key, char scancode) {
             break;
             
         case ARROW_UP_KEY:
-            // up
+            // Move cursor up
             if (selected_app >= FILES_PER_ROW) {
                 selected_app -= FILES_PER_ROW;
             }
             break;
             
         case ARROW_DOWN_KEY:
-            // down
+            // Move cursor down
             if (selected_app + FILES_PER_ROW < total_apps) {
                 selected_app += FILES_PER_ROW;
             }
             break;
             
         case ENTER_KEY_CODE:
-            // launch application
+            // Launch application
             launch_selected_app();
             return true;
             
@@ -549,7 +557,7 @@ bool dock_handle_key(unsigned char key, char scancode) {
     }
     
     if (previous_selection != selected_app) {
-        draw_dock();  // redraw
+        draw_dock();
         draw_time_forced();
     }
     
@@ -557,7 +565,7 @@ bool dock_handle_key(unsigned char key, char scancode) {
 }
 
 /**
- * init
+ * Initialise the dock
  */
 void dock_init() {
     selected_app = 0;
@@ -565,19 +573,17 @@ void dock_init() {
 }
 
 /**
- * dock active?
+ * Check if dock is active
  */
 bool dock_is_active() {
     return (!explorer_active && !editor_active && !dialog_active && !terminal_active); // crazy logic right here *claps*
 }
 
 /**
- * go back to dock
+ * Return to dock
  */
 void dock_return() {
-    
     gui_clearmouse();
-    
     explorer_active = false;
     editor_active = false;
     terminal_active = false;
@@ -587,7 +593,7 @@ void dock_return() {
 }
 
 /**
- * set app selection
+ * Set app selection
  */
 void dock_set_selection(int app_index) {
     if (app_index >= 0 && app_index < total_apps) {
@@ -599,7 +605,7 @@ void dock_set_selection(int app_index) {
 }
 
 /**
- * create and open a file
+ * Create and open a file
  */
 void dock_mkopen_file() {
     if (dialog_input[0] != '\0') {
@@ -642,12 +648,12 @@ bool dock_handle_mouse() {
     
     if (mouse->left_button) {
         if (!last_left_state) {
-            // click detected
+            // Click detected
             last_left_state = true;
             return dock_handle_mouse_click(mouse_x, mouse_y);
         }
     } else {
-        // reset state when released
+        // Reset state when released
         last_left_state = false;
     }
     
@@ -655,7 +661,7 @@ bool dock_handle_mouse() {
 }
 
 /**
- * update time
+ * Update time display
  */
 void dock_update_time() {
     static uint32_t last_time_update = 0;

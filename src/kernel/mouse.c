@@ -1,6 +1,6 @@
 /*
     MooseOS Mouse
-    Copyright 2025 Ethan Zhang
+    Copyright (c) 2025 Ethan Zhang
 */
 #include "include/mouse.h"
 

@@ -1,6 +1,6 @@
 /*
 	MooseOS
-	Copyright 2025 Ethan Zhang
+	Copyright (c) 2025 Ethan Zhang
 */
 #ifndef IDT_H
 #define IDT_H

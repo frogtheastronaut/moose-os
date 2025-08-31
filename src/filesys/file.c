@@ -1,6 +1,6 @@
-/*
+/**
     Moose Operating System
-    Copyright 2025 Ethan Zhang, All rights reserved.
+    Copyright (c) 2025 Ethan Zhang.
 
     @todo add disk I/O, dynamic file handling.
 */
@@ -8,7 +8,10 @@
 // Includes
 #include "file.h"
 
-// This is the filesystem ( @todo Remove limitations)
+/** This is the file system
+ *
+ * @todo Remove limitations
+ */
 File filesys[MAX_NODES];
 int fileCount = 0;
 
@@ -20,9 +23,11 @@ File* root;
 File* cwd;
 
 
-// It's like Malloc, but for files.
-// Allocates a new File structure from a filesys
-// @return pointer to File, or NULL if full
+/**
+ * It's like Malloc, but for files.
+ * Allocates a new File structure from a filesys
+ * @return pointer to File, or NULL if full
+ */
 File* allocFile() {
     if (fileCount >= MAX_NODES) return NULL;
     return &filesys[fileCount++];
@@ -43,8 +48,10 @@ void filesys_init() {
     cwd = root;
 }
 
-// check if file name in CWD
-// @return true if exists, false if not
+ /**
+ * Check if file name in CWD
+ * @return true if exists, false if not
+ */
 bool nameInCWD(const char* name, NodeType type) {
     for (int i = 0; i < cwd->folder.childCount; i++) {
         File* child = cwd->folder.children[i];
@@ -58,8 +65,9 @@ bool nameInCWD(const char* name, NodeType type) {
     return false;
 }
 
-// Make directory
-// @return number depending on success
+/** Make directory
+ * @return number depending on success
+ */
 int filesys_mkdir(const char* name) {
     if (!name || strlen(name) == 0 || strlen(name) >= MAX_NAME_LEN) return -2; // Invalid name
     if (cwd->folder.childCount >= MAX_CHILDREN) return -1; // Too many files/folders
@@ -78,11 +86,13 @@ int filesys_mkdir(const char* name) {
     return 0;
 }
 
-// Create file
-// @return number depending on success
+/** Create file
+ * @return number depending on success
+ */
 int filesys_mkfile(const char* name, const char* content) {
     if (!name || strlen(name) == 0 || strlen(name) >= MAX_NAME_LEN) return -2; // Invalid name - too long/empty
-    if (!content || strlen(content) >= MAX_CONTENT) return -3; // Content too large @todo remove limitations and add dynamic file sizes.
+    if (!content || strlen(content) >= MAX_CONTENT) return -3; // Content too large
+    /** @todo remove limitations and add dynamic file sizes. */
     if (cwd->folder.childCount >= MAX_CHILDREN) return -1; // Too many files
     if (nameInCWD(name, FILE_NODE)) return -4; // Duplicate file name
 
@@ -104,8 +114,9 @@ int filesys_mkfile(const char* name, const char* content) {
     return 0;
 }
 
-// Change directory
-// @return 0 on success, -1 on failure
+/** Change directory
+ * @return 0 on success, -1 on failure
+ */
 int filesys_cd(const char* name) {
     // .. means to go back to parent folder
     if (strEqual(name, "..")) {
@@ -123,8 +134,9 @@ int filesys_cd(const char* name) {
     return -1; // Not found
 }
 
-// Remove file
-// @return 0 on success, -1 on failure
+/** Remove file
+ * @return 0 on success, -1 on failure
+ */
 int filesys_rm(const char* name) {
     for (int i = 0; i < cwd->folder.childCount; i++) {
         File* child = cwd->folder.children[i];
@@ -140,8 +152,9 @@ int filesys_rm(const char* name) {
     return -1; // Not found or not a file (is folder)
 }
 
-// Remove folder
-// @return 0 on success, -1 on failure, -2 if not empty
+/** Remove folder
+ * @return 0 on success, -1 on failure, -2 if not empty
+ */
 int filesys_rmdir(const char* name) {
     for (int i = 0; i < cwd->folder.childCount; i++) {
         File* child = cwd->folder.children[i];
@@ -159,8 +172,10 @@ int filesys_rmdir(const char* name) {
     }
     return -1; // Not found/not a directory (is a file)
 }
-// Edit file content
-// @return 0 on success, -1 on failure
+
+/** Edit file content
+ * @return 0 on success, -1 on failure
+ */
 int filesys_editfile(const char* name, const char* new_content) {
     for (int i = 0; i < cwd->folder.childCount; i++) {
         File* child = cwd->folder.children[i];

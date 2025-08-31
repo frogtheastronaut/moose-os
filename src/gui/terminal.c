@@ -1,7 +1,7 @@
 
 /*
     Moose Operating System
-    Copyright 2025 Ethan Zhang, All rights reserved.
+    Copyright (c) 2025 Ethan Zhang.
 */
 
 #include "include/terminal.h"
@@ -12,6 +12,10 @@ static char terminal_lines[MAX_LINES][CHARS_PER_LINE + 1];
 static int current_line = 0;
 bool terminal_active = false;
 
+/**
+ * Clear the terminal
+ * Used in the terminal `clear` function
+ */
 void clear_terminal() {
     for (int i = 0; i < MAX_LINES; i++) {
         terminal_lines[i][0] = '\0';
@@ -21,6 +25,9 @@ void clear_terminal() {
     command_pos = 0;
 }
 
+/**
+ * Add a line to the terminal
+ */
 static void terminal_add_line(const char* text, uint8_t color) {
     if (current_line >= MAX_LINES) {
         // scroll up
@@ -35,7 +42,7 @@ static void terminal_add_line(const char* text, uint8_t color) {
         current_line = MAX_LINES - 1;
     }
     
-    // new line
+    // New line
     int i = 0;
     while (i < CHARS_PER_LINE && text[i] != '\0') {
         terminal_lines[current_line][i] = text[i];
@@ -46,21 +53,21 @@ static void terminal_add_line(const char* text, uint8_t color) {
 }
 
 /**
- * print text
+ * Print text
  */
 static void terminal_print(const char* text) {
     terminal_add_line(text, TERM_TEXT_COLOR);
 }
 
 /**
- * error msg
+ * Print error message
  */
 static void terminal_print_error(const char* text) {
     terminal_add_line(text, TERM_ERROR_COLOR);
 }
 
 /**
- * get cwd name
+ * Get current working directory name
  */
 static const char* get_cwd() {
     if (cwd == root) {
@@ -72,13 +79,16 @@ static const char* get_cwd() {
 }
 
 /**
- * executs command
+ * Execute a command
+ * 
+ * @todo: Add tokenization + other features commonly found in a shell.
+ *        This is high priority.
  */
 static void term_exec_cmd(const char* cmd) {
-    // strip whitespace
+    // Strip whitespace
     cmd = strip_whitespace(cmd);
     
-    // add cmd to history
+    // Add cmd to history
     char prompt_line[CHARS_PER_LINE + 1];
     msnprintf(prompt_line, sizeof(prompt_line), "%s# %s", get_cwd(), cmd); 
     terminal_add_line(prompt_line, TERM_PROMPT_COLOR);
@@ -249,7 +259,7 @@ static void term_exec_cmd(const char* cmd) {
         }
         sec_str[2] = '\0';
         
-        // Format date (DD/MM/YYYY) - manual formatting
+        // Format date (DD/MM/YYYY)
         char month_str[3], day_str[3], year_str[5];
         if (local_time.month < 10) {
             month_str[0] = '0';
@@ -268,7 +278,8 @@ static void term_exec_cmd(const char* cmd) {
             day_str[1] = '0' + (local_time.day % 10);
         }
         day_str[2] = '\0';
-        // year
+
+        // Year
         year_str[0] = '2';
         year_str[1] = '0';
         if (local_time.year < 10) {
@@ -320,7 +331,8 @@ static void term_exec_cmd(const char* cmd) {
             terminal_print_error("Usage: settimezone <hours>");
         }
     }
-    // unknown
+
+    // Unknown command
     else {
         char line[CHARS_PER_LINE + 1];
         msnprintf(line, sizeof(line), "Unknown command: %s", cmd);
@@ -330,16 +342,15 @@ static void term_exec_cmd(const char* cmd) {
 }
 
 /**
- * draw terminal window
+ * Draw terminal window
  */
 static void terminal_draw_win() {
     gui_clear(VGA_COLOR_LIGHT_GREY);
-    // Full screen terminal - no window box or title bar
     draw_rect(TERM_AREA_X, TERM_AREA_Y, TERM_AREA_WIDTH, TERM_AREA_HEIGHT, TERM_BG_COLOR);
 }
 
 /**
- * draw terminal content
+ * Draw terminal content
  */
 static void term_draw_content() {
     int y_pos = TERM_AREA_Y + 5;
@@ -358,13 +369,20 @@ static void term_draw_content() {
     draw_text(TERM_AREA_X + 5, y_pos, prompt, TERM_PROMPT_COLOR);
     
     int cursor_x = TERM_AREA_X + 5 + get_textwidth(prompt);
+
+    /**
+     * Currently, the cursor is a _
+     * 
+     * @todo: add different types of cursors. This is low priority.
+     */
+
     draw_text(cursor_x, y_pos, "_", TERM_PROMPT_COLOR);
 }
 
 
 
 /**
- * draw terminal
+ * Draw terminal
  */
 void draw_term() {
     gui_init();
@@ -379,20 +397,19 @@ void draw_term() {
 }
 
 /**
- * handle terminal keyboard input
+ * Handle terminal keyboard input
  */
 bool term_handlekey(unsigned char key, char scancode) {
     if (!terminal_active) return false;
     
     switch (scancode) {
         case ESC_KEY_CODE:
-            // exit
             terminal_active = false;
             dock_return();
             return true;
             
         case ENTER_KEY_CODE:
-            // exec
+            // Enter key executes commands
             term_exec_cmd(command_buffer);
             command_buffer[0] = '\0';
             command_pos = 0;
@@ -400,7 +417,6 @@ bool term_handlekey(unsigned char key, char scancode) {
             return true;
             
         case BS_KEY_CODE:
-            // backspace
             if (command_pos > 0) {
                 command_pos--;
                 command_buffer[command_pos] = '\0';
@@ -409,7 +425,7 @@ bool term_handlekey(unsigned char key, char scancode) {
             return true;
             
         default:
-            // 'normal characters'
+            // Printable characters
             if (key >= 32 && key < 127 && command_pos < MAX_COMMAND_LEN) {
                 command_buffer[command_pos] = key;
                 command_pos++;
@@ -421,7 +437,7 @@ bool term_handlekey(unsigned char key, char scancode) {
 }
 
 /**
- * init
+ * Initialize terminal
  */
 void term_init() {
     clear_terminal();
@@ -431,14 +447,14 @@ void term_init() {
 }
 
 /**
- * terminal_active but a function
+ * Check if terminal is active
  */
 bool term_isactive() {
     return terminal_active;
 }
 
 /**
- * open term
+ * Open terminal
  */
 void gui_open_terminal() {
     term_init();

@@ -1,6 +1,6 @@
 /*
     Moose Operating System - main script setting up IDT and GDT
-    Copyright 2025 Ethan Zhang, All rights reserved.
+    Copyright (c) 2025 Ethan Zhang.
 */
 
 #include "include/IDT.h"

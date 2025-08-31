@@ -1,5 +1,5 @@
 ; Task Switching for Moose OS
-; Copyright 2025 Ethan (go read other copryright files)
+; Copyright (c) 2025 Ethan (go read other copryright files)
 section .text
     global task_switch
 

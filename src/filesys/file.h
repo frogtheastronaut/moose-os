@@ -17,11 +17,14 @@ typedef enum {
 } NodeType;
 
 // File contains:
-// Name ( @todo Remove limitations)
+// Name 
 // Its type (file/folder)
 // Its parent folder
-// Its content ( @todo Remove limitations)
-// Children, and childcount ( @todo Same as above)
+// Its content 
+// Children, and childcount 
+/**
+ * @todo Remove limitations
+ */
 typedef struct File {
     char name[MAX_NAME_LEN];
     NodeType type;
@@ -37,22 +40,21 @@ typedef struct File {
     };
 } File;
 
-// This is the filesystem ( @todo Remove limitations)
+// This is the filesystem
+/** @todo Remove limitations */
 extern File filesys[MAX_NODES];
 extern int fileCount;
 
 // Buffer used for multiple purposes
 extern char buffer[256];
 
-
 // Root and Current Working Director
 extern File* root;
 extern File* cwd;
 
-// Filesystem operations
+// Functions
 int filesys_mkdir(const char* name);
 int filesys_mkfile(const char* name, const char* content);
-
 int filesys_cd(const char* name);
 int filesys_rm(const char* name);
 int filesys_rmdir(const char* name);

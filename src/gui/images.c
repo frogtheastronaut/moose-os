@@ -1,3 +1,10 @@
+/**
+ * Bitmap images for GUI elements
+ * 
+ * @todo: Add custom icons. Maybe some code that turns a png into a bitmap?
+ * 
+ */
+
 #include "include/images.h"
 
 const uint8_t folder_icon[16][16] = {
@@ -76,8 +83,8 @@ const uint8_t icon_color_map[] = {
     VGA_COLOR_RED,         // 4 = accent color
     VGA_COLOR_GREEN,       // 5 = alternate color
     VGA_COLOR_BLUE,        // 6 = another accent color
-    VGA_COLOR_WHITE,        // 7 = document color
-    VGA_COLOR_DARK_GREY,
+    VGA_COLOR_WHITE,       // 7 = document color
+    VGA_COLOR_DARK_GREY,   // 8-10 = misc colors
     VGA_COLOR_LIGHT_GREEN,
     VGA_COLOR_LIGHT_BLUE
 };
