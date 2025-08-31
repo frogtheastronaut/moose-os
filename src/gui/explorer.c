@@ -399,8 +399,6 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
             editor_active = false;
             explorer_active = true;
             dock_return();
-            extern void gui_updatemouse(void);
-            gui_updatemouse();
             return true;
             
         case ENTER_KEY_CODE:

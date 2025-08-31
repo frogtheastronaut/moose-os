@@ -673,14 +673,6 @@ void dock_update_time() {
         draw_time();
         last_time_update = ticks;
     }
-    
-    if (ticks - last_mouse_recovery >= 500) { 
-        if (!dialog_active) {
-            extern void gui_updatemouse(void);
-            gui_updatemouse();
-        }
-        last_mouse_recovery = ticks;
-    }
 }
 
 

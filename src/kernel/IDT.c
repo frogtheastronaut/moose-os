@@ -5,6 +5,8 @@
 
 #include "include/IDT.h"
 
+volatile bool key_pressed = false;
+volatile char last_keycode = 0;
 
 // gdts
 struct GDT_entry GDT[3];
@@ -103,16 +105,22 @@ void kb_init(void)
 
 void keyboard_handler_main(void)
 {
-	unsigned char status;
-	char keycode;
+    if (handler_lock != 0) return;
+    handler_lock = 1;
 
-	/* write EOI */
-	write_port(0x20, 0x20);
+    unsigned char status;
+    char keycode;
 
-	status = read_port(KEYBOARD_STATUS_PORT);
-	if (status & 0x01) {
-		keycode = read_port(KEYBOARD_DATA_PORT);
-		// goes to keyhandler.c 
-		processKey(keyboard_map_normal[(unsigned char) keycode], keycode);
-	}
+    /* write EOI */
+    write_port(0x20, 0x20);
+
+
+    status = read_port(KEYBOARD_STATUS_PORT);
+    if (status & 0x01) {
+        keycode = read_port(KEYBOARD_DATA_PORT);
+        last_keycode = keycode;
+        key_pressed = true;
+    }
+
+    handler_lock = 0;
 }

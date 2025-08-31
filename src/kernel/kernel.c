@@ -43,12 +43,12 @@ void init_filesys() {
 }
 
 void dock() {
-    static bool first_run = true;
+    //static bool first_run = true;
     static uint32_t last_cursor_update = 0;
-    if (first_run) {
-        gui_updatemouse(); 
-        first_run = false;
-    }
+    // if (first_run) {
+    //     gui_updatemouse(); 
+    //     first_run = false;
+    // }
     
     while (1) {
         if (dock_is_active()) {
@@ -56,6 +56,13 @@ void dock() {
         } else if (explorer_active) {
             explorer_handle_mouse();
         }
+
+        // Keyboard event processing
+        if (key_pressed) {
+            processKey(keyboard_map_normal[(unsigned char)last_keycode], last_keycode);
+            key_pressed = false;
+        }
+
         if (ticks - last_cursor_update >= 2) {
             gui_updatemouse();
             last_cursor_update = ticks;

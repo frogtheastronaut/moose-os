@@ -6,6 +6,7 @@
 #define IDT_H
 
 #include "keyhandler.h"
+#include "lock.h"
 // defines
 #define VGA_WIDTH   80
 #define VGA_HEIGHT  25
@@ -21,12 +22,16 @@
 extern void load_gdt(unsigned int);
 extern void load_idt(unsigned long *idt_ptr);
 
+
 // handlers
 extern void keyboard_handler(void);
 extern void mouse_handler(void);
 extern void timer_handler(void);
 extern char read_port(unsigned short port);
 extern void write_port(unsigned short port, unsigned char data);
+
+extern volatile bool key_pressed;
+extern volatile char last_keycode;
 
 
 struct GDT_entry {

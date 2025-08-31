@@ -22,7 +22,8 @@ SRC = \
     src/gui/fontdef.c \
     src/gui/images.c \
     src/time/rtc.c \
-    src/filesys/file.c
+    src/filesys/file.c \
+	src/kernel/lock.c
 
 OBJ = $(SRC:.c=.o)
 

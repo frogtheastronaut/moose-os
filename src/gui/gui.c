@@ -160,9 +160,6 @@ void gui_clear(uint8_t color) {
     for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
         vga_buffer[i] = color;
     }
-    
-    // Update mouse
-    gui_updatemouse();
 }
 
 // Draw a title bar
@@ -618,7 +615,7 @@ void restore_cursor_pixels(void) {
 }
 
 void update_mouse(void) {
-    
+
     extern bool dialog_active;
     if (dialog_active) {
         return;
@@ -643,7 +640,6 @@ void update_mouse(void) {
     
     // only update if moved
     if (cursor_x != last_mouse_x || cursor_y != last_mouse_y) {
-        
         if (last_mouse_x >= 0 && last_mouse_y >= 0) {
             restore_cursor_pixels();
         }

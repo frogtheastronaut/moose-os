@@ -73,7 +73,11 @@ void mouse_init(void) {
 }
 
 // handle interrupts
+// Add lock.h for handler_lock
 void mouse_handler_main(void) {
+    if (handler_lock != 0) return;
+    handler_lock = 1;
+
     unsigned char status = read_port(MOUSE_STATUS);
     
     write_port(0xA0, 0x20); 
@@ -81,11 +85,13 @@ void mouse_handler_main(void) {
     
     // safety checks
     if (!(status & MOUSE_BBIT)) {
+        handler_lock = 0;
         return; // no data
     }
 
     if (!(status & MOUSE_F_BIT)) {
         read_port(MOUSE_PORT);
+        handler_lock = 0;
         return;
     }
 
@@ -148,15 +154,6 @@ void mouse_handler_main(void) {
             if (mouse_state.y_position < 0) mouse_state.y_position = 0;
             if (mouse_state.y_position >= 480) mouse_state.y_position = 479;
             
-            static uint32_t last_cursor_update = 0;
-            extern volatile uint32_t ticks;
-            extern void gui_updatemouse(void);
-            
-            if (ticks - last_cursor_update >= 1) {
-                gui_updatemouse();
-                last_cursor_update = ticks;
-            }
-            
             break;
             
         default:
@@ -164,6 +161,7 @@ void mouse_handler_main(void) {
             mouse_cycle = 0;
             break;
     }
+    handler_lock = 0;
 }
 
 // get mouse state
