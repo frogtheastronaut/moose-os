@@ -24,7 +24,6 @@ SRC = \
     src/gui/images.c \
     src/time/rtc.c \
     src/filesys/file.c \
-    src/mbasic/interpreter.c \
 	src/kernel/lock.c \
 	src/lib/malloc.c
 
