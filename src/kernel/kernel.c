@@ -14,6 +14,7 @@ simple code to run a simple OS
 #include "include/IDT.h"
 #include "include/task.h"
 #include "include/mouse.h"
+#include "include/disk.h"
 #include "../lib/lib.h"
 #include "../gui/include/explorer.h"
 #include "../gui/include/gui.h"
@@ -25,7 +26,25 @@ extern bool explorer_active;
 extern volatile uint32_t ticks;
 
 void init_filesys() {
+    // Initialize disk subsystem first
+    disk_init();
+    
+    // Initialize basic in-memory filesystem structure
     filesys_init();
+    
+    // Try to mount existing filesystem from disk
+    int mount_result = filesys_mount(0);
+    if (mount_result == 0) {
+        // Mount succeeded, try to load existing filesystem data
+        int load_result = filesys_load_from_disk();
+        if (load_result == 0) {
+            // Successfully loaded existing filesystem from disk
+            return;
+        }
+        // If load failed, fall through to create default filesystem
+    }
+    
+    // No valid filesystem found or load failed, create default filesystem
     filesys_mkdir("Documents");
     filesys_mkdir("Desktop");
     filesys_mkdir("Apps");
@@ -40,6 +59,13 @@ void init_filesys() {
                         "- 'D' to make folder, 'F' to make file.\n"
                         "You are running MooseOS version 0.5BETA. \nEnjoy!\n\n"
                         "Copyright 2025 Ethan Zhang\n");
+    
+    // Format the disk and save the default filesystem
+    int format_result = filesys_format(0);
+    if (format_result == 0) {
+        // Format succeeded, now save the current in-memory filesystem to disk
+        filesys_save_to_disk();
+    }
 }
 
 void dock() {

@@ -44,21 +44,51 @@ Then, build the OS. This step is optional as there is most likely a pre-built bi
 make build-iso
 ```
 
-Then lastly, you can run the ISO file.
+Now you can run MooseOS with disk I/O support:
 
 ```shell
-make run-iso
+# Run with disk image (recommended)
+make run
 
-# Or, to run the ISO fullscreen
-make run-iso-fullscreen
+# Or run fullscreen with disk
+make run-fullscreen
 ```
 
-Once it loads, select MOOSE, press Enter, and then MooseOS should load. You can move your cursor around, and type something to test the operating system.
+This will automatically create a 10MB disk image (`bin/moose_disk.img`) and run MooseOS with persistent storage support.
+
+### Disk I/O Features
+
+MooseOS now includes a full disk I/O subsystem with the following features:
+
+- **ATA/IDE Controller Support**: Direct hardware interface for reading/writing sectors
+- **Persistent Filesystem**: Files and directories are saved to disk and survive reboots
+- **Disk Management Commands**: Use the terminal to manage the filesystem:
+  - `diskinfo` - Show disk and filesystem information
+  - `mount` - Mount the filesystem from disk
+  - `sync` - Sync filesystem changes to disk
+  - `save` - Save current filesystem state to disk
+  - `load` - Load filesystem from disk
+  - `format` - Format the disk with MooseOS filesystem
+
+### Terminal Commands
+
+Open the terminal in MooseOS and try these commands:
+
+- `help` - Show available commands
+- `ls` - List files and directories
+- `cd <dir>` - Change directory
+- `mkdir <name>` - Create directory
+- `touch <name>` - Create file
+- `cat <file>` - Show file content
+- `diskinfo` - Show disk information
+- `save` - Save filesystem to disk
+
+Once it loads, select MooseOS, press Enter, and then MooseOS should load. You can move your cursor around, open the terminal, and test the persistent filesystem.
 
 ## Built With
 
-* [Make](https://www.gnu.org/software/make/) - Runs Makefiles.
-* [Homebrew](https://brew.sh/) - Install Dependencies
+- [Make](https://www.gnu.org/software/make/) - Runs Makefiles.
+- [Homebrew](https://brew.sh/) - Install Dependencies
 
 ## Contributing
 
@@ -70,7 +100,7 @@ We use [SemVer](http://semver.org/) for versioning.
 
 ## Authors
 
-* **Ethan Zhang** - *Initial work* - [frogtheastronaut](https://github.com/frogtheastronaut)
+- **Ethan Zhang** - *Initial work* - [frogtheastronaut](https://github.com/frogtheastronaut)
 
 We will add contributors once we get contribution.
 
