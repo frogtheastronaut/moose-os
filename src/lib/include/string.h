@@ -108,4 +108,23 @@ static inline const char* strip_whitespace(const char* str) {
     return trimmed;
 }
 
+// memory copy function
+static inline void* memcpy(void* dest, const void* src, size_t n) {
+    char* d = (char*)dest;
+    const char* s = (const char*)src;
+    for (size_t i = 0; i < n; i++) {
+        d[i] = s[i];
+    }
+    return dest;
+}
+
+// memory set function
+static inline void* memset(void* ptr, int value, size_t n) {
+    unsigned char* p = (unsigned char*)ptr;
+    for (size_t i = 0; i < n; i++) {
+        p[i] = (unsigned char)value;
+    }
+    return ptr;
+}
+
 #endif

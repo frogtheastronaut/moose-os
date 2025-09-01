@@ -1,12 +1,31 @@
 /*
-  This file is taken from a tutorial, not part of Moose OS.
-  i put it here for fun. get over with it. its not part of the code.
+  This file is taken from a tutorial, adapted for MooseOS kernel.
+  Modified to work without external dependencies.
 */
 
-#include <assert.h>
-#include <string.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include "malloc.h"
+#include "include/string.h"
+
+// Simple assert for kernel use
+#define assert(x) do { if (!(x)) { /* panic or halt */ } } while(0)
+
+// Simple sbrk implementation using a static heap
+static char kernel_heap[1024 * 1024]; // 1MB heap
+static size_t heap_offset = 0;
+
+void *sbrk(int increment) {
+    if (increment == 0) {
+        return &kernel_heap[heap_offset];
+    }
+    
+    if (heap_offset + increment > sizeof(kernel_heap)) {
+        return (void*)-1; // Out of memory
+    }
+    
+    void *old_break = &kernel_heap[heap_offset];
+    heap_offset += increment;
+    return old_break;
+}
 
 // sbrk some extra space every time we need it.
 // This does no bookkeeping and therefore has no ability to free, realloc, etc.

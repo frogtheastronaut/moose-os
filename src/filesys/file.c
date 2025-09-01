@@ -7,16 +7,12 @@
 
 // Includes
 #include "file.h"
+#include "../lib/malloc.h"
 
-/** This is the file system - now using dynamic allocation
+/** This is the file system - now using true dynamic allocation with malloc
  *
- * Dynamic file allocation implemented
+ * True dynamic file allocation implemented using malloc/free
  */
-// Memory pool for dynamic file allocation
-#define FILE_POOL_SIZE 1024  // Can allocate 1024 files
-static File file_pool[FILE_POOL_SIZE];
-static uint8_t file_allocation_bitmap[FILE_POOL_SIZE / 8]; // Bitmap for tracking allocated files
-static int pool_initialized = 0;
 
 int fileCount = 0;
 
@@ -34,76 +30,6 @@ static uint8_t disk_buffer[SECTOR_SIZE];
 static superblock_t sb_cache;
 
 /**
- * Initialize the file memory pool
- */
-static void init_file_pool(void) {
-    if (pool_initialized) return;
-    
-    // Clear the allocation bitmap
-    for (int i = 0; i < FILE_POOL_SIZE / 8; i++) {
-        file_allocation_bitmap[i] = 0;
-    }
-    
-    // Clear all file structures
-    for (int i = 0; i < FILE_POOL_SIZE; i++) {
-        // Clear the entire file structure
-        uint8_t* file_ptr = (uint8_t*)&file_pool[i];
-        for (int j = 0; j < sizeof(File); j++) {
-            file_ptr[j] = 0;
-        }
-    }
-    
-    pool_initialized = 1;
-}
-
-/**
- * Allocate a file from the memory pool
- */
-static File* allocate_file_from_pool(void) {
-    if (!pool_initialized) {
-        init_file_pool();
-    }
-    
-    // Find a free slot in the bitmap
-    for (int i = 0; i < FILE_POOL_SIZE; i++) {
-        int byte_index = i / 8;
-        int bit_index = i % 8;
-        
-        if (!(file_allocation_bitmap[byte_index] & (1 << bit_index))) {
-            // Mark as allocated
-            file_allocation_bitmap[byte_index] |= (1 << bit_index);
-            
-            // Clear the file structure
-            uint8_t* file_ptr = (uint8_t*)&file_pool[i];
-            for (int j = 0; j < sizeof(File); j++) {
-                file_ptr[j] = 0;
-            }
-            
-            return &file_pool[i];
-        }
-    }
-    
-    return NULL; // No free slots available
-}
-
-/**
- * Free a file back to the memory pool
- */
-static void free_file_to_pool(File* file) {
-    if (!file || !pool_initialized) return;
-    
-    // Find the index of this file in the pool
-    int index = file - file_pool;
-    if (index < 0 || index >= FILE_POOL_SIZE) return; // Invalid file pointer
-    
-    int byte_index = index / 8;
-    int bit_index = index % 8;
-    
-    // Mark as free
-    file_allocation_bitmap[byte_index] &= ~(1 << bit_index);
-}
-
-/**
  * Auto-save helper function - saves filesystem to disk after changes
  */
 static void auto_save_filesystem(void) {
@@ -115,43 +41,158 @@ static void auto_save_filesystem(void) {
 }
 
 /**
- * Dynamic file allocator - replaces the old static allocation
- * Allocates a new File structure from the memory pool
- * @return pointer to File, or NULL if pool is full
+ * Dynamic file allocator using malloc
+ * Allocates a new File structure from heap
+ * @return pointer to File, or NULL if out of memory
  */
 File* allocFile() {
-    File* new_file = allocate_file_from_pool();
+    File* new_file = (File*)malloc(sizeof(File));
     if (new_file) {
+        // Clear the allocated memory
+        uint8_t* file_ptr = (uint8_t*)new_file;
+        for (int i = 0; i < sizeof(File); i++) {
+            file_ptr[i] = 0;
+        }
+        
+        // Initialize dynamic fields to NULL/0
+        new_file->name[0] = '\0';
+        new_file->type = FILE_NODE; // Will be set properly later
+        new_file->parent = NULL;
+        
+        // Initialize union fields to NULL
+        new_file->file.content = NULL;
+        new_file->file.content_size = 0;
+        new_file->file.content_capacity = 0;
+        
         fileCount++;
     }
     return new_file;
 }
 
 /**
- * Free a file and return it to the pool
+ * Free a file using free()
  * @param file pointer to the file to free
  */
 void freeFile(File* file) {
     if (!file) return;
     
-    // Recursively free all children if it's a directory
-    if (file->type == FOLDER_NODE) {
+    if (file->type == FILE_NODE) {
+        // Free dynamically allocated content
+        if (file->file.content) {
+            free(file->file.content);
+            file->file.content = NULL;
+        }
+    } else if (file->type == FOLDER_NODE) {
+        // Recursively free all children
         for (int i = 0; i < file->folder.childCount; i++) {
-            if (file->folder.children[i]) {
+            if (file->folder.children && file->folder.children[i]) {
                 freeFile(file->folder.children[i]);
             }
         }
+        // Free the children array
+        if (file->folder.children) {
+            free(file->folder.children);
+            file->folder.children = NULL;
+        }
     }
     
-    free_file_to_pool(file);
+    free(file);
     fileCount--;
+}
+
+/**
+ * Set file content dynamically
+ */
+static int set_file_content(File* file, const char* content) {
+    if (!file || file->type != FILE_NODE || !content) return -1;
+    
+    size_t new_size = strlen(content);
+    
+    // Free old content if exists
+    if (file->file.content) {
+        free(file->file.content);
+    }
+    
+    // Allocate new content (with null terminator)
+    file->file.content = (char*)malloc(new_size + 1);
+    if (!file->file.content) {
+        file->file.content_size = 0;
+        file->file.content_capacity = 0;
+        return -1; // Out of memory
+    }
+    
+    // Copy content
+    for (size_t i = 0; i < new_size; i++) {
+        file->file.content[i] = content[i];
+    }
+    file->file.content[new_size] = '\0';
+    
+    file->file.content_size = new_size;
+    file->file.content_capacity = new_size + 1;
+    
+    return 0;
+}
+
+/**
+ * Add child to directory (with dynamic array growth)
+ */
+static int add_child_to_directory(File* dir, File* child) {
+    if (!dir || !child || dir->type != FOLDER_NODE) return -1;
+    
+    // Initialize children array if first child
+    if (!dir->folder.children) {
+        dir->folder.capacity = 4; // Start with small capacity
+        dir->folder.children = (File**)malloc(dir->folder.capacity * sizeof(File*));
+        if (!dir->folder.children) return -1;
+        dir->folder.childCount = 0;
+    }
+    
+    // Grow array if needed
+    if (dir->folder.childCount >= dir->folder.capacity) {
+        int new_capacity = dir->folder.capacity * 2;
+        File** new_children = (File**)realloc(dir->folder.children, new_capacity * sizeof(File*));
+        if (!new_children) return -1; // Out of memory
+        
+        dir->folder.children = new_children;
+        dir->folder.capacity = new_capacity;
+    }
+    
+    // Add child
+    dir->folder.children[dir->folder.childCount] = child;
+    dir->folder.childCount++;
+    child->parent = dir;
+    
+    return 0;
+}
+
+/**
+ * Remove child from directory
+ */
+static int remove_child_from_directory(File* dir, File* child) {
+    if (!dir || !child || dir->type != FOLDER_NODE || !dir->folder.children) return -1;
+    
+    // Find child index
+    int child_index = -1;
+    for (int i = 0; i < dir->folder.childCount; i++) {
+        if (dir->folder.children[i] == child) {
+            child_index = i;
+            break;
+        }
+    }
+    
+    if (child_index == -1) return -1; // Child not found
+    
+    // Shift remaining children left
+    for (int i = child_index; i < dir->folder.childCount - 1; i++) {
+        dir->folder.children[i] = dir->folder.children[i + 1];
+    }
+    dir->folder.childCount--;
+    
+    return 0;
 }
 
 // Initialise filesystem.
 void filesys_init() {
-    // Initialize the file memory pool
-    init_file_pool();
-    
     root = allocFile();
     if (!root) return; // Root does not exist
     copyStr(root->name, "/"); // Root is /
@@ -159,7 +200,9 @@ void filesys_init() {
     // Initialise root
     root->type = FOLDER_NODE;
     root->parent = NULL;
+    root->folder.children = NULL;
     root->folder.childCount = 0;
+    root->folder.capacity = 0;
 
     // We start at root
     cwd = root;
@@ -170,15 +213,14 @@ void filesys_init() {
  * @return true if exists, false if not
  */
 bool nameInCWD(const char* name, NodeType type) {
+    if (!cwd || cwd->type != FOLDER_NODE || !cwd->folder.children) return false;
+    
     for (int i = 0; i < cwd->folder.childCount; i++) {
         File* child = cwd->folder.children[i];
-        // Check if file type and name match up
-        if (child->type == type && strEqual(child->name, name)) {
-            // Exists
+        if (child && child->type == type && strEqual(child->name, name)) {
             return true;
         }
     }
-    // Does not exist
     return false;
 }
 
@@ -187,22 +229,28 @@ bool nameInCWD(const char* name, NodeType type) {
  */
 int filesys_mkdir(const char* name) {
     if (!name || strlen(name) == 0 || strlen(name) >= MAX_NAME_LEN) return -2; // Invalid name
-    if (cwd->folder.childCount >= MAX_CHILDREN) return -1; // Too many files/folders
     if (nameInCWD(name, FOLDER_NODE)) return -3; // Duplicate file/folder
 
-    // This is really similar to how we made a root folder.
     File* node = allocFile();
     if (!node) return -1;
+    
     copyStr(node->name, name);
     node->type = FOLDER_NODE;
-    node->parent = cwd;
+    
+    // Initialize empty directory (no children allocated yet)
+    node->folder.children = NULL;
     node->folder.childCount = 0;
-    cwd->folder.children[cwd->folder.childCount++] = node;
+    node->folder.capacity = 0;
+    
+    // Add to current directory
+    if (add_child_to_directory(cwd, node) != 0) {
+        freeFile(node);
+        return -1;
+    }
 
     // Auto-save to disk after creating directory
     auto_save_filesystem();
 
-    // Success
     return 0;
 }
 
@@ -211,29 +259,30 @@ int filesys_mkdir(const char* name) {
  */
 int filesys_mkfile(const char* name, const char* content) {
     if (!name || strlen(name) == 0 || strlen(name) >= MAX_NAME_LEN) return -2; // Invalid name - too long/empty
-    if (!content || strlen(content) >= MAX_CONTENT) return -3; // Content too large
-    /** @todo remove limitations and add dynamic file sizes. */
-    if (cwd->folder.childCount >= MAX_CHILDREN) return -1; // Too many files
+    if (!content) return -3; // Content is NULL
     if (nameInCWD(name, FILE_NODE)) return -4; // Duplicate file name
 
-    // Same as mkdir
     File* node = allocFile();
     if (!node) return -1;
+    
     copyStr(node->name, name);
     node->type = FILE_NODE;
-    node->parent = cwd;
-    int i = 0;
-    while (content[i] && i < MAX_CONTENT - 1) {
-        node->file.content[i] = content[i];
-        i++;
+    
+    // Set content dynamically
+    if (set_file_content(node, content) != 0) {
+        freeFile(node);
+        return -1; // Failed to allocate content
     }
-    node->file.content[i] = '\0';
-    cwd->folder.children[cwd->folder.childCount++] = node;
+    
+    // Add to current directory
+    if (add_child_to_directory(cwd, node) != 0) {
+        freeFile(node);
+        return -1;
+    }
 
     // Auto-save to disk after creating file
     auto_save_filesystem();
 
-    // Success
     return 0;
 }
 
@@ -246,10 +295,13 @@ int filesys_cd(const char* name) {
         if (cwd->parent != NULL) cwd = cwd->parent;
         return 0;
     }
+    
+    if (!cwd->folder.children) return -1; // No children
+    
     // CD to folder
     for (int i = 0; i < cwd->folder.childCount; i++) {
         File* child = cwd->folder.children[i];
-        if (child->type == FOLDER_NODE && strEqual(child->name, name)) {
+        if (child && child->type == FOLDER_NODE && strEqual(child->name, name)) {
             cwd = child;
             return 0;
         }
@@ -261,22 +313,21 @@ int filesys_cd(const char* name) {
  * @return 0 on success, -1 on failure
  */
 int filesys_rm(const char* name) {
+    if (!cwd->folder.children) return -1; // No children
+    
     for (int i = 0; i < cwd->folder.childCount; i++) {
         File* child = cwd->folder.children[i];
-        if (child->type == FILE_NODE && strEqual(child->name, name)) {
-            // Shift remaining children left
-            for (int j = i; j < cwd->folder.childCount - 1; j++) {
-                cwd->folder.children[j] = cwd->folder.children[j + 1];
+        if (child && child->type == FILE_NODE && strEqual(child->name, name)) {
+            // Remove from directory
+            if (remove_child_from_directory(cwd, child) == 0) {
+                // Free the file memory
+                freeFile(child);
+                
+                // Auto-save to disk after removing file
+                auto_save_filesystem();
+                
+                return 0;
             }
-            cwd->folder.childCount--;
-            
-            // Free the file memory
-            freeFile(child);
-            
-            // Auto-save to disk after removing file
-            auto_save_filesystem();
-            
-            return 0;
         }
     }
     return -1; // Not found or not a file (is folder)
@@ -286,25 +337,25 @@ int filesys_rm(const char* name) {
  * @return 0 on success, -1 on failure, -2 if not empty
  */
 int filesys_rmdir(const char* name) {
+    if (!cwd->folder.children) return -1; // No children
+    
     for (int i = 0; i < cwd->folder.childCount; i++) {
         File* child = cwd->folder.children[i];
-        if (child->type == FOLDER_NODE && strEqual(child->name, name)) {
+        if (child && child->type == FOLDER_NODE && strEqual(child->name, name)) {
             if (child->folder.childCount > 0) {
                 return -2; // Directory not empty
             }
-            // Shift remaining children left
-            for (int j = i; j < cwd->folder.childCount - 1; j++) {
-                cwd->folder.children[j] = cwd->folder.children[j + 1];
+            
+            // Remove from directory
+            if (remove_child_from_directory(cwd, child) == 0) {
+                // Free the directory memory
+                freeFile(child);
+                
+                // Auto-save to disk after removing directory
+                auto_save_filesystem();
+                
+                return 0;
             }
-            cwd->folder.childCount--;
-            
-            // Free the directory memory
-            freeFile(child);
-            
-            // Auto-save to disk after removing directory
-            auto_save_filesystem();
-            
-            return 0;
         }
     }
     return -1; // Not found/not a directory (is a file)
@@ -314,24 +365,21 @@ int filesys_rmdir(const char* name) {
  * @return 0 on success, -1 on failure
  */
 int filesys_editfile(const char* name, const char* new_content) {
+    if (!cwd->folder.children) return -1; // No children
+    
     for (int i = 0; i < cwd->folder.childCount; i++) {
         File* child = cwd->folder.children[i];
-        if (child->type == FILE_NODE && strEqual(child->name, name)) {
-            // Replace content
-            int j = 0;
-            while (new_content[j] && j < MAX_CONTENT - 1) {
-                child->file.content[j] = new_content[j];
-                j++;
+        if (child && child->type == FILE_NODE && strEqual(child->name, name)) {
+            // Set new content dynamically
+            if (set_file_content(child, new_content) == 0) {
+                // Auto-save to disk after editing file
+                auto_save_filesystem();
+                return 0;
             }
-            child->file.content[j] = '\0';
-            
-            // Auto-save to disk after editing file
-            auto_save_filesystem();
-            
-            return 0;
+            return -1; // Failed to set content
         }
     }
-    return -1;
+    return -1; // File not found
 }
 
 /**
@@ -637,11 +685,15 @@ static int convert_memory_to_disk_inode(File *memory_file, disk_inode_t *disk_in
     disk_inode->name[name_len] = '\0';
     
     if (memory_file->type == FILE_NODE) {
-        // Handle file content
-        disk_inode->size = strlen(memory_file->file.content);
+        // Handle file content - use dynamic content pointer
+        if (memory_file->file.content) {
+            disk_inode->size = memory_file->file.content_size;
+        } else {
+            disk_inode->size = 0;
+        }
         
         // Write content to data blocks if file has content
-        if (disk_inode->size > 0) {
+        if (disk_inode->size > 0 && memory_file->file.content) {
             uint32_t data_block = allocate_data_block();
             if (data_block > 0) {
                 disk_inode->data_blocks[0] = data_block;
@@ -697,6 +749,8 @@ static int save_directory_recursive(File *dir, uint32_t dir_inode_num, uint32_t 
     
     // Save children
     for (int i = 0; i < dir->folder.childCount && i < MAX_CHILDREN_PER_DIR; i++) {
+        if (!dir->folder.children || !dir->folder.children[i]) continue;
+        
         File *child = dir->folder.children[i];
         uint32_t child_inode = allocate_inode();
         if (child_inode == 0) continue;
@@ -759,26 +813,44 @@ static File* convert_disk_to_memory_file(disk_inode_t *disk_inode) {
             uint8_t content_buffer[SECTOR_SIZE];
             
             if (disk_read_sector(boot_drive, disk_inode->data_blocks[0], content_buffer) == 0) {
-                // Copy content to memory file
-                uint32_t content_len = disk_inode->size;
-                if (content_len >= MAX_CONTENT) {
-                    content_len = MAX_CONTENT - 1; // Prevent overflow
+                // Allocate content dynamically
+                memory_file->file.content = (char*)malloc(disk_inode->size + 1);
+                if (memory_file->file.content) {
+                    // Copy content to memory file
+                    uint32_t content_len = disk_inode->size;
+                    if (content_len > SECTOR_SIZE - 1) {
+                        content_len = SECTOR_SIZE - 1; // Prevent buffer overflow
+                    }
+                    
+                    for (uint32_t i = 0; i < content_len; i++) {
+                        memory_file->file.content[i] = content_buffer[i];
+                    }
+                    memory_file->file.content[content_len] = '\0';
+                    memory_file->file.content_size = content_len;
+                    memory_file->file.content_capacity = disk_inode->size + 1;
+                } else {
+                    // Failed to allocate content memory
+                    memory_file->file.content = NULL;
+                    memory_file->file.content_size = 0;
+                    memory_file->file.content_capacity = 0;
                 }
-                
-                for (uint32_t i = 0; i < content_len; i++) {
-                    memory_file->file.content[i] = content_buffer[i];
-                }
-                memory_file->file.content[content_len] = '\0';
             } else {
                 // Failed to read content
-                memory_file->file.content[0] = '\0';
+                memory_file->file.content = NULL;
+                memory_file->file.content_size = 0;
+                memory_file->file.content_capacity = 0;
             }
         } else {
-            memory_file->file.content[0] = '\0';
+            // Empty file
+            memory_file->file.content = NULL;
+            memory_file->file.content_size = 0;
+            memory_file->file.content_capacity = 0;
         }
     } else {
-        // For directories
+        // For directories - initialize empty
+        memory_file->folder.children = NULL;
         memory_file->folder.childCount = 0;
+        memory_file->folder.capacity = 0;
     }
     
     return memory_file;
@@ -802,8 +874,12 @@ static int load_directory_recursive(uint32_t inode_num, File *parent) {
     
     memory_file->parent = parent;
     
-    if (parent && parent->type == FOLDER_NODE && parent->folder.childCount < MAX_CHILDREN) {
-        parent->folder.children[parent->folder.childCount++] = memory_file;
+    // Add to parent directory if parent exists
+    if (parent && parent->type == FOLDER_NODE) {
+        if (add_child_to_directory(parent, memory_file) != 0) {
+            freeFile(memory_file);
+            return -1;
+        }
     }
     
     // If this is a directory, load its children
@@ -832,9 +908,6 @@ int filesys_load_from_disk(void) {
         cwd = NULL;
     }
     fileCount = 0;
-    
-    // Reinitialize the file pool
-    init_file_pool();
     
     // Load root directory
     disk_inode_t root_disk_inode;
@@ -981,37 +1054,31 @@ int filesys_get_memory_stats(char *stats_buffer, int buffer_size) {
     
     strcat(stats_buffer, "=== Filesystem Memory Statistics ===\n");
     
-    // Calculate total allocated files
-    int allocated_files = 0;
-    if (pool_initialized) {
-        for (int i = 0; i < FILE_POOL_SIZE; i++) {
-            int byte_index = i / 8;
-            int bit_index = i % 8;
-            if (file_allocation_bitmap[byte_index] & (1 << bit_index)) {
-                allocated_files++;
-            }
-        }
-    }
+    strcat(stats_buffer, "Allocation Method: Dynamic (malloc)\n");
     
-    strcat(stats_buffer, "File Pool Size: ");
-    int2str(FILE_POOL_SIZE, temp, sizeof(temp));
+    strcat(stats_buffer, "Active Files: ");
+    int2str(fileCount, temp, sizeof(temp));
     strcat(stats_buffer, temp);
     strcat(stats_buffer, "\n");
     
-    strcat(stats_buffer, "Allocated Files: ");
-    int2str(allocated_files, temp, sizeof(temp));
-    strcat(stats_buffer, temp);
-    strcat(stats_buffer, "\n");
+    // Calculate actual memory usage
+    int total_memory = fileCount * sizeof(File); // Base structures
+    int content_memory = 0;
+    int children_memory = 0;
     
-    strcat(stats_buffer, "Free Slots: ");
-    int2str(FILE_POOL_SIZE - allocated_files, temp, sizeof(temp));
-    strcat(stats_buffer, temp);
-    strcat(stats_buffer, "\n");
-    
-    strcat(stats_buffer, "Memory Usage: ");
-    int2str((allocated_files * sizeof(File)), temp, sizeof(temp));
+    // We'd need to traverse all files to get exact usage
+    // For now, show base structure usage
+    strcat(stats_buffer, "Base Structures: ");
+    int2str(total_memory, temp, sizeof(temp));
     strcat(stats_buffer, temp);
     strcat(stats_buffer, " bytes\n");
+    
+    strcat(stats_buffer, "Per-File Base Size: ");
+    int2str(sizeof(File), temp, sizeof(temp));
+    strcat(stats_buffer, temp);
+    strcat(stats_buffer, " bytes\n");
+    
+    strcat(stats_buffer, "Note: + dynamic content/children\n");
     
     return 0;
 }

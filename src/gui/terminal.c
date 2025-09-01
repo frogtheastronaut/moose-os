@@ -118,18 +118,20 @@ static void term_exec_cmd(const char* cmd) {
     }
     // ls
     else if (strEqual(cmd, "ls")) {
-        if (cwd->folder.childCount == 0) {
+        if (cwd->folder.childCount == 0 || !cwd->folder.children) {
             terminal_print("Directory is empty.");
         } else {
             for (int i = 0; i < cwd->folder.childCount; i++) {
                 File* child = cwd->folder.children[i];
-                char line[CHARS_PER_LINE + 1];
-                if (child->type == FOLDER_NODE) {
-                    msnprintf(line, sizeof(line), "[DIR]  %s", child->name);
-                } else {
-                    msnprintf(line, sizeof(line), "[FILE] %s", child->name);
+                if (child) {
+                    char line[CHARS_PER_LINE + 1];
+                    if (child->type == FOLDER_NODE) {
+                        msnprintf(line, sizeof(line), "[DIR]  %s", child->name);
+                    } else {
+                        msnprintf(line, sizeof(line), "[FILE] %s", child->name);
+                    }
+                    terminal_print(line);
                 }
-                terminal_print(line);
             }
         }
     }
@@ -150,15 +152,17 @@ static void term_exec_cmd(const char* cmd) {
             terminal_print("Changed to /");
         } else {
             bool found = false;
-            for (int i = 0; i < cwd->folder.childCount; i++) {
-                File* child = cwd->folder.children[i];
-                if (child->type == FOLDER_NODE && strEqual(child->name, dirname)) {
-                    cwd = child;
-                    char line[CHARS_PER_LINE + 1];
-                    msnprintf(line, sizeof(line), "Changed to %s", dirname);
-                    terminal_print(line);
-                    found = true;
-                    break;
+            if (cwd->folder.children) {
+                for (int i = 0; i < cwd->folder.childCount; i++) {
+                    File* child = cwd->folder.children[i];
+                    if (child && child->type == FOLDER_NODE && strEqual(child->name, dirname)) {
+                        cwd = child;
+                        char line[CHARS_PER_LINE + 1];
+                        msnprintf(line, sizeof(line), "Changed to %s", dirname);
+                        terminal_print(line);
+                        found = true;
+                        break;
+                    }
                 }
             }
             if (!found) {
@@ -196,35 +200,37 @@ static void term_exec_cmd(const char* cmd) {
         
         // Search for the file in current directory
         bool found = false;
-        for (int i = 0; i < cwd->folder.childCount; i++) {
-            File* child = cwd->folder.children[i];
-            if (child->type == FILE_NODE && strEqual(child->name, filename)) {
-                found = true;
-                if (strlen(child->file.content) > 0) {
-                    // Split content into multiple lines if needed
-                    char* content = child->file.content;
-                    char line[CHARS_PER_LINE + 1];
-                    int pos = 0;
-                    for (int j = 0; content[j] != '\0'; j++) {
-                        if (content[j] == '\n' || pos >= CHARS_PER_LINE - 1) {
-                            line[pos] = '\0';
-                            terminal_print(line);
-                            pos = 0;
-                            if (content[j] != '\n') {
+        if (cwd->folder.children) {
+            for (int i = 0; i < cwd->folder.childCount; i++) {
+                File* child = cwd->folder.children[i];
+                if (child && child->type == FILE_NODE && strEqual(child->name, filename)) {
+                    found = true;
+                    if (child->file.content && child->file.content_size > 0) {
+                        // Split content into multiple lines if needed
+                        char* content = child->file.content;
+                        char line[CHARS_PER_LINE + 1];
+                        int pos = 0;
+                        for (int j = 0; content[j] != '\0'; j++) {
+                            if (content[j] == '\n' || pos >= CHARS_PER_LINE - 1) {
+                                line[pos] = '\0';
+                                terminal_print(line);
+                                pos = 0;
+                                if (content[j] != '\n') {
+                                    line[pos++] = content[j];
+                                }
+                            } else {
                                 line[pos++] = content[j];
                             }
-                        } else {
-                            line[pos++] = content[j];
                         }
+                        if (pos > 0) {
+                            line[pos] = '\0';
+                            terminal_print(line);
+                        }
+                    } else {
+                        terminal_print("File is empty");
                     }
-                    if (pos > 0) {
-                        line[pos] = '\0';
-                        terminal_print(line);
-                    }
-                } else {
-                    terminal_print("File is empty");
+                    break;
                 }
-                break;
             }
         }
         if (!found) {

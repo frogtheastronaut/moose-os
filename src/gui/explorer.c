@@ -69,25 +69,29 @@ void draw_explorer() {
         }
     }
     
-    // draw files and folders
-    for (int i = 0; i < cwd->folder.childCount && displayed_count < 16; i++) { // 4 rows of 4 items each
-        File* child = cwd->folder.children[i];
+    // draw files and folders - check for null children array
+    if (cwd->folder.children) {
+        for (int i = 0; i < cwd->folder.childCount && displayed_count < 16; i++) { // 4 rows of 4 items each
+            if (!cwd->folder.children[i]) continue; // Skip null children
+            
+            File* child = cwd->folder.children[i];
 
-        int selection_index = i;
-        if (cwd != root) {
-            selection_index = i + 1;  // +1 bc of ".." folder 
-        }
-        
-        draw_file(x_pos, y_pos, child->name, 
-                        (child->type == FOLDER_NODE), 
-                        current_selection == selection_index);
+            int selection_index = i;
+            if (cwd != root) {
+                selection_index = i + 1;  // +1 bc of ".." folder 
+            }
+            
+            draw_file(x_pos, y_pos, child->name, 
+                            (child->type == FOLDER_NODE), 
+                            current_selection == selection_index);
 
-        x_pos += 70;
-        displayed_count++;
+            x_pos += 70;
+            displayed_count++;
 
-        if (displayed_count % 4 == 0) { // 4 items per row
-            x_pos = 20;
-            y_pos += 40;
+            if (displayed_count % 4 == 0) { // 4 items per row
+                x_pos = 20;
+                y_pos += 40;
+            }
         }
     }
 
@@ -303,7 +307,8 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
                 int actual_index = current_selection;
                 if (cwd != root) actual_index -= 1;  // account for ".." entry
                 
-                if (actual_index >= 0 && actual_index < cwd->folder.childCount) {
+                if (actual_index >= 0 && actual_index < cwd->folder.childCount && 
+                    cwd->folder.children && cwd->folder.children[actual_index]) {
                     File* child = cwd->folder.children[actual_index];
                     if (child->type == FOLDER_NODE) {
                         filesys_cd(child->name);
@@ -345,7 +350,8 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
                 int actual_index = current_selection;
                 if (cwd != root) actual_index -= 1;  // account for ".." entry
 
-                if (actual_index >= 0 && actual_index < cwd->folder.childCount) {
+                if (actual_index >= 0 && actual_index < cwd->folder.childCount && 
+                    cwd->folder.children && cwd->folder.children[actual_index]) {
                     File* child = cwd->folder.children[actual_index];
                     
                     if (child->type == FOLDER_NODE) {

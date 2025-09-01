@@ -24,7 +24,8 @@ SRC = \
     src/gui/images.c \
     src/time/rtc.c \
     src/filesys/file.c \
-	src/kernel/lock.c
+	src/kernel/lock.c \
+	src/lib/malloc.c
 
 OBJ = $(SRC:.c=.o)
 

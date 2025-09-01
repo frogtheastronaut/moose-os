@@ -476,7 +476,11 @@ void draw_dialog(const char* title, const char* prompt) {
 }
 
 char* get_file_content(const char* filename) {
+    if (!cwd->folder.children) return NULL;
+    
     for (int i = 0; i < cwd->folder.childCount; i++) {
+        if (!cwd->folder.children[i]) continue;
+        
         File* child = cwd->folder.children[i];
         if (child->type == FILE_NODE && strEqual(child->name, filename)) {
             return child->file.content;

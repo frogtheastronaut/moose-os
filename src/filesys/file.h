@@ -71,10 +71,10 @@ typedef struct {
 // Name 
 // Its type (file/folder)
 // Its parent folder
-// Its content 
-// Children, and childcount 
+// Its content (dynamically allocated)
+// Children, and childcount (dynamically allocated)
 /**
- * @todo Remove limitations
+ * Dynamic file allocation implemented
  */
 typedef struct File {
     char name[MAX_NAME_LEN];
@@ -82,18 +82,21 @@ typedef struct File {
     struct File* parent;
     union {
         struct {
-            char content[MAX_CONTENT];
+            char* content;          // Dynamically allocated content
+            size_t content_size;    // Actual content size
+            size_t content_capacity; // Allocated capacity
         } file;
         struct {
-            struct File* children[MAX_CHILDREN];
+            struct File** children; // Dynamically allocated array of pointers
             int childCount;
+            int capacity;           // Current array capacity
         } folder;
     };
 } File;
 
-// This is the filesystem - now using dynamic allocation
-/** Dynamic file allocation implemented */
-// extern File filesys[MAX_NODES];  // Removed - now using dynamic allocation
+// This is the filesystem - now using dynamic allocation with malloc
+/** Dynamic file allocation implemented using malloc/free */
+// No longer using static array - now using malloc
 extern int fileCount;
 
 // Buffer used for multiple purposes
