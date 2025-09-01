@@ -54,22 +54,7 @@ make run
 make run-fullscreen
 ```
 
-This will automatically create a 10MB disk image (`bin/moose_disk.img`) and run MooseOS with persistent storage support.
-
-### Terminal Commands
-
-Open the terminal in MooseOS and try these commands:
-
-- `help` - Show available commands
-- `ls` - List files and directories
-- `cd <dir>` - Change directory
-- `mkdir <name>` - Create directory
-- `touch <name>` - Create file
-- `cat <file>` - Show file content
-- `diskinfo` - Show disk information
-- `save` - Save filesystem to disk
-
-Once it loads, select MooseOS, press Enter, and then MooseOS should load. You can move your cursor around, open the terminal, and test the persistent filesystem.
+This will automatically create a 10MB disk image (`bin/moose_disk.img`).
 
 ## Built With
 
@@ -88,7 +73,7 @@ We use [SemVer](http://semver.org/) for versioning.
 
 - **Ethan Zhang** - *Initial work* - [frogtheastronaut](https://github.com/frogtheastronaut)
 
-We will add contributors once we get contribution.
+We will add contributors once we get contributions.
 
 ## License
 
