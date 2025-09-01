@@ -1,12 +1,12 @@
-
+# Assuming you have installed said dependancies
+# Dependancies are listed in README.md
 NASM = nasm
 GCC = i386-elf-gcc
 LD = i386-elf-ld
 GRUB_MKRESCUE = i686-elf-grub-mkrescue
 QEMU = qemu-system-i386
 
-
-# Explicit list of all .c files in src/
+# Make sure any additional file is listed in this SRC list.
 SRC = \
     src/kernel/keyhandler.c \
     src/kernel/IDT.c \
@@ -43,7 +43,7 @@ kasm.o: src/kernel/boot.asm
 switchtask.o: src/kernel/switchtask.asm
 	$(NASM) -f elf32 $< -o $@
 
-# Disk image targets
+
 create-disk:
 	@if [ ! -f bin/moose_disk.img ]; then \
 		mkdir -p bin; \
@@ -53,12 +53,6 @@ create-disk:
 		echo "Disk image bin/moose_disk.img already exists, skipping creation"; \
 	fi
 
-create-disk-force:
-	@mkdir -p bin
-	dd if=/dev/zero of=bin/moose_disk.img bs=1M count=10
-	@echo "Created new 10MB disk image: bin/moose_disk.img (overwrote existing)"
-
-# ISO creation targets
 build-iso: build-elf
 	mkdir -p iso/boot/grub
 	cp bin/MooseOS.elf iso/boot/
@@ -68,19 +62,17 @@ build-iso: build-elf
 	$(GRUB_MKRESCUE) -o bin/MooseOS.iso iso
 	rm -rf iso
 
-# Run targets - ISO with disk is the primary way to run MooseOS
-run: run-iso-with-disk
-
-run-fullscreen: run-iso-with-disk-fullscreen
-
-run-iso-with-disk: build-iso create-disk
+build-run: build-iso create-disk
 	$(QEMU) -cdrom bin/MooseOS.iso -drive file=bin/moose_disk.img,format=raw,if=ide -m 512M
 
-run-iso-with-disk-fullscreen: build-iso create-disk
-	$(QEMU) -display cocoa,zoom-to-fit=on -cdrom bin/MooseOS.iso -drive file=bin/moose_disk.img,format=raw,if=ide -full-screen -m 512M
+run: create-disk
+	$(QEMU) -cdrom bin/MooseOS.iso -drive file=bin/moose_disk.img,format=raw,if=ide -m 512M
+
+run-fullscreen:
 	$(QEMU) -display cocoa,zoom-to-fit=on -cdrom bin/MooseOS.iso -drive file=bin/moose_disk.img,format=raw,if=ide -full-screen -m 512M
 
-# Cleanup
+# Note: There is no build-run-fullscreen target
+
 clean-iso:
 	rm -f bin/MooseOS.iso
 	rm -rf iso
@@ -93,32 +85,3 @@ clean-o:
 
 clean-kernel:
 	rm -f bin/MooseOS.elf
-
-clean-all: clean-iso clean-disk clean-kernel clean-o
-	@echo "Cleaned all build artifacts"
-
-# Default target
-all: build-iso
-	@echo "MooseOS built successfully. Use 'make run' to start with disk support."
-
-# Help target
-help:
-	@echo "MooseOS Build System"
-	@echo "==================="
-	@echo "Main targets:"
-	@echo "  build-elf           - Build the kernel ELF file"
-	@echo "  build-iso           - Build the ISO image"
-	@echo "  create-disk         - Create a 10MB disk image (only if it doesn't exist)"
-	@echo "  create-disk-force   - Create a new 10MB disk image (overwrites existing)"
-	@echo "  run                 - Run MooseOS in QEMU with disk (default)"
-	@echo "  run-fullscreen      - Run MooseOS in fullscreen with disk"
-	@echo ""
-	@echo "Cleanup targets:"
-	@echo "  clean-o             - Remove object files"
-	@echo "  clean-kernel        - Remove kernel ELF"
-	@echo "  clean-iso           - Remove ISO files"
-	@echo "  clean-disk          - Remove disk image"
-	@echo "  clean-all           - Remove all build artifacts"
-	@echo ""
-	@echo "Note: The primary way to run MooseOS is with 'make run' which"
-	@echo "      automatically builds the ISO and creates a disk image."

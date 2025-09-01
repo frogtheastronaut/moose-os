@@ -44,31 +44,17 @@ Then, build the OS. This step is optional as there is most likely a pre-built bi
 make build-iso
 ```
 
-Now you can run MooseOS with disk I/O support:
+Then, to run MooseOS:
 
 ```shell
-# Run with disk image (recommended)
+# Run
 make run
 
-# Or run fullscreen with disk
+# Or run fullscreen
 make run-fullscreen
 ```
 
 This will automatically create a 10MB disk image (`bin/moose_disk.img`) and run MooseOS with persistent storage support.
-
-### Disk I/O Features
-
-MooseOS now includes a full disk I/O subsystem with the following features:
-
-- **ATA/IDE Controller Support**: Direct hardware interface for reading/writing sectors
-- **Persistent Filesystem**: Files and directories are saved to disk and survive reboots
-- **Disk Management Commands**: Use the terminal to manage the filesystem:
-  - `diskinfo` - Show disk and filesystem information
-  - `mount` - Mount the filesystem from disk
-  - `sync` - Sync filesystem changes to disk
-  - `save` - Save current filesystem state to disk
-  - `load` - Load filesystem from disk
-  - `format` - Format the disk with MooseOS filesystem
 
 ### Terminal Commands
 

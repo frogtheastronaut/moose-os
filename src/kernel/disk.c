@@ -1,14 +1,17 @@
 /**
     Moose Operating System
     Copyright (c) 2025 Ethan Zhang.
-    
-    ATA/IDE Disk I/O Implementation
+
+    ATA disk implementation.
+
+    @todo: This currently only supports QEMU disks.
+           Not a high priority.
 */
 
 #include "include/disk.h"
 #include "../lib/lib.h"
 
-// Global array to store ATA device information
+// ATA device information
 ata_device_t ata_devices[4];
 
 /**
@@ -26,24 +29,24 @@ void ata_write_command(uint16_t base_io, uint8_t cmd) {
 }
 
 /**
- * Simple delay - just read a port a few times with memory barrier
+ * Delay
  */
 void simple_delay(void) {
     for (int i = 0; i < 100; i++) {
-        volatile uint8_t dummy = inb(0x80); // Unused port, just for delay
-        (void)dummy; // Prevent optimization
+        volatile uint8_t dummy = inb(0x80); // Unused port
+        (void)dummy;
     }
 }
 
 /**
- * Read a single sector from disk - QEMU-compatible version with proper status checking
+ * Read a single sector from disk
  */
 int disk_read_sector(uint8_t drive, uint32_t lba, uint8_t *buffer) {
     if (drive >= 4 || !ata_devices[drive].exists) {
         return -1; // Invalid drive
     }
     
-    // Use primary IDE controller (0x1F0) - QEMU standard
+    // Use primary IDE controller
     uint16_t base_io = 0x1F0;
     
     // Wait for controller to be ready (BSY clear)
@@ -210,32 +213,32 @@ int ata_identify(uint8_t drive, uint16_t *buffer) {
 }
 
 /**
- * Initialize disk subsystem - ultra-simple version
+ * Initialize disk
  */
 void disk_init(void) {
-    // Just assume QEMU primary master exists and skip complex detection
     for (int i = 0; i < 4; i++) {
         ata_devices[i].exists = 0;
     }
     
-    // Set up primary master (drive 0) for QEMU
+    // Set up primary master 
+    // Currently only works on QEMU
     ata_devices[0].exists = 1;
     ata_devices[0].drive = 0;
     ata_devices[0].base_io = 0x1F0;
     ata_devices[0].ctrl_io = 0x3F6;
-    ata_devices[0].size = 20480; // 10MB in sectors
-    copyStr(ata_devices[0].model, "QEMU HARDDISK");
+    ata_devices[0].size = 20480; // 10mb
+    copyStr(ata_devices[0].model, "QEMU");
 }
 
 /**
- * Write a single sector to disk - QEMU-compatible version with proper status checking
+ * Write a single sector to disk
  */
 int disk_write_sector(uint8_t drive, uint32_t lba, uint8_t *buffer) {
     if (drive >= 4 || !ata_devices[drive].exists) {
         return -1; // Invalid drive
     }
     
-    // Use primary IDE controller (0x1F0) - QEMU standard
+    // Use primary IDE controller (0x1F0)
     uint16_t base_io = 0x1F0;
     
     // Wait for controller to be ready (BSY clear)
@@ -308,7 +311,7 @@ int disk_write_sector(uint8_t drive, uint32_t lba, uint8_t *buffer) {
 }
 
 /**
- * Read multiple sectors from disk with error handling
+ * Read multiple sectors from disk
  */
 int disk_read_sectors(uint8_t drive, uint32_t lba, uint8_t sector_count, uint8_t *buffer) {
     if (!buffer || sector_count == 0) return -1;
@@ -323,7 +326,7 @@ int disk_read_sectors(uint8_t drive, uint32_t lba, uint8_t sector_count, uint8_t
 }
 
 /**
- * Write multiple sectors to disk with error handling
+ * Write multiple sectors to disk
  */
 int disk_write_sectors(uint8_t drive, uint32_t lba, uint8_t sector_count, uint8_t *buffer) {
     if (!buffer || sector_count == 0) return -1;
@@ -339,6 +342,8 @@ int disk_write_sectors(uint8_t drive, uint32_t lba, uint8_t sector_count, uint8_
 
 /**
  * Force flush disk cache using multiple methods
+ *
+ * @todo: Is this necessary?
  */
 int disk_force_flush(uint8_t drive) {
     if (drive >= 4 || !ata_devices[drive].exists) {
@@ -347,7 +352,7 @@ int disk_force_flush(uint8_t drive) {
     
     uint16_t base_io = 0x1F0;
     
-    // Method 1: Standard cache flush
+    //  Standard cache flush
     outb(base_io + ATA_REG_COMMAND, ATA_CMD_CACHE_FLUSH);
     
     int timeout = 10000;
@@ -355,7 +360,11 @@ int disk_force_flush(uint8_t drive) {
         simple_delay();
     }
     
-    // Method 2: Multiple read/write cycles to force persistence
+    /**
+     * Multiple read/write cycles to force persistence
+     * 
+     * @todo: Is this necessary?
+     */
     uint8_t temp_buffer[512];
     for (int i = 0; i < 3; i++) {
         // Read a sector and write it back
