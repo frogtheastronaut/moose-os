@@ -109,6 +109,7 @@ static void term_exec_cmd(const char* cmd) {
         terminal_print("touch <name> - Create file");
         terminal_print("cat <file> - Show file content");
         terminal_print("diskinfo - Show disk information");
+        terminal_print("memstats - Show memory statistics");
         terminal_print("save - Save current filesystem to disk");
         terminal_print("load - Load filesystem from disk");
         terminal_print("disktest - Test basic disk read/write");
@@ -368,6 +369,36 @@ static void term_exec_cmd(const char* cmd) {
             }
         } else {
             terminal_print_error("Failed to get disk information");
+        }
+    }
+    
+    else if (strEqual(cmd, "memstats")) {
+        char stats_buffer[512];
+        if (filesys_get_memory_stats(stats_buffer, sizeof(stats_buffer)) == 0) {
+            char *line_start = stats_buffer;
+            char *line_end;
+            
+            while (*line_start) {
+                line_end = line_start;
+                // Find end of line or end of string
+                while (*line_end && *line_end != '\n') {
+                    line_end++;
+                }
+                
+                // Create null-terminated line
+                char temp_char = *line_end;
+                *line_end = '\0';
+                terminal_print(line_start);
+                *line_end = temp_char;
+                
+                // Move to next line
+                if (*line_end == '\n') {
+                    line_end++;
+                }
+                line_start = line_end;
+            }
+        } else {
+            terminal_print_error("Failed to get memory statistics");
         }
     }
 

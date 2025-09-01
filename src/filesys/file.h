@@ -91,9 +91,9 @@ typedef struct File {
     };
 } File;
 
-// This is the filesystem
-/** @todo Remove limitations */
-extern File filesys[MAX_NODES];
+// This is the filesystem - now using dynamic allocation
+/** Dynamic file allocation implemented */
+// extern File filesys[MAX_NODES];  // Removed - now using dynamic allocation
 extern int fileCount;
 
 // Buffer used for multiple purposes
@@ -109,6 +109,8 @@ extern uint8_t filesystem_mounted;
 extern uint8_t boot_drive;
 
 // Functions
+File* allocFile(void);               // Dynamic file allocator
+void freeFile(File* file);           // Free a file and return to pool
 int filesys_mkdir(const char* name);
 int filesys_mkfile(const char* name, const char* content);
 int filesys_cd(const char* name);
@@ -133,6 +135,7 @@ File* convert_disk_inode_to_memory(disk_inode_t *disk_inode);
 
 // Disk utility functions
 int filesys_get_disk_info(char *info_buffer, int buffer_size);
+int filesys_get_memory_stats(char *stats_buffer, int buffer_size);
 int filesys_disk_status(void);
 void filesys_flush_cache(void);
 

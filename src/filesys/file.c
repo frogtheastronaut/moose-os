@@ -8,26 +8,100 @@
 // Includes
 #include "file.h"
 
-/** This is the file system
+/** This is the file system - now using dynamic allocation
  *
- * @todo Remove limitations
+ * Dynamic file allocation implemented
  */
-File filesys[MAX_NODES];
+// Memory pool for dynamic file allocation
+#define FILE_POOL_SIZE 1024  // Can allocate 1024 files
+static File file_pool[FILE_POOL_SIZE];
+static uint8_t file_allocation_bitmap[FILE_POOL_SIZE / 8]; // Bitmap for tracking allocated files
+static int pool_initialized = 0;
+
 int fileCount = 0;
 
 // Buffer used for multiple purposes
 char buffer[256];
 
-// Root and Current Working Director
+// Root and Current Working Directory
 File* root;
 File* cwd;
 
-// Disk filesystem globals
 superblock_t *superblock = NULL;
 uint8_t filesystem_mounted = 0;
 uint8_t boot_drive = 0;
 static uint8_t disk_buffer[SECTOR_SIZE];
 static superblock_t sb_cache;
+
+/**
+ * Initialize the file memory pool
+ */
+static void init_file_pool(void) {
+    if (pool_initialized) return;
+    
+    // Clear the allocation bitmap
+    for (int i = 0; i < FILE_POOL_SIZE / 8; i++) {
+        file_allocation_bitmap[i] = 0;
+    }
+    
+    // Clear all file structures
+    for (int i = 0; i < FILE_POOL_SIZE; i++) {
+        // Clear the entire file structure
+        uint8_t* file_ptr = (uint8_t*)&file_pool[i];
+        for (int j = 0; j < sizeof(File); j++) {
+            file_ptr[j] = 0;
+        }
+    }
+    
+    pool_initialized = 1;
+}
+
+/**
+ * Allocate a file from the memory pool
+ */
+static File* allocate_file_from_pool(void) {
+    if (!pool_initialized) {
+        init_file_pool();
+    }
+    
+    // Find a free slot in the bitmap
+    for (int i = 0; i < FILE_POOL_SIZE; i++) {
+        int byte_index = i / 8;
+        int bit_index = i % 8;
+        
+        if (!(file_allocation_bitmap[byte_index] & (1 << bit_index))) {
+            // Mark as allocated
+            file_allocation_bitmap[byte_index] |= (1 << bit_index);
+            
+            // Clear the file structure
+            uint8_t* file_ptr = (uint8_t*)&file_pool[i];
+            for (int j = 0; j < sizeof(File); j++) {
+                file_ptr[j] = 0;
+            }
+            
+            return &file_pool[i];
+        }
+    }
+    
+    return NULL; // No free slots available
+}
+
+/**
+ * Free a file back to the memory pool
+ */
+static void free_file_to_pool(File* file) {
+    if (!file || !pool_initialized) return;
+    
+    // Find the index of this file in the pool
+    int index = file - file_pool;
+    if (index < 0 || index >= FILE_POOL_SIZE) return; // Invalid file pointer
+    
+    int byte_index = index / 8;
+    int bit_index = index % 8;
+    
+    // Mark as free
+    file_allocation_bitmap[byte_index] &= ~(1 << bit_index);
+}
 
 /**
  * Auto-save helper function - saves filesystem to disk after changes
@@ -41,17 +115,43 @@ static void auto_save_filesystem(void) {
 }
 
 /**
- * It's like Malloc, but for files.
- * Allocates a new File structure from a filesys
- * @return pointer to File, or NULL if full
+ * Dynamic file allocator - replaces the old static allocation
+ * Allocates a new File structure from the memory pool
+ * @return pointer to File, or NULL if pool is full
  */
 File* allocFile() {
-    if (fileCount >= MAX_NODES) return NULL;
-    return &filesys[fileCount++];
+    File* new_file = allocate_file_from_pool();
+    if (new_file) {
+        fileCount++;
+    }
+    return new_file;
+}
+
+/**
+ * Free a file and return it to the pool
+ * @param file pointer to the file to free
+ */
+void freeFile(File* file) {
+    if (!file) return;
+    
+    // Recursively free all children if it's a directory
+    if (file->type == FOLDER_NODE) {
+        for (int i = 0; i < file->folder.childCount; i++) {
+            if (file->folder.children[i]) {
+                freeFile(file->folder.children[i]);
+            }
+        }
+    }
+    
+    free_file_to_pool(file);
+    fileCount--;
 }
 
 // Initialise filesystem.
 void filesys_init() {
+    // Initialize the file memory pool
+    init_file_pool();
+    
     root = allocFile();
     if (!root) return; // Root does not exist
     copyStr(root->name, "/"); // Root is /
@@ -170,6 +270,9 @@ int filesys_rm(const char* name) {
             }
             cwd->folder.childCount--;
             
+            // Free the file memory
+            freeFile(child);
+            
             // Auto-save to disk after removing file
             auto_save_filesystem();
             
@@ -194,6 +297,9 @@ int filesys_rmdir(const char* name) {
                 cwd->folder.children[j] = cwd->folder.children[j + 1];
             }
             cwd->folder.childCount--;
+            
+            // Free the directory memory
+            freeFile(child);
             
             // Auto-save to disk after removing directory
             auto_save_filesystem();
@@ -719,8 +825,16 @@ static int load_directory_recursive(uint32_t inode_num, File *parent) {
 int filesys_load_from_disk(void) {
     if (!filesystem_mounted || !superblock) return -1;
     
-    // Clear current in-memory filesystem
+    // Clear current in-memory filesystem and free all allocated files
+    if (root) {
+        freeFile(root); // This will recursively free all children
+        root = NULL;
+        cwd = NULL;
+    }
     fileCount = 0;
+    
+    // Reinitialize the file pool
+    init_file_pool();
     
     // Load root directory
     disk_inode_t root_disk_inode;
@@ -854,4 +968,50 @@ void filesys_flush_cache(void) {
         // Force hardware cache flush using the dedicated function
         disk_force_flush(boot_drive);
     }
+}
+
+/**
+ * Get filesystem memory statistics
+ */
+int filesys_get_memory_stats(char *stats_buffer, int buffer_size) {
+    if (!stats_buffer || buffer_size < 200) return -1;
+    
+    char temp[50];
+    stats_buffer[0] = '\0';
+    
+    strcat(stats_buffer, "=== Filesystem Memory Statistics ===\n");
+    
+    // Calculate total allocated files
+    int allocated_files = 0;
+    if (pool_initialized) {
+        for (int i = 0; i < FILE_POOL_SIZE; i++) {
+            int byte_index = i / 8;
+            int bit_index = i % 8;
+            if (file_allocation_bitmap[byte_index] & (1 << bit_index)) {
+                allocated_files++;
+            }
+        }
+    }
+    
+    strcat(stats_buffer, "File Pool Size: ");
+    int2str(FILE_POOL_SIZE, temp, sizeof(temp));
+    strcat(stats_buffer, temp);
+    strcat(stats_buffer, "\n");
+    
+    strcat(stats_buffer, "Allocated Files: ");
+    int2str(allocated_files, temp, sizeof(temp));
+    strcat(stats_buffer, temp);
+    strcat(stats_buffer, "\n");
+    
+    strcat(stats_buffer, "Free Slots: ");
+    int2str(FILE_POOL_SIZE - allocated_files, temp, sizeof(temp));
+    strcat(stats_buffer, temp);
+    strcat(stats_buffer, "\n");
+    
+    strcat(stats_buffer, "Memory Usage: ");
+    int2str((allocated_files * sizeof(File)), temp, sizeof(temp));
+    strcat(stats_buffer, temp);
+    strcat(stats_buffer, " bytes\n");
+    
+    return 0;
 }
