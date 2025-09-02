@@ -29,7 +29,7 @@ void init_filesys() {
     // Initialize disk subsystem first
     disk_init();
     
-    // Initialize basic in-memory filesystem structure
+    // Initialize in-memory filesystem structure
     filesys_init();
     
     // Try to mount existing filesystem from disk
