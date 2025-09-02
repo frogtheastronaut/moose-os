@@ -6,6 +6,7 @@
 
 #include "include/terminal.h"
 #include "../kernel/include/disk.h"
+#include "../mbasic/interpreter.h"
 
 static char command_buffer[MAX_COMMAND_LEN + 1] = "";
 static int command_pos = 0;
@@ -56,7 +57,7 @@ static void terminal_add_line(const char* text, uint8_t color) {
 /**
  * Print text
  */
-static void terminal_print(const char* text) {
+void terminal_print(const char* text) {
     terminal_add_line(text, TERM_TEXT_COLOR);
 }
 
@@ -113,6 +114,7 @@ static void term_exec_cmd(const char* cmd) {
         terminal_print("save - Save current filesystem to disk");
         terminal_print("load - Load filesystem from disk");
         terminal_print("disktest - Test basic disk read/write");
+        terminal_print("basic <file> - Run BASIC program");
         terminal_print("help - Show this help");
         terminal_print("clear - Clear terminal");
     }
@@ -504,6 +506,17 @@ static void term_exec_cmd(const char* cmd) {
         } else {
             terminal_print("Data mismatch or corruption!");
         }
+    }
+    else if (cmd[0] == 'b' && cmd[1] == 'a' && cmd[2] == 's' && cmd[3] == 'i' && cmd[4] == 'c' && cmd[5] == ' ') {
+        const char* filename = cmd + 6; // Skip "basic "
+        if (strlen(filename) == 0) {
+            terminal_print_error("Usage: basic <filename.bas>");
+            terminal_print("Example: basic hello.bas");
+            return;
+        }
+        
+        // Run the BASIC interpreter on the specified file
+        basic_run_file(filename);
     }
     // Unknown command
     else {

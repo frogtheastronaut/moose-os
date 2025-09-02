@@ -59,6 +59,7 @@ extern File* cwd;
 
 // Function prototypes
 bool term_isactive(void);
+void terminal_print(const char* text);
 
 
 #endif
