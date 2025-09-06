@@ -30,7 +30,7 @@ SRC = \
 OBJ = $(SRC:.c=.o)
 
 ASM_SRC := src/kernel/boot.asm src/kernel/switchtask.asm
-ASM_OBJ := kasm.o switchtask.o
+ASM_OBJ := src/kasm.o src/switchtask.o
 
 build-elf: $(ASM_OBJ) $(OBJ)
 	$(LD) -m elf_i386 -T src/link.ld -o bin/MooseOS.elf $(ASM_OBJ) $(OBJ)
@@ -38,10 +38,10 @@ build-elf: $(ASM_OBJ) $(OBJ)
 %.o: %.c
 	$(GCC) -c $< -o $@ -nostdlib -ffreestanding -O2
 
-kasm.o: src/kernel/boot.asm
+src/kasm.o: src/kernel/boot.asm
 	$(NASM) -f elf32 $< -o $@
 
-switchtask.o: src/kernel/switchtask.asm
+src/switchtask.o: src/kernel/switchtask.asm
 	$(NASM) -f elf32 $< -o $@
 
 

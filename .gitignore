@@ -2,3 +2,6 @@
 */.DS_Store
 *.code-workspace
 .vscode
+.o
+*/.o
+bin/moose_disk.img
