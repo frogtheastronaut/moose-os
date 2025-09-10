@@ -7,11 +7,28 @@ MOOSE is a 80s-style operating system, currently designed to run on virtual mach
 
 As of writing, these instructions assume you are running MacOS with Homebrew installed. Feel free to adjust these commands so they can work on your Operating System. We are using Linux binutils, so Linux users can skip some of the prequisites.
 
+### Quick Start
+
+Don't want to read any more? Fair enough. Running this OS is easy. Just install QEMU
+
+```shell
+brew install qemu
+```
+
+then run
+
+```shell
+cd moose-os
+make run
+```
+
+And enjoy!
+
 ### Prerequisites
 
 Please install Homebrew, then install the following dependencies.
 
-First, ap NativeOS' i386 elf toolchain and install it. This is used to link and compile the project.
+First, tap NativeOS' i386 elf toolchain and install it. This is used to link and compile the project.
 
 ```shell
 brew tap nativeos/i386-elf-toolchain
@@ -20,6 +37,10 @@ brew install nativeos/i386-elf-toolchain/i386-elf-gcc
 ```
 
 Next, install QEMU and NASM. QEMU is used to test the operating system in a virtual environment, and NASM is used to compile ASM files.
+
+```shell
+brew install qemu nasm
+```
 
 Finally, install GRUB. We use GRUB to make the ISO.
 
