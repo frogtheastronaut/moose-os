@@ -25,12 +25,14 @@ void vga_load_palette(const uint8_t palette[256][3]) {
     }
 }
 
-// Grayscale palette based on VGA_COLOR_LIGHT_GREY
+/**
+ * Initialise a custom grayscale palette
+ * @note each colour is based of a base of 'light grey'
+ */
 void vga_init_custom_palette(void) {
     // Base gray value from VGA_COLOR_LIGHT_GREY
     uint8_t base_gray = 170;
     
-    // Create grayscale variations based on the base gray
     vga_set_palette_color(VGA_COLOR_BLACK, 0, 0, 0);                           // Pure black
     vga_set_palette_color(VGA_COLOR_BLUE, base_gray - 85, base_gray - 85, base_gray - 85);     // Dark gray
     vga_set_palette_color(VGA_COLOR_GREEN, base_gray - 70, base_gray - 70, base_gray - 70);    // Medium-dark gray
