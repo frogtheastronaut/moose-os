@@ -10,6 +10,7 @@ QEMU = qemu-system-i386
 SRC = \
     src/kernel/keyhandler.c \
     src/kernel/IDT.c \
+    src/kernel/paging.c \
     src/kernel/task.c \
     src/kernel/kernel.c \
     src/kernel/mouse.c \

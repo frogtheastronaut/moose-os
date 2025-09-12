@@ -27,6 +27,7 @@ extern void load_idt(unsigned long *idt_ptr);
 extern void keyboard_handler(void);
 extern void mouse_handler(void);
 extern void timer_handler(void);
+extern void page_fault_handler_asm(void);
 extern char read_port(unsigned short port);
 extern void write_port(unsigned short port, unsigned char data);
 

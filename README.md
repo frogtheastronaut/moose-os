@@ -1,6 +1,5 @@
-# Moose Operating System
+<h1 align="center"><img src="./resources/moose-logo.png"/></h1>
 
-![Moose Logo](resources/MOOSE%20logo.png)
 MOOSE is a 80s-style operating system, currently designed to run on virtual machines.
 
 ## Getting Started

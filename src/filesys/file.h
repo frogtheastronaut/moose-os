@@ -5,6 +5,7 @@
 // #include "../kernel/include/tty.h"
 #include "../lib/lib.h"
 #include "../kernel/include/disk.h"
+#include "../lib/malloc.h"
 
 // Definitions
 #define MAX_NAME_LEN 128
@@ -13,7 +14,7 @@
 #define MAX_NODES 4096
 
 // Disk filesystem constants
-#define FILESYSTEM_SIGNATURE 0x4D4F4F53  // "MOOS" in little endian
+#define FILESYSTEM_SIGNATURE 0x4D4F4F53  // "MOOS"
 #define SUPERBLOCK_SECTOR 0
 #define INODE_TABLE_SECTOR 1
 #define DATA_BLOCKS_START_SECTOR 100
@@ -71,23 +72,20 @@ typedef struct {
 // Name 
 // Its type (file/folder)
 // Its parent folder
-// Its content (dynamically allocated)
-// Children, and childcount (dynamically allocated)
-/**
- * Dynamic file allocation implemented
- */
+// Its content
+// Children, and childcount
 typedef struct File {
     char name[MAX_NAME_LEN];
     NodeType type;
     struct File* parent;
     union {
         struct {
-            char* content;          // Dynamically allocated content
+            char* content;
             size_t content_size;    // Actual content size
             size_t content_capacity; // Allocated capacity
         } file;
         struct {
-            struct File** children; // Dynamically allocated array of pointers
+            struct File** children; // Array of pointers
             int childCount;
             int capacity;           // Current array capacity
         } folder;

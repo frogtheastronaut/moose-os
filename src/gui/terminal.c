@@ -6,6 +6,7 @@
 
 #include "include/terminal.h"
 #include "../kernel/include/disk.h"
+#include "../kernel/include/paging.h"
 
 
 static char command_buffer[MAX_COMMAND_LEN + 1] = "";
@@ -113,7 +114,7 @@ static void term_exec_cmd(const char* cmd) {
         terminal_print("memstats - Show memory statistics");
         terminal_print("save - Save current filesystem to disk");
         terminal_print("load - Load filesystem from disk");
-        terminal_print("disktest - Test disk read/write");
+        terminal_print("systest - Run system tests (disk, paging, interrupts)");
         terminal_print("help - Show this help");
         terminal_print("clear - Clear terminal");
     }
@@ -457,55 +458,94 @@ static void term_exec_cmd(const char* cmd) {
         }
     }
     
-    // disktest - test disk operations
-    else if (strEqual(cmd, "disktest")) {
-        terminal_print("Commencing disk test...");
-        
-        extern ata_device_t ata_devices[4];
-        if (!ata_devices[0].exists) {
-            terminal_print_error("FATAL: No disk device found!");
-            return;
-        }
+    // systest - system test (compact version)
+    else if (strEqual(cmd, "systest")) {
+        terminal_print("=== System Test ===");
         
         char line[CHARS_PER_LINE + 1];
-        uint8_t test_buffer[512];
         
-        // Simple test: write pattern, read back, verify
-        // Fill with simple repeating pattern
-        for (int i = 0; i < 512; i++) {
-            test_buffer[i] = (uint8_t)(i % 256);
-        }
-        
-        // Write to sector 100
-        terminal_print("Writing...");
-        int write_result = disk_write_sector(0, 100, test_buffer);
-        msnprintf(line, sizeof(line), "Write result: %d", write_result);
-        terminal_print(line);
-        
-        // Clear buffer
-        for (int i = 0; i < 512; i++) {
-            test_buffer[i] = 0xCC;
-        }
-        
-        // Read back
-        terminal_print("Reading...");
-        int read_result = disk_read_sector(0, 100, test_buffer);
-        msnprintf(line, sizeof(line), "Read result: %d", read_result);
-        terminal_print(line);
-        
-        // Show first 8 bytes
-        msnprintf(line, sizeof(line), "Data: %02X %02X %02X %02X %02X %02X %02X %02X",
-            test_buffer[0], test_buffer[1], test_buffer[2], test_buffer[3],
-            test_buffer[4], test_buffer[5], test_buffer[6], test_buffer[7]);
-        terminal_print(line);
-        
-        // Simple check: are first few bytes what we expect?
-        if (test_buffer[0] == 0 && test_buffer[1] == 1 && test_buffer[2] == 2) {
-            terminal_print("SUCCESS: Data matches!");
+        // Test interrupts
+        uint32_t eflags;
+        asm volatile("pushf; pop %0" : "=r"(eflags));
+        if (eflags & 0x200) {
+            terminal_print("[PASS] Interrupts enabled");
         } else {
-            terminal_print("Data mismatch or corruption!");
+            terminal_print("[FAIL] Interrupts disabled");
         }
+        
+        // Test paging - show real-time activity
+        uint32_t cr0;
+        asm volatile("mov %%cr0, %0" : "=r"(cr0));
+        if (cr0 & 0x80000000) {
+            // Get current page directory
+            uint32_t cr3;
+            asm volatile("mov %%cr3, %0" : "=r"(cr3));
+            msnprintf(line, sizeof(line), "[PASS] Paging active @0x%08X", cr3);
+            terminal_print(line);
+            
+            // Show live memory translation
+            uint32_t virt_addr = 0x100000; // 1MB mark
+            uint32_t *page_dir = (uint32_t*)(cr3 & 0xFFFFF000);
+            uint32_t pde_index = virt_addr >> 22;
+            uint32_t pte_index = (virt_addr >> 12) & 0x3FF;
+            
+            msnprintf(line, sizeof(line), "[INFO] Virt 0x%06X -> PDE[%u] PTE[%u]", 
+                virt_addr, pde_index, pte_index);
+            terminal_print(line);
+        } else {
+            terminal_print("[FAIL] Paging disabled");
+        }
+        
+        if (cr0 & 0x1) {
+            terminal_print("[PASS] Protected mode");
+        } else {
+            terminal_print("[FAIL] Real mode");
+        }
+        
+        // Test memory
+        uint32_t *test_addr = (uint32_t*)0x100000;
+        uint32_t orig = *test_addr;
+        *test_addr = 0xDEADBEEF;
+        if (*test_addr == 0xDEADBEEF) {
+            terminal_print("[PASS] Memory access OK");
+            *test_addr = orig;
+        } else {
+            terminal_print("[FAIL] Memory access failed");
+        }
+        
+        // Test disk
+        extern ata_device_t ata_devices[4];
+        if (ata_devices[0].exists) {
+            terminal_print("[PASS] Disk detected");
+            
+            uint8_t buffer[512];
+            for (int i = 0; i < 512; i++) buffer[i] = i % 256;
+            
+            if (disk_write_sector(0, 100, buffer) == 0) {
+                terminal_print("[PASS] Disk write OK");
+                
+                for (int i = 0; i < 512; i++) buffer[i] = 0xCC;
+                
+                if (disk_read_sector(0, 100, buffer) == 0) {
+                    if (buffer[0] == 0 && buffer[1] == 1) {
+                        terminal_print("[PASS] Disk read OK");
+                    } else {
+                        terminal_print("[FAIL] Data corruption");
+                    }
+                } else {
+                    terminal_print("[FAIL] Disk read failed");
+                }
+            } else {
+                terminal_print("[FAIL] Disk write failed");
+            }
+        } else {
+            terminal_print("[FAIL] No disk found");
+        }
+        
+        // Summary
+        terminal_print("=== Test Complete ===");
     }
+    
     // Unknown command
     else {
         char line[CHARS_PER_LINE + 1];

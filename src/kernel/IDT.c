@@ -4,6 +4,7 @@
 */
 
 #include "include/IDT.h"
+#include "include/paging.h"
 
 volatile bool key_pressed = false;
 volatile char last_keycode = 0;
@@ -74,6 +75,14 @@ void idt_init(void)
     IDT[0x2C].type_attr = INTERRUPT_GATE;
     IDT[0x2C].offset_higherbits = (mouse_address & 0xffff0000) >> 16;
 
+    /* idt entry for page fault interrupt, exception 14 */
+    unsigned long page_fault_address = (unsigned long)page_fault_handler_asm;
+    IDT[14].offset_lowerbits = page_fault_address & 0xffff;
+    IDT[14].selector = KERNEL_CODE_SEGMENT_OFFSET;
+    IDT[14].zero = 0;
+    IDT[14].type_attr = INTERRUPT_GATE;
+    IDT[14].offset_higherbits = (page_fault_address & 0xffff0000) >> 16;
+
 	write_port(0x20 , 0x11);
 	write_port(0xA0 , 0x11);
 
@@ -121,6 +130,20 @@ void keyboard_handler_main(void)
         last_keycode = keycode;
         key_pressed = true;
     }
+
+    handler_lock = 0;
+}
+
+void page_fault_handler_main(uint32_t error_code) {
+    if (handler_lock != 0) return;
+    handler_lock = 1;
+
+    // Get the virtual address that caused the page fault
+    uint32_t faulting_address;
+    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
+
+    // Call the main page fault handler
+    page_fault_handler(error_code, faulting_address);
 
     handler_lock = 0;
 }

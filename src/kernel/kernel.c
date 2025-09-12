@@ -12,6 +12,7 @@ simple code to run a simple OS
 
 // #include "include/tty.h"
 #include "include/IDT.h"
+#include "include/paging.h"
 #include "include/task.h"
 #include "include/mouse.h"
 #include "include/disk.h"
@@ -103,6 +104,10 @@ void kernel_main(void)
     // INNIT
     gui_init();
     idt_init();
+    
+    // Initialize paging with 16MB of memory (adjust as needed)
+    paging_init(16 * 1024 * 1024);
+    
     kb_init();
     mouse_init(); 
 

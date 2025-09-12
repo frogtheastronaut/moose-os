@@ -19,12 +19,14 @@ global write_port
 global load_idt
 global timer_handler
 global load_gdt
+global page_fault_handler_asm
 
 ; external variables
 extern kernel_main	       
 extern keyboard_handler_main
 extern mouse_handler_main
 extern task_tick
+extern page_fault_handler_main
 
 start:
   cli 			      
@@ -85,6 +87,17 @@ timer_handler:
     popa
     mov al, 0x20
     out 0x20, al
+    iretd
+
+; page fault handler
+page_fault_handler_asm:
+    pusha
+    mov eax, [esp + 32]  ; Get error code from stack
+    push eax
+    call page_fault_handler_main
+    add esp, 4           ; Clean up stack
+    popa
+    add esp, 4           ; Remove error code from stack
     iretd
 
 ; BSS

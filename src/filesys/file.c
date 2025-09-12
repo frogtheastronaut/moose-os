@@ -1,18 +1,10 @@
 /**
     Moose Operating System
     Copyright (c) 2025 Ethan Zhang.
-
-    @todo add disk I/O, dynamic file handling.
 */
 
 // Includes
 #include "file.h"
-#include "../lib/malloc.h"
-
-/** This is the file system - now using true dynamic allocation with malloc
- *
- * True dynamic file allocation implemented using malloc/free
- */
 
 int fileCount = 0;
 
@@ -30,7 +22,7 @@ static uint8_t disk_buffer[SECTOR_SIZE];
 static superblock_t sb_cache;
 
 /**
- * Auto-save helper function - saves filesystem to disk after changes
+ * Autosaves filesystem to disk after changes
  */
 static void auto_save_filesystem(void) {
     if (filesystem_mounted && superblock) {
@@ -54,7 +46,7 @@ File* allocFile() {
             file_ptr[i] = 0;
         }
         
-        // Initialize dynamic fields to NULL/0
+        // Initialize dynamic fields to NULL
         new_file->name[0] = '\0';
         new_file->type = FILE_NODE; // Will be set properly later
         new_file->parent = NULL;
@@ -77,7 +69,7 @@ void freeFile(File* file) {
     if (!file) return;
     
     if (file->type == FILE_NODE) {
-        // Free dynamically allocated content
+        // Free content
         if (file->file.content) {
             free(file->file.content);
             file->file.content = NULL;
@@ -101,14 +93,14 @@ void freeFile(File* file) {
 }
 
 /**
- * Set file content dynamically
+ * Set file content
  */
 static int set_file_content(File* file, const char* content) {
     if (!file || file->type != FILE_NODE || !content) return -1;
     
     size_t new_size = strlen(content);
     
-    // Free old content if exists
+    // Free old content
     if (file->file.content) {
         free(file->file.content);
     }
@@ -134,14 +126,17 @@ static int set_file_content(File* file, const char* content) {
 }
 
 /**
- * Add child to directory (with dynamic array growth)
+ * Add child to directory
  */
 static int add_child_to_directory(File* dir, File* child) {
     if (!dir || !child || dir->type != FOLDER_NODE) return -1;
     
     // Initialize children array if first child
     if (!dir->folder.children) {
-        dir->folder.capacity = 4; // Start with small capacity
+        /**
+         * @note We could make this bigger
+         */
+        dir->folder.capacity = 4; 
         dir->folder.children = (File**)malloc(dir->folder.capacity * sizeof(File*));
         if (!dir->folder.children) return -1;
         dir->folder.childCount = 0;
@@ -167,6 +162,7 @@ static int add_child_to_directory(File* dir, File* child) {
 
 /**
  * Remove child from directory
+ * @return 0 on success, -1 on failure
  */
 static int remove_child_from_directory(File* dir, File* child) {
     if (!dir || !child || dir->type != FOLDER_NODE || !dir->folder.children) return -1;
@@ -194,7 +190,7 @@ static int remove_child_from_directory(File* dir, File* child) {
 // Initialise filesystem.
 void filesys_init() {
     root = allocFile();
-    if (!root) return; // Root does not exist
+    if (!root) return; // Root does not exist (allocFile failed)
     copyStr(root->name, "/"); // Root is /
 
     // Initialise root
@@ -224,7 +220,8 @@ bool nameInCWD(const char* name, NodeType type) {
     return false;
 }
 
-/** Make directory
+/** 
+ * Make directory
  * @return number depending on success
  */
 int filesys_mkdir(const char* name) {
@@ -268,7 +265,7 @@ int filesys_mkfile(const char* name, const char* content) {
     copyStr(node->name, name);
     node->type = FILE_NODE;
     
-    // Set content dynamically
+    // Set content
     if (set_file_content(node, content) != 0) {
         freeFile(node);
         return -1; // Failed to allocate content
@@ -286,7 +283,8 @@ int filesys_mkfile(const char* name, const char* content) {
     return 0;
 }
 
-/** Change directory
+/** 
+ * Change directory
  * @return 0 on success, -1 on failure
  */
 int filesys_cd(const char* name) {
@@ -370,7 +368,7 @@ int filesys_editfile(const char* name, const char* new_content) {
     for (int i = 0; i < cwd->folder.childCount; i++) {
         File* child = cwd->folder.children[i];
         if (child && child->type == FILE_NODE && strEqual(child->name, name)) {
-            // Set new content dynamically
+            // Set new content
             if (set_file_content(child, new_content) == 0) {
                 // Auto-save to disk after editing file
                 auto_save_filesystem();
@@ -813,7 +811,7 @@ static File* convert_disk_to_memory_file(disk_inode_t *disk_inode) {
             uint8_t content_buffer[SECTOR_SIZE];
             
             if (disk_read_sector(boot_drive, disk_inode->data_blocks[0], content_buffer) == 0) {
-                // Allocate content dynamically
+                // Allocate content
                 memory_file->file.content = (char*)malloc(disk_inode->size + 1);
                 if (memory_file->file.content) {
                     // Copy content to memory file
