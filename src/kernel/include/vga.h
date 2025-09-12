@@ -6,6 +6,7 @@
 #define I386_VGA_H
 
 #include <stdint.h>
+#include "../../lib/include/io.h"
 
 // colors
 enum vga_color {
@@ -34,5 +35,16 @@ static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) {
 static inline uint16_t vga_entry(unsigned char uc, uint8_t color) {
 	return (uint16_t) uc | (uint16_t) color << 8;
 }
+
+// VGA DAC registers
+#define VGA_DAC_READ_INDEX  0x3C7
+#define VGA_DAC_WRITE_INDEX 0x3C8
+#define VGA_DAC_DATA        0x3C9
+
+// VGA palette programming functions
+void vga_set_palette_color(uint8_t index, uint8_t r, uint8_t g, uint8_t b);
+void vga_get_palette_color(uint8_t index, uint8_t* r, uint8_t* g, uint8_t* b);
+void vga_load_palette(const uint8_t palette[256][3]);
+void vga_init_custom_palette(void);
 
 #endif

@@ -16,6 +16,7 @@ SRC = \
     src/kernel/mouse.c \
     src/kernel/keyboard.c \
     src/kernel/disk.c \
+    src/kernel/vga.c \
     src/gui/explorer.c \
     src/gui/editor.c \
     src/gui/dock.c \

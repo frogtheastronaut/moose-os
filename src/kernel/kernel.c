@@ -21,6 +21,7 @@ simple code to run a simple OS
 #include "../gui/include/gui.h"
 #include "../gui/include/dock.h"
 #include "../time/rtc.h"
+#include "include/vga.h"
 
 
 extern bool explorer_active;
@@ -101,6 +102,7 @@ void dock() {
 
 void kernel_main(void) 
 {
+    vga_init_custom_palette();
     // INNIT
     gui_init();
     idt_init();
