@@ -1,3 +1,10 @@
+/**
+    Moose Operating System
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+
+    Header file for ../dock.c
+*/
+
 #ifndef DOCK_H 
 #define DOCK_H 
 
@@ -36,6 +43,10 @@ extern void gui_clearmouse(void);
 
 // Window height, width, and position
 // Window height/width is the screen height/width
+/**
+ * @todo Add windowed apps
+ * This should be high priority
+ */
 #define WINDOW_WIDTH SCREEN_WIDTH    
 #define WINDOW_HEIGHT SCREEN_HEIGHT   
 #define WINDOW_X 0
@@ -78,7 +89,7 @@ extern bool terminal_active;
 extern volatile uint32_t ticks;
 extern File* root;
 extern File* cwd;
-extern int filesys_mkfile(const char* name, const char* content);
+extern int fs_make_file(const char* name, const char* content);
 
 // Functions
 void dock_mkopen_file(void);

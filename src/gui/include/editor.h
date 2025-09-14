@@ -1,3 +1,9 @@
+/**
+    Moose Operating System
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+
+    Header file for ../editor.c
+*/
 #ifndef EDITOR_H
 #define EDITOR_H
 

@@ -1,5 +1,5 @@
 ; MooseOS
-; Copyright (c) 2025 Ethan Zhang.
+; Copyright (c) 2025 Ethan Zhang and Contributors.
 
 bits 32
 ; multiboot spec
@@ -89,7 +89,7 @@ timer_handler:
     out 0x20, al
     iretd
 
-; page fault handler
+; page fault handler (asm one)
 page_fault_handler_asm:
     pusha
     mov eax, [esp + 32]  ; Get error code from stack

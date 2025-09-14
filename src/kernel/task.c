@@ -1,3 +1,56 @@
+/*
+    MooseOS Multitasking System
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+    
+    ============================ OS THEORY: MULTITASKING ============================
+    
+    WHAT IS MULTITASKING?
+    With multiple programs running, the CPU needs to switch between them quickly.
+    This is called multitasking. The CPU gives each program a tiny "time slice"
+    (like 10-100 milliseconds) before switching to the next one. It happens so fast
+    that it APPEARS like all programs are running simultaneously.
+    
+    TWO TYPES OF MULTITASKING:
+    1. COOPERATIVE MULTITASKING (what MooseOS uses):
+       - Programs voluntarily give up control (like polite people taking turns)
+       - A program runs until it decides to yield to others
+       - If a program never yields, it can freeze the entire system!
+       - Simpler to implement, but less robust
+       
+    2. PREEMPTIVE MULTITASKING (modern systems):
+       - OS forcibly switches between programs using timer interrupts
+       - Each program gets a fixed time slice whether it likes it or not
+       - More complex but prevents one program from hogging the CPU
+    
+    TASK CONTROL BLOCKS (TCBs):
+    Each running program needs information that contains:
+    - Program ID and name
+    - Current state (running, waiting, stopped)
+    - CPU register values when paused
+    - Memory information (which pages it owns)
+    - Priority level
+    
+    CONTEXT SWITCHING:
+    When switching between programs, the OS must:
+    1. Save the current program's CPU registers
+    2. Load the next program's CPU registers
+    3. Switch to the new program's memory space
+    4. Jump to where the program left off
+    
+    
+    SCHEDULING:
+    The OS needs to decide which program runs next. Common algorithms:
+    - Round Robin: Take turns in order (fair but simple)
+    - Priority: Important programs go first
+    - Shortest Job First: Quick tasks before long ones
+    MooseOS uses Round Robin scheduling.
+    
+    PROCESS vs THREAD:
+    - PROCESS: A complete program with its own memory space
+    - THREAD: A lightweight task within a process (shares memory)
+
+    Source: https://wiki.osdev.org/Multitasking_Systems
+*/
 #include "include/task.h"
 
 static task tasks[MAX_TASKS];
@@ -15,20 +68,19 @@ void task_init() {
     num_tasks = 0;
 }
 
-// it TICKS
+// Tick handler
 void task_tick() {
     ticks++;
     task_schedule();
 }
 
-// start task
+// Start task
 void task_start() {
     for (int i = 0; i < num_tasks; ++i) {
         if (tasks[i].state == TASK_READY) {
             current_task = i;
             tasks[i].state = TASK_RUNNING;
-            // Switch to the first task's stack and start running
-            // This will not return
+            // Switch to the first task's stack and start running it
             asm volatile (
                 "movl %0, %%esp\n"
                 "call *%1\n"

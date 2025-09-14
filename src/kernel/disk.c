@@ -1,12 +1,39 @@
-/**
-    Moose Operating System
-    Copyright (c) 2025 Ethan Zhang.
-
-    ATA disk implementation.
-
-    @todo: This currently only supports QEMU disks.
-           Not a high priority.
+/*
+    Copyright (c) 2025 Ethan Zhang and Contributors.
 */
+
+/*
+    ==================== OS THEORY ====================
+    If you haven't read other OS theory files, basically MooseOS is an educational OS, so comments at the top of each 
+    file will explain the relevant OS theory. This is so that users can learn about OS concepts while reading the code, 
+    and maybe even make their own OS some day. 
+    Usually, there are external websites that describe OS Theory excellently. They will be quoted, and a link
+    will be provided.
+    
+    ATA/IDE INTERFACE:
+    ATA (Advanced Technology Attachment) is a standard way for CPUs to talk to disks.
+    IDE (Integrated Drive Electronics) is the older name.
+    
+    ATA COMMAND PROTOCOL:
+    Communication happens through I/O ports:
+    - COMMAND PORT: Send commands (READ, WRITE, IDENTIFY)
+    - STATUS PORT: Check if drive is busy/ready/error
+    - DATA PORT: Transfer actual data (512 bytes per sector)
+    - FEATURES PORT: Specify command parameters
+
+    LBA? WHAT'S AN LBA?
+    LBA stands for Logical Block Addressing.  It is a way of determining the position of a block.
+    Instead of specifying cylinder/head/sector, just use a single number:
+    - Sector 0, Sector 1, Sector 2, ... up to millions
+    - Each sector is typically 512 bytes
+    - Much simpler than old CHS (Cylinder/Head/Sector) addressing
+
+    Source: https://wiki.osdev.org/ATA_PIO_Mode
+            https://wiki.osdev.org/ATA_Command_Matrix (in case you need to write an ATA driver)
+
+*/
+
+/** @todo: This currently only supports QEMU disks. Not a high priority. */
 
 #include "include/disk.h"
 #include "../lib/lib.h"

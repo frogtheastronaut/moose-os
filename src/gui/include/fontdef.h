@@ -1,3 +1,9 @@
+/**
+    Moose Operating System
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+
+    Header file for ../fontdef.c
+*/
 #ifndef FONTDEF_H
 #define FONTDEF_H
 

@@ -1,3 +1,9 @@
+/**
+    Moose Operating System
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+
+    Header file for ../gui.c
+*/
 #ifndef GUI_H
 #define GUI_H
 

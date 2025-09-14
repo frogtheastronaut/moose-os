@@ -1,6 +1,6 @@
 /**
  * Moose Operating System
- * Copyright (c) 2025 Ethan Zhang.
+ * Copyright (c) 2025 Ethan Zhang and Contributors.
  * 
  * @todo: If we ever make it so we can change the folder/file icon size, 
  *        we would need to update this code. We wouldn't be considering this as an immediate priority.
@@ -122,10 +122,10 @@ void dialog_create_item() {
         
         if (dialog_type == 0) {
             // Create directory
-            filesys_mkdir(dialog_input);
+            fs_make_dir(dialog_input);
         } else {
             // Create file
-            filesys_mkfile(dialog_input, "");
+            fs_make_file(dialog_input, "");
         }
         
         if (cwd->folder.childCount > previous_item_count) {
@@ -299,7 +299,7 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
             
         case ENTER_KEY_CODE:
             if (cwd != root && current_selection == 0) {
-                filesys_cd("..");
+                fs_change_dir("..");
                 current_selection = 0;
                 draw_explorer();
                 return true;
@@ -311,7 +311,7 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
                     cwd->folder.children && cwd->folder.children[actual_index]) {
                     File* child = cwd->folder.children[actual_index];
                     if (child->type == FOLDER_NODE) {
-                        filesys_cd(child->name);
+                        fs_change_dir(child->name);
                         current_selection = 0;
                         draw_explorer();
                         return true;
@@ -356,10 +356,10 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
                     
                     if (child->type == FOLDER_NODE) {
                         // Delete folder
-                        filesys_rmdir(child->name);
+                        fs_remove_dir(child->name);
                     } else {
                         // Delete file
-                        filesys_rm(child->name);
+                        fs_remove(child->name);
                     }
                     
                     if (cwd->folder.childCount > 0) {
@@ -419,7 +419,7 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
                     editor_scroll_line = editor_cursor_line - EDITOR_LINES_VISIBLE + 1;
                 }
                 editor_modified = true;
-                filesys_editfile(editor_filename, editor_content);
+                fs_edit_file(editor_filename, editor_content);
                 editor_modified = false;
                 editor_draw();
             }
@@ -436,7 +436,7 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
                     editor_scroll_line = editor_cursor_line;
                 }
                 editor_modified = true;
-                filesys_editfile(editor_filename, editor_content);
+                fs_edit_file(editor_filename, editor_content);
                 editor_modified = false;
                 editor_draw();
             }
@@ -524,7 +524,7 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
                         editor_scroll_line = editor_cursor_line - EDITOR_LINES_VISIBLE + 1;
                     }
                     editor_modified = true;
-                    filesys_editfile(editor_filename, editor_content);
+                    fs_edit_file(editor_filename, editor_content);
                     editor_modified = false;
                     editor_draw();
                 }

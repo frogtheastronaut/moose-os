@@ -1,14 +1,36 @@
+/*
+    MooseOS Graphical User Interface (GUI)
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+*/
+
+/*
+    ====================== OS THEORY ======================
+    If you haven't read other OS theory files, basically MooseOS is an educational OS, so comments at the top of each 
+    file will explain the relevant OS theory. This is so that users can learn about OS concepts while reading the code, 
+    and maybe even make their own OS some day. 
+    Usually, there are external websites that describe OS Theory excellently. They will be quoted, and a link
+    will be provided.
+
+    GUIs use graphics in combination with text to display output.
+    It's usually paired with a mouse driver and a mouse. After all, you need a GUI to see the mouse.
+
+    
+    FRAMEBUFFER:
+    You might be reading and think, how exactly does a computer display graphics to the screen?
+    The answer is a FRAMEBUFFER. It's a section of RAM that contains a bitmap display. Change that, and
+    you change what shows up on the screen.
+    - Each pixel on screen corresponds to bytes in memory
+    - Changing memory bytes immediately changes screen pixels
+    - Address 0xA0000 = top-left pixel, 0xA0001 = next pixel, etc.
+
+    Sources: https://wiki.osdev.org/GUI
+             https://en.wikipedia.org/wiki/Framebuffer (While Wikipedia isn't exactly trustworthy, 
+                                                        this article explains it quite well without 
+                                                        too much jargon)
+*/
 /**
- * MOOSE GUI code.
- * 
- * @todo: Refactor the code so its better documented. 
- *        Move some functions to other files as they 
- *        don't necessarily belong here
- * 
- * @todo: Some GUI elements, or maybe just MOOSE in general,
- *        is extremely laggy. This is high priority.
- *        Note: It doesn't 'lag out', but rather the GUI stops updating.
- *        We speculate it might be a GUI-related issue.
+    @todo: Refactor the code so its better documented. 
+           Move some functions to other files as they don't necessarily belong here
  */
 
 #include "include/gui.h"

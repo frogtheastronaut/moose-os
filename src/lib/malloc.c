@@ -1,6 +1,20 @@
 /*
-  This file is taken from a tutorial, adapted for MooseOS kernel.
-  Modified to work without external dependencies.
+    MooseOS
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+*/
+
+/*
+
+    ====================== OS THEORY ======================
+    WHAT IS MALLOC?
+    malloc is a standard library function in C that allocates a specified amount of memory on the
+    heap and returns a pointer to it. It's used for dynamic memory management, allowing programs to
+    request memory at runtime.
+
+    So instead of having fixed-size arrays, you can allocate memory as needed, and free them to make space for
+    other data.
+
+    Read more here: https://wiki.osdev.org/Memory_Allocation
 */
 
 #include "malloc.h"

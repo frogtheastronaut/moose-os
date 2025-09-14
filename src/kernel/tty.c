@@ -1,9 +1,9 @@
 
-/*
+/**
     Moose Operating System & SimpleM
-    Copyright (c) 2025 Ethan Zhang.
+    Copyright (c) 2025 Ethan Zhang and Contributors.
 
-	This file is mostly deprecated, as I am using GUI right now.
+	@note This file is mostly deprecated, as I am using GUI right now.
 	Nevertheless, I will keep it for reference.
 */
 

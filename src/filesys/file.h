@@ -1,7 +1,15 @@
+/**
+    Moose Operating System
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+
+    Header file for ./file.c
+*/
+
 #ifndef FILE_H
 #define FILE_H
 
 #include <stdint.h>
+// tty.h is deprecated.
 // #include "../kernel/include/tty.h"
 #include "../lib/lib.h"
 #include "../kernel/include/disk.h"
@@ -32,7 +40,7 @@ typedef enum {
     FOLDER_NODE
 } NodeType;
 
-// On-disk inode structure (optimized to fit in 256 bytes)
+// On-disk inode structure
 typedef struct {
     uint32_t signature;         // Magic number for validation
     uint32_t inode_number;      // Unique inode number
@@ -45,8 +53,8 @@ typedef struct {
     uint32_t modified_time;     // Last modification timestamp
     uint32_t child_count;       // Number of children (for directories)
     uint32_t child_inodes[16];  // Child inode numbers (for directories)
-    char name[64];              // File/directory name (reduced from 128)
-    uint8_t reserved[32];       // Reserved space to make it exactly 256 bytes
+    char name[64];              // File/directory name
+    uint8_t reserved[32];       // Reserved space
 } disk_inode_t;
 
 // Directory entry structure (stored in data blocks for directories)
@@ -75,9 +83,9 @@ typedef struct {
 // Its content
 // Children, and childcount
 typedef struct File {
-    char name[MAX_NAME_LEN];
-    NodeType type;
-    struct File* parent;
+    char name[MAX_NAME_LEN]; // Name of file
+    NodeType type; // Type (File or Folder)
+    struct File* parent; // Parent file pointer
     union {
         struct {
             char* content;
@@ -87,20 +95,14 @@ typedef struct File {
         struct {
             struct File** children; // Array of pointers
             int childCount;
-            int capacity;           // Current array capacity
+            int capacity;           // Array capacity
         } folder;
     };
 } File;
 
-// This is the filesystem - now using dynamic allocation with malloc
-/** Dynamic file allocation implemented using malloc/free */
-// No longer using static array - now using malloc
+// External variables
 extern int fileCount;
-
-// Buffer used for multiple purposes
 extern char buffer[256];
-
-// Root and Current Working Director
 extern File* root;
 extern File* cwd;
 
@@ -110,22 +112,22 @@ extern uint8_t filesystem_mounted;
 extern uint8_t boot_drive;
 
 // Functions
-File* allocFile(void);               // Dynamic file allocator
-void freeFile(File* file);           // Free a file and return to pool
-int filesys_mkdir(const char* name);
-int filesys_mkfile(const char* name, const char* content);
-int filesys_cd(const char* name);
-int filesys_rm(const char* name);
-int filesys_rmdir(const char* name);
-int filesys_editfile(const char* name, const char* new_content);
-void filesys_init(void);
+File* file_alloc(void);
+void file_free(File* file);
+int fs_make_dir(const char* name);
+int fs_make_file(const char* name, const char* content);
+int fs_change_dir(const char* name);
+int fs_remove(const char* name);
+int fs_remove_dir(const char* name);
+int fs_edit_file(const char* name, const char* new_content);
+void fs_init(void);
 
 // Disk filesystem functions
-int filesys_mount(uint8_t drive);
+int fs_mount(uint8_t drive);
 int filesys_sync(void);
-int filesys_format(uint8_t drive);
-int filesys_save_to_disk(void);
-int filesys_load_from_disk(void);
+int fs_format(uint8_t drive);
+int fs_save_to_disk(void);
+int fs_load_from_disk(void);
 uint32_t allocate_inode(void);
 uint32_t allocate_data_block(void);
 void free_inode(uint32_t inode_num);
@@ -135,7 +137,7 @@ int read_inode_from_disk(uint32_t inode_num, disk_inode_t *inode);
 File* convert_disk_inode_to_memory(disk_inode_t *disk_inode);
 
 // Disk utility functions
-int filesys_get_disk_info(char *info_buffer, int buffer_size);
+int fs_get_disk_info(char *info_buffer, int buffer_size);
 int filesys_get_memory_stats(char *stats_buffer, int buffer_size);
 int filesys_disk_status(void);
 void filesys_flush_cache(void);

@@ -1,6 +1,6 @@
 /**
  * Moose Operating System
- * Copyright (c) 2025 Ethan Zhang.
+ * Copyright (c) 2025 Ethan Zhang and Contributors.
  * @todo: Simplify the logic
  */
 

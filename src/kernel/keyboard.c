@@ -1,3 +1,8 @@
+/*
+    MooseOS
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+*/
+
 #include "include/keyboard.h"
 
 unsigned char keyboard_map_normal[128] = {

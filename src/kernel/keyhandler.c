@@ -1,6 +1,5 @@
 /*
-    Moose Operating System
-    Copyright (c) 2025 Ethan Zhang.
+    Copyright (c) 2025 Ethan Zhang and Contributors.
 */
 
 #include "include/keyhandler.h"

@@ -1,10 +1,16 @@
+/**
+    Moose Operating System
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+
+    Header file for ../images.c
+*/
 #ifndef IMAGES_H
 #define IMAGES_H
 
 #include <stdint.h>
 #include "../../kernel/include/vga.h"
 
-// Images in ../images.c
+// Images in .c file
 extern const uint8_t folder_icon[16][16];
 extern const uint8_t file_icon[16][16];
 extern const uint8_t terminal_icon[16][16];

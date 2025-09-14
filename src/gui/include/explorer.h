@@ -1,3 +1,9 @@
+/**
+    Moose Operating System
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+
+    Header file for ../explorer.c
+*/
 #ifndef EXPLROR_H
 #define EXPLROR_H
 

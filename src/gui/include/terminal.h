@@ -1,3 +1,9 @@
+/**
+    Moose Operating System
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+
+    Header file for ../terminal.c
+*/
 #ifndef TERMINAL_H 
 #define TERMINAL_H
 

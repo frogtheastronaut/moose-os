@@ -1,6 +1,6 @@
 /**
     Moose Operating System
-    Copyright (c) 2025 Ethan Zhang.
+    Copyright (c) 2025 Ethan Zhang and Contributors.
 
     @todo: Add custom apps. This would require a MOOSE implementation of a scripting language.
 */
@@ -613,7 +613,7 @@ void dock_mkopen_file() {
         cwd = root;  // go 2 root
         
         // create new file
-        filesys_mkfile(dialog_input, "");
+        fs_make_file(dialog_input, "");
         
         // restor original dir
         cwd = original_cwd;

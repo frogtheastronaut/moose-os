@@ -1,11 +1,49 @@
-/**
-    Moose Operating System
-    Copyright (c) 2025 Ethan Zhang.
+/*
+    MooseOS File System
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+*/
+/*
+    ========================= OS THEORY =========================
+    If you haven't read other OS theory files, basically MooseOS is an educational OS, so comments at the top of each 
+    file will explain the relevant OS theory. This is so that users can learn about OS concepts while reading the code, 
+    and maybe even make their own OS some day. 
+    Usually, there are external websites that describe OS Theory excellently. They will be quoted, and a link
+    will be provided.
+
+    File systems are the operating system's method of ordering data on persistent storage devices like disks.
+    
+    The fundamental operations of any filesystem are:
+
+    - Tracking the available storage space
+    - Tracking which block or blocks of data belong to which files
+    - Creating new files
+    - Reading data from existing files into memory
+    - Updating the data in the files
+    - Deleting existing files
+    
+    MooseOS' FILE ALLOCATION:
+    In MooseOS, each file/directory has an inode with file metadata. File content is stored in single disk blocks (up to 512 bytes per file currently).
+    They are persistent as the inode table is saved on disk.
+    
+    INODES:
+    The OSDev wiki describes inodes as follows:
+    "inodes (information nodes) are a crucial design element in most Unix file systems: 
+    Each file is made of data blocks (the sectors that contains your raw data bits), 
+    index blocks (containing pointers to data blocks so that you know which sector is the 
+    nth in the sequence), and one inode block.
+
+    "The inode is the root of the index blocks, and can also be the sole index block if the 
+    file is small enough. Moreover, as Unix file systems support hard links (the same file may 
+    appear several times in the directory tree), inodes are a natural place to store Metadata 
+    such as file size, owner, creation/access/modification times, locks, etc."
+
+    Source: https://wiki.osdev.org/File_Systems 
 */
 
 // Includes
 #include "file.h"
 
+// Current file count
 int fileCount = 0;
 
 // Buffer used for multiple purposes
@@ -15,10 +53,20 @@ char buffer[256];
 File* root;
 File* cwd;
 
+// Superblock
 superblock_t *superblock = NULL;
+
+// 1 if filesystem is mounted, 0 if not
+// Currently, it's not mounted
 uint8_t filesystem_mounted = 0;
+
+// Currently, boot drive does not exist
 uint8_t boot_drive = 0;
+
+// Disk buffer of sector size
 static uint8_t disk_buffer[SECTOR_SIZE];
+
+// Cache
 static superblock_t sb_cache;
 
 /**
@@ -27,7 +75,7 @@ static superblock_t sb_cache;
 static void auto_save_filesystem(void) {
     if (filesystem_mounted && superblock) {
         filesys_sync();
-        filesys_save_to_disk();
+        fs_save_to_disk();
         filesys_flush_cache();
     }
 }
@@ -37,7 +85,7 @@ static void auto_save_filesystem(void) {
  * Allocates a new File structure from heap
  * @return pointer to File, or NULL if out of memory
  */
-File* allocFile() {
+File* file_alloc() {
     File* new_file = (File*)malloc(sizeof(File));
     if (new_file) {
         // Clear the allocated memory
@@ -65,7 +113,7 @@ File* allocFile() {
  * Free a file using free()
  * @param file pointer to the file to free
  */
-void freeFile(File* file) {
+void file_free(File* file) {
     if (!file) return;
     
     if (file->type == FILE_NODE) {
@@ -78,7 +126,7 @@ void freeFile(File* file) {
         // Recursively free all children
         for (int i = 0; i < file->folder.childCount; i++) {
             if (file->folder.children && file->folder.children[i]) {
-                freeFile(file->folder.children[i]);
+                file_free(file->folder.children[i]);
             }
         }
         // Free the children array
@@ -88,6 +136,7 @@ void freeFile(File* file) {
         }
     }
     
+    // Free the file and decrease fileCount because we just deleted the file.
     free(file);
     fileCount--;
 }
@@ -127,8 +176,10 @@ static int set_file_content(File* file, const char* content) {
 
 /**
  * Add child to directory
+ * 
+ * @returns 0 on success, -1 on failure.
  */
-static int add_child_to_directory(File* dir, File* child) {
+static int add_child_to_dir(File* dir, File* child) {
     if (!dir || !child || dir->type != FOLDER_NODE) return -1;
     
     // Initialize children array if first child
@@ -164,7 +215,7 @@ static int add_child_to_directory(File* dir, File* child) {
  * Remove child from directory
  * @return 0 on success, -1 on failure
  */
-static int remove_child_from_directory(File* dir, File* child) {
+static int remove_child_from_dir(File* dir, File* child) {
     if (!dir || !child || dir->type != FOLDER_NODE || !dir->folder.children) return -1;
     
     // Find child index
@@ -188,9 +239,9 @@ static int remove_child_from_directory(File* dir, File* child) {
 }
 
 // Initialise filesystem.
-void filesys_init() {
-    root = allocFile();
-    if (!root) return; // Root does not exist (allocFile failed)
+void fs_init() {
+    root = file_alloc();
+    if (!root) return; // Root does not exist (file_alloc failed)
     copyStr(root->name, "/"); // Root is /
 
     // Initialise root
@@ -208,7 +259,7 @@ void filesys_init() {
  * Check if file name in CWD
  * @return true if exists, false if not
  */
-bool nameInCWD(const char* name, NodeType type) {
+bool name_in_CWD(const char* name, NodeType type) {
     if (!cwd || cwd->type != FOLDER_NODE || !cwd->folder.children) return false;
     
     for (int i = 0; i < cwd->folder.childCount; i++) {
@@ -222,13 +273,13 @@ bool nameInCWD(const char* name, NodeType type) {
 
 /** 
  * Make directory
- * @return number depending on success
+ * @return number depending on success (0 is success, others are fail)
  */
-int filesys_mkdir(const char* name) {
+int fs_make_dir(const char* name) {
     if (!name || strlen(name) == 0 || strlen(name) >= MAX_NAME_LEN) return -2; // Invalid name
-    if (nameInCWD(name, FOLDER_NODE)) return -3; // Duplicate file/folder
+    if (name_in_CWD(name, FOLDER_NODE)) return -3; // Duplicate file/folder
 
-    File* node = allocFile();
+    File* node = file_alloc();
     if (!node) return -1;
     
     copyStr(node->name, name);
@@ -240,8 +291,8 @@ int filesys_mkdir(const char* name) {
     node->folder.capacity = 0;
     
     // Add to current directory
-    if (add_child_to_directory(cwd, node) != 0) {
-        freeFile(node);
+    if (add_child_to_dir(cwd, node) != 0) {
+        file_free(node);
         return -1;
     }
 
@@ -251,15 +302,16 @@ int filesys_mkdir(const char* name) {
     return 0;
 }
 
-/** Create file
+/** 
+ * Create file
  * @return number depending on success
  */
-int filesys_mkfile(const char* name, const char* content) {
+int fs_make_file(const char* name, const char* content) {
     if (!name || strlen(name) == 0 || strlen(name) >= MAX_NAME_LEN) return -2; // Invalid name - too long/empty
     if (!content) return -3; // Content is NULL
-    if (nameInCWD(name, FILE_NODE)) return -4; // Duplicate file name
+    if (name_in_CWD(name, FILE_NODE)) return -4; // Duplicate file name
 
-    File* node = allocFile();
+    File* node = file_alloc();
     if (!node) return -1;
     
     copyStr(node->name, name);
@@ -267,13 +319,13 @@ int filesys_mkfile(const char* name, const char* content) {
     
     // Set content
     if (set_file_content(node, content) != 0) {
-        freeFile(node);
+        file_free(node);
         return -1; // Failed to allocate content
     }
     
     // Add to current directory
-    if (add_child_to_directory(cwd, node) != 0) {
-        freeFile(node);
+    if (add_child_to_dir(cwd, node) != 0) {
+        file_free(node);
         return -1;
     }
 
@@ -287,7 +339,7 @@ int filesys_mkfile(const char* name, const char* content) {
  * Change directory
  * @return 0 on success, -1 on failure
  */
-int filesys_cd(const char* name) {
+int fs_change_dir(const char* name) {
     // .. means to go back to parent folder
     if (strEqual(name, "..")) {
         if (cwd->parent != NULL) cwd = cwd->parent;
@@ -307,19 +359,20 @@ int filesys_cd(const char* name) {
     return -1; // Not found
 }
 
-/** Remove file
+/** 
+ * Remove file
  * @return 0 on success, -1 on failure
  */
-int filesys_rm(const char* name) {
+int fs_remove(const char* name) {
     if (!cwd->folder.children) return -1; // No children
     
     for (int i = 0; i < cwd->folder.childCount; i++) {
         File* child = cwd->folder.children[i];
         if (child && child->type == FILE_NODE && strEqual(child->name, name)) {
             // Remove from directory
-            if (remove_child_from_directory(cwd, child) == 0) {
+            if (remove_child_from_dir(cwd, child) == 0) {
                 // Free the file memory
-                freeFile(child);
+                file_free(child);
                 
                 // Auto-save to disk after removing file
                 auto_save_filesystem();
@@ -331,10 +384,11 @@ int filesys_rm(const char* name) {
     return -1; // Not found or not a file (is folder)
 }
 
-/** Remove folder
+/** 
+ * Remove folder
  * @return 0 on success, -1 on failure, -2 if not empty
  */
-int filesys_rmdir(const char* name) {
+int fs_remove_dir(const char* name) {
     if (!cwd->folder.children) return -1; // No children
     
     for (int i = 0; i < cwd->folder.childCount; i++) {
@@ -345,9 +399,9 @@ int filesys_rmdir(const char* name) {
             }
             
             // Remove from directory
-            if (remove_child_from_directory(cwd, child) == 0) {
+            if (remove_child_from_dir(cwd, child) == 0) {
                 // Free the directory memory
-                freeFile(child);
+                file_free(child);
                 
                 // Auto-save to disk after removing directory
                 auto_save_filesystem();
@@ -362,7 +416,7 @@ int filesys_rmdir(const char* name) {
 /** Edit file content
  * @return 0 on success, -1 on failure
  */
-int filesys_editfile(const char* name, const char* new_content) {
+int fs_edit_file(const char* name, const char* new_content) {
     if (!cwd->folder.children) return -1; // No children
     
     for (int i = 0; i < cwd->folder.childCount; i++) {
@@ -515,9 +569,9 @@ int read_inode_from_disk(uint32_t inode_num, disk_inode_t *inode) {
 }
 
 /**
- * Format a disk with MooseOS filesystem
+ * Format a disk with MooseOS custom filesystem format
  */
-int filesys_format(uint8_t drive) {
+int fs_format(uint8_t drive) {
     // Initialize superblock
     superblock = &sb_cache;
     superblock->signature = FILESYSTEM_SIGNATURE;
@@ -547,7 +601,7 @@ int filesys_format(uint8_t drive) {
         disk_buffer[i] = 0;
     }
     
-    // Copy superblock safely
+    // Copy superblock 
     for (uint32_t i = 0; i < sizeof(superblock_t); i++) {
         disk_buffer[i] = ((uint8_t*)superblock)[i];
     }
@@ -575,6 +629,7 @@ int filesys_format(uint8_t drive) {
         ((uint8_t*)&root_inode)[i] = 0;
     }
     
+    // Initialise
     root_inode.signature = FILESYSTEM_SIGNATURE;
     root_inode.inode_number = 1;
     root_inode.type = FOLDER_NODE;
@@ -607,7 +662,7 @@ int filesys_format(uint8_t drive) {
 /**
  * Mount filesystem from disk
  */
-int filesys_mount(uint8_t drive) {
+int fs_mount(uint8_t drive) {
     // Read superblock
     if (disk_read_sector(drive, SUPERBLOCK_SECTOR, disk_buffer) != 0) {
         return -1;
@@ -631,7 +686,7 @@ int filesys_mount(uint8_t drive) {
 }
 
 /**
- * Sync filesystem to disk (write superblock)
+ * Sync filesystem to disk 
  */
 int filesys_sync(void) {
     if (!filesystem_mounted || !superblock) return -1;
@@ -646,7 +701,7 @@ int filesys_sync(void) {
         disk_buffer[i] = 0;
     }
     
-    // Copy superblock safely
+    // Copy superblock
     for (uint32_t i = 0; i < sizeof(superblock_t); i++) {
         disk_buffer[i] = ((uint8_t*)superblock)[i];
     }
@@ -661,7 +716,7 @@ int filesys_sync(void) {
 /**
  * Convert a memory File structure to disk inode format
  */
-static int convert_memory_to_disk_inode(File *memory_file, disk_inode_t *disk_inode, uint32_t inode_num, uint32_t parent_inode) {
+static int memory_to_inode(File *memory_file, disk_inode_t *disk_inode, uint32_t inode_num, uint32_t parent_inode) {
     if (!memory_file || !disk_inode) return -1;
     
     // Clear the disk inode
@@ -683,14 +738,14 @@ static int convert_memory_to_disk_inode(File *memory_file, disk_inode_t *disk_in
     disk_inode->name[name_len] = '\0';
     
     if (memory_file->type == FILE_NODE) {
-        // Handle file content - use dynamic content pointer
+        // Handle file content
         if (memory_file->file.content) {
             disk_inode->size = memory_file->file.content_size;
         } else {
             disk_inode->size = 0;
         }
         
-        // Write content to data blocks if file has content
+        // Write content to data blocks (if file has content)
         if (disk_inode->size > 0 && memory_file->file.content) {
             uint32_t data_block = allocate_data_block();
             if (data_block > 0) {
@@ -731,12 +786,13 @@ static int convert_memory_to_disk_inode(File *memory_file, disk_inode_t *disk_in
 
 /**
  * Recursively save directory tree to disk
+ * 
  */
 static int save_directory_recursive(File *dir, uint32_t dir_inode_num, uint32_t parent_inode) {
     if (!dir || dir->type != FOLDER_NODE) return -1;
     
     disk_inode_t dir_disk_inode;
-    if (convert_memory_to_disk_inode(dir, &dir_disk_inode, dir_inode_num, parent_inode) != 0) {
+    if (memory_to_inode(dir, &dir_disk_inode, dir_inode_num, parent_inode) != 0) {
         return -1;
     }
     
@@ -755,7 +811,7 @@ static int save_directory_recursive(File *dir, uint32_t dir_inode_num, uint32_t 
         
         if (child->type == FILE_NODE) {
             disk_inode_t child_disk_inode;
-            if (convert_memory_to_disk_inode(child, &child_disk_inode, child_inode, dir_inode_num) == 0) {
+            if (memory_to_inode(child, &child_disk_inode, child_inode, dir_inode_num) == 0) {
                 write_inode_to_disk(child_inode, &child_disk_inode);
                 dir_disk_inode.child_inodes[dir_disk_inode.child_count++] = child_inode;
             }
@@ -773,9 +829,9 @@ static int save_directory_recursive(File *dir, uint32_t dir_inode_num, uint32_t 
     return 0;
 }
 /**
- * Save current in-memory filesystem to disk
+ * Save current filesystem to disk
  */
-int filesys_save_to_disk(void) {
+int fs_save_to_disk(void) {
     if (!filesystem_mounted || !superblock || !root) return -1;
     
     // Clear all inodes except root
@@ -798,7 +854,7 @@ int filesys_save_to_disk(void) {
 static File* convert_disk_to_memory_file(disk_inode_t *disk_inode) {
     if (!disk_inode || disk_inode->signature != FILESYSTEM_SIGNATURE) return NULL;
     
-    File *memory_file = allocFile();
+    File *memory_file = file_alloc();
     if (!memory_file) return NULL;
     
     // Copy basic information
@@ -874,8 +930,8 @@ static int load_directory_recursive(uint32_t inode_num, File *parent) {
     
     // Add to parent directory if parent exists
     if (parent && parent->type == FOLDER_NODE) {
-        if (add_child_to_directory(parent, memory_file) != 0) {
-            freeFile(memory_file);
+        if (add_child_to_dir(parent, memory_file) != 0) {
+            file_free(memory_file);
             return -1;
         }
     }
@@ -896,12 +952,12 @@ static int load_directory_recursive(uint32_t inode_num, File *parent) {
 /**
  * Load filesystem from disk to memory
  */
-int filesys_load_from_disk(void) {
+int fs_load_from_disk(void) {
     if (!filesystem_mounted || !superblock) return -1;
     
     // Clear current in-memory filesystem and free all allocated files
     if (root) {
-        freeFile(root); // This will recursively free all children
+        file_free(root); // This will recursively free all children
         root = NULL;
         cwd = NULL;
     }
@@ -918,7 +974,7 @@ int filesys_load_from_disk(void) {
     }
     
     // Create root
-    root = allocFile();
+    root = file_alloc();
     if (!root) return -1;
     
     copyStr(root->name, "/");
@@ -940,15 +996,20 @@ int filesys_load_from_disk(void) {
 
 /**
  * Get disk information as a formatted string
+ * 
+ * @note this is implemented wierdly. However, we must focus on other stuff
+ * because such is life.
+ * 
+ * This is more of a debug thing.
  */
-int filesys_get_disk_info(char *info_buffer, int buffer_size) {
+int fs_get_disk_info(char *info_buffer, int buffer_size) {
     if (!info_buffer || buffer_size < 200) return -1;
     
     char temp[100];
     info_buffer[0] = '\0';
     
     // Add disk drive information
-    strcat(info_buffer, "=== MooseOS Disk Information ===\n");
+    strcat(info_buffer, "Disk Info\n");
     
     for (int i = 0; i < 4; i++) {
         if (ata_devices[i].exists) {
@@ -960,7 +1021,7 @@ int filesys_get_disk_info(char *info_buffer, int buffer_size) {
             strcat(info_buffer, ata_devices[i].model);
             strcat(info_buffer, "\n  Size: ");
             
-            // Convert size to string (simplified)
+            // Convert size to string
             uint32_t size_mb = (ata_devices[i].size * 512) / (1024 * 1024);
             int pos = 0;
             uint32_t temp_size = size_mb;
@@ -986,7 +1047,7 @@ int filesys_get_disk_info(char *info_buffer, int buffer_size) {
     
     // Add filesystem information
     if (filesystem_mounted && superblock) {
-        strcat(info_buffer, "\n=== Filesystem Status ===\n");
+        strcat(info_buffer, "\nFilesystem status:\n");
         strcat(info_buffer, "Status: Mounted\n");
         strcat(info_buffer, "Free inodes: ");
         
@@ -1011,7 +1072,7 @@ int filesys_get_disk_info(char *info_buffer, int buffer_size) {
         strcat(info_buffer, temp);
         strcat(info_buffer, "\n");
     } else {
-        strcat(info_buffer, "\n=== Filesystem Status ===\n");
+        strcat(info_buffer, "\nFilesystem Status:\n");
         strcat(info_buffer, "Status: Not mounted\n");
     }
     
@@ -1026,23 +1087,29 @@ int filesys_disk_status(void) {
 }
 
 /**
- * Flush filesystem cache to disk with additional verification
+ * Flush filesystem cache to disk
  */
 void filesys_flush_cache(void) {
+    // Check if filesystem is mounted
     if (filesystem_mounted) {
         // First sync the superblock
         filesys_sync();
         
         // Then save all filesystem data
-        filesys_save_to_disk();
+        fs_save_to_disk();
         
-        // Force hardware cache flush using the dedicated function
+        // Force hardware cache flush
         disk_force_flush(boot_drive);
     }
 }
 
 /**
  * Get filesystem memory statistics
+ * 
+ * @note Yes this is also a debug thing. 
+ *       It's pretty... wierd... but we won't fix it just yet.
+ * 
+ * This function is currently being used by the terminal
  */
 int filesys_get_memory_stats(char *stats_buffer, int buffer_size) {
     if (!stats_buffer || buffer_size < 200) return -1;
@@ -1050,22 +1117,21 @@ int filesys_get_memory_stats(char *stats_buffer, int buffer_size) {
     char temp[50];
     stats_buffer[0] = '\0';
     
-    strcat(stats_buffer, "=== Filesystem Memory Statistics ===\n");
-    
-    strcat(stats_buffer, "Allocation Method: Dynamic (malloc)\n");
+    strcat(stats_buffer, "Filesystem Memory Statistics:\n");
     
     strcat(stats_buffer, "Active Files: ");
     int2str(fileCount, temp, sizeof(temp));
     strcat(stats_buffer, temp);
     strcat(stats_buffer, "\n");
     
-    // Calculate actual memory usage
+    // Calculate memory usage
     int total_memory = fileCount * sizeof(File); // Base structures
     int content_memory = 0;
     int children_memory = 0;
-    
-    // We'd need to traverse all files to get exact usage
-    // For now, show base structure usage
+
+    /**
+     * @todo Make this print the exact amount of bytes the disk is using.
+     */
     strcat(stats_buffer, "Base Structures: ");
     int2str(total_memory, temp, sizeof(temp));
     strcat(stats_buffer, temp);

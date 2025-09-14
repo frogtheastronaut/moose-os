@@ -1,3 +1,9 @@
+/**
+    Moose Operating System
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+
+    .h file for ./rtc.c
+*/
 #ifndef RTC_H
 #define RTC_H
 

@@ -1,10 +1,30 @@
 /*
     Moose Operating System
-    Copyright (c) 2025 Ethan Zhang.
+    Copyright (c) 2025 Ethan Zhang and Contributors.
 */
 
 /*
+    ================================ OS THEORY ================================
+    If you haven't read other OS theory files, basically MooseOS is an educational OS, so comments at the top of each 
+    file will explain the relevant OS theory. This is so that users can learn about OS concepts while reading the code, 
+    and maybe even make their own OS some day. 
+    Usually, there are external websites that describe OS Theory excellently. They will be quoted, and a link
+    will be provided.
+    
+    The kernel is the CORE of any operating system. When your computer boots up, the kernel is the first program
+    that runs and it never stops running until you shut down. This file is very important!
+    
+    WHAT DOES THE KERNEL DO?
+    1. HARDWARE MANAGEMENT: Controls CPU, memory, disk, keyboard, mouse, graphics
+    2. PROCESS MANAGEMENT: Runs multiple programs at the same time (multitasking)
+    3. MEMORY MANAGEMENT: Decides which programs get which parts of memory
+    4. SECURITY: Prevents programs from interfering with each other
+    5. RESOURCE ALLOCATION: Shares CPU time, memory, and hardware between programs
 
+    Source: https://wiki.osdev.org/Kernel
+*/
+
+/*
 simple code to run a simple OS
  - MooseOS guy 
  (Do not remove)
@@ -32,13 +52,13 @@ void init_filesys() {
     disk_init();
     
     // Initialize in-memory filesystem structure
-    filesys_init();
+    fs_init();
     
     // Try to mount existing filesystem from disk
-    int mount_result = filesys_mount(0);
+    int mount_result = fs_mount(0);
     if (mount_result == 0) {
         // Mount succeeded, try to load existing filesystem data
-        int load_result = filesys_load_from_disk();
+        int load_result = fs_load_from_disk();
         if (load_result == 0) {
             // Successfully loaded existing filesystem from disk
             return;
@@ -47,13 +67,13 @@ void init_filesys() {
     }
     
     // No valid filesystem found or load failed, create default filesystem
-    filesys_mkdir("Documents");
-    filesys_mkdir("Desktop");
-    filesys_mkdir("Apps");
-    filesys_mkdir("Photos");
-    filesys_mkdir("Library");
+    fs_make_dir("Documents");
+    fs_make_dir("Desktop");
+    fs_make_dir("Apps");
+    fs_make_dir("Photos");
+    fs_make_dir("Library");
     // sample file
-    filesys_mkfile("HELP.txt", "Hello! Welcome to MooseOS!\n"
+    fs_make_file("HELP.txt", "Hello! Welcome to MooseOS!\n"
                         "Controls:\n"
                         "- Use arrow keys to navigate\n"
                             "- Press Enter to open selection\n"
@@ -63,10 +83,10 @@ void init_filesys() {
                         "Copyright 2025 Ethan Zhang\n");
     
     // Format the disk and save the default filesystem
-    int format_result = filesys_format(0);
+    int format_result = fs_format(0);
     if (format_result == 0) {
         // Format succeeded, now save the current in-memory filesystem to disk
-        filesys_save_to_disk();
+        fs_save_to_disk();
     }
 }
 

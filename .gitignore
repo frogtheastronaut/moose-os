@@ -6,3 +6,4 @@
 */*.o
 bin/moose_disk.img
 .markdownlint.json
+*/*.dylib

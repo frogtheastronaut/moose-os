@@ -1,6 +1,50 @@
 /*
-    Moose Operating System - main script setting up IDT and GDT
-    Copyright (c) 2025 Ethan Zhang.
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+    
+    ========================= OS THEORY =========================
+    If you haven't read other OS theory files, basically MooseOS is an educational OS, so comments at the top of each 
+    file will explain the relevant OS theory. This is so that users can learn about OS concepts while reading the code, 
+    and maybe even make their own OS some day. 
+    Usually, there are external websites that describe OS Theory excellently. They will be quoted, and a link
+    will be provided.
+    
+    WHAT ARE INTERRUPTS?
+    Interrupts are signals from a device, such as a keyboard or a hard drive, to the CPU, 
+    telling it to immediately stop whatever it is currently doing and do something else.
+
+    For example, a keyboard controller can send an interrupt when a character key was pressed. 
+    Then the OS can display the character on screen immediately, even if the CPU was doing something 
+    completely unrelated before, and return to what it was doing afterwards.
+
+    When a specific interrupt arises, the CPU looks up an entry for that specific interrupt from a 
+    table provided by the OS. In x86 protected mode the table is called the Interrupt Descriptor Table 
+    (IDT) and can have up to 256 entries, but the name of this table and the maximum number of entries it 
+    can have can differ based on the CPU architecture.
+
+    After the CPU finds the entry for the interrupt, it jumps to the code the entry points to. 
+    This code that is run in response to the interrupt is known as a interrupt service routine (ISR) 
+    or an interrupt handler.
+
+    There are generally 3 types of interrupts:
+    1. Exceptions: These are interrupts that arise from the CPU itself, 
+       usually due to some error or special condition. For example, a division by zero error 
+       will raise an exception.
+    2. Hardware Interrupts: These are interrupts that arise from hardware devices, 
+       such as keyboards, mice, and hard drives. For example, a keyboard controller can raise
+       an interrupt when a key is pressed.
+    3. Software Interrupts: These are interrupts that are raised by software, to get the kernel's attention.
+
+    We just talked about Interrupts and IDTs. But to make an IDT, we also need a GDT.
+
+    WHAT'S A GDT?
+    The Global Descriptor Table (GDT) is a data structure used by Intel x86-family
+    processors to define the characteristics of the various memory areas used during program
+    execution, including the base address, the size, and access privileges like executability
+    and writability. The GDT can hold entries for segments in both kernel mode and user mode.
+
+    Source: https://wiki.osdev.org/Interrupts
+            https://wiki.osdev.org/Interrupt_Descriptor_Table
+            https://wiki.osdev.org/Global_Descriptor_Table
 */
 
 #include "include/IDT.h"

@@ -1,6 +1,42 @@
 /*
-    MooseOS Mouse
-    Copyright (c) 2025 Ethan Zhang
+    MooseOS Mouse Driver
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+    
+    ======================== OS THEORY: MOUSE INPUT & PS/2 PROTOCOL ========================
+    
+    WHAT IS PS/2 MOUSE PROTOCOL?
+    PS/2 is an old but still common interface for mice and keyboards. Think of it like
+    a specific "language" that mice use to talk to computers. Even modern USB mice
+    often emulate PS/2 protocol for compatibility!
+    
+    HOW MICE REPORT MOVEMENT:
+    Unlike keyboards that send "key pressed/released", mice continuously report:
+    1. RELATIVE MOVEMENT: "I moved 5 pixels left, 3 pixels up"
+    2. BUTTON STATES: "Left button is pressed, right button released"
+    3. SCROLL WHEEL: "User scrolled up 2 notches"
+    
+    PS/2 MOUSE DATA PACKET:
+    Mice send data in 3-byte packets:
+    
+    BYTE 1 (Status Byte):
+    - Bit 0: Left button pressed (1) or released (0)  
+    - Bit 1: Right button pressed (1) or released (0)
+    - Bit 2: Middle button pressed (1) or released (0)
+    - Bit 4: X movement sign (1 = negative, 0 = positive)
+    - Bit 5: Y movement sign (1 = negative, 0 = positive)
+    - Other bits: Overflow flags and sync bits
+    
+    BYTE 2: X movement delta (-256 to +255 pixels)
+    BYTE 3: Y movement delta (-256 to +255 pixels)
+    
+    MOUSE COORDINATE SYSTEM:
+    - X increases going RIGHT
+    - Y increases going DOWN (opposite of math!)
+    - (0,0) is top-left corner of screen
+    - Mouse reports RELATIVE movement, OS tracks ABSOLUTE position
+
+    Source: https://wiki.osdev.org/PS/2_Mouse
+            https://wiki.osdev.org/Mouse_Input
 */
 #include "include/mouse.h"
 

@@ -1,7 +1,7 @@
 
 /*
     Moose Operating System
-    Copyright (c) 2025 Ethan Zhang.
+    Copyright (c) 2025 Ethan Zhang and Contributors.
 */
 
 #include "include/terminal.h"
@@ -176,7 +176,7 @@ static void term_exec_cmd(const char* cmd) {
     else if (cmd[0] == 'm' && cmd[1] == 'k' && cmd[2] == 'd' && cmd[3] == 'i' && cmd[4] == 'r' && cmd[5] == ' ') {
         const char* dirname = cmd + 6;
         if (strlen(dirname) > 0) {
-            filesys_mkdir(dirname);
+            fs_make_dir(dirname);
             char line[CHARS_PER_LINE + 1];
             msnprintf(line, sizeof(line), "Created directory %s", dirname);
             terminal_print(line);
@@ -188,7 +188,7 @@ static void term_exec_cmd(const char* cmd) {
     else if (cmd[0] == 't' && cmd[1] == 'o' && cmd[2] == 'u' && cmd[3] == 'c' && cmd[4] == 'h' && cmd[5] == ' ') {
         const char* filename = cmd + 6;
         if (strlen(filename) > 0) {
-            filesys_mkfile(filename, "");
+            fs_make_file(filename, "");
             char line[CHARS_PER_LINE + 1];
             msnprintf(line, sizeof(line), "Created file %s", filename);
             terminal_print(line);
@@ -352,7 +352,7 @@ static void term_exec_cmd(const char* cmd) {
     
     else if (strEqual(cmd, "diskinfo")) {
         char info_buffer[512];
-        if (filesys_get_disk_info(info_buffer, sizeof(info_buffer)) == 0) {
+        if (fs_get_disk_info(info_buffer, sizeof(info_buffer)) == 0) {
             char *line_start = info_buffer;
             char *line_end;
             
@@ -426,7 +426,7 @@ static void term_exec_cmd(const char* cmd) {
             }
             
             // Then save filesystem data
-            int save_result = filesys_save_to_disk();
+            int save_result = fs_save_to_disk();
             if (save_result == 0) {
                 terminal_print("Filesystem data saved successfully");
                 
@@ -448,7 +448,7 @@ static void term_exec_cmd(const char* cmd) {
     // load - load filesystem from disk
     else if (strEqual(cmd, "load")) {
         if (filesys_disk_status()) {
-            if (filesys_load_from_disk() == 0) {
+            if (fs_load_from_disk() == 0) {
                 terminal_print("Filesystem loaded from disk successfully");
             } else {
                 terminal_print_error("Failed to load filesystem from disk");
