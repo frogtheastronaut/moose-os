@@ -129,9 +129,13 @@ void kernel_main(void)
     
     // Initialize paging with 16MB of memory (adjust as needed)
     paging_init(16 * 1024 * 1024);
+
     
-    kb_init();
     mouse_init(); 
+
+    kb_init(); 
+    
+    
 
     // yeah idk either. this just happens to work
     outb(0x43, 0x36); 

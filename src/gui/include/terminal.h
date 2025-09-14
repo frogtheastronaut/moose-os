@@ -35,8 +35,10 @@
 
 // Terminal settings
 #define MAX_COMMAND_LEN 64
-#define MAX_LINES 15
-#define CHARS_PER_LINE 35
+#define MAX_LINES 20
+#define CHARS_PER_LINE 50
+#define FONT_HEIGHT 10
+#define FONT_SPACING 5
 
 // Boolean definition
 #ifndef __cplusplus

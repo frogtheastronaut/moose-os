@@ -56,17 +56,49 @@ static void terminal_add_line(const char* text, uint8_t color) {
 }
 
 /**
- * Print text
+ * Wrap text and add multiple lines to terminal if needed
  */
-void terminal_print(const char* text) {
-    terminal_add_line(text, TERM_TEXT_COLOR);
+static void terminal_add_wrapped_text(const char* text, uint8_t color) {
+    if (!text) return;
+    
+    int text_len = strlen(text);
+    char line_buffer[CHARS_PER_LINE + 1];
+    int pos = 0;
+    
+    for (int i = 0; i <= text_len; i++) {
+        // If we hit end of string or newline, flush current line
+        if (text[i] == '\0' || text[i] == '\n') {
+            line_buffer[pos] = '\0';
+            if (pos > 0) {
+                terminal_add_line(line_buffer, color);
+            }
+            pos = 0;
+            continue;
+        }
+        
+        // If line is getting too long, wrap it
+        if (pos >= CHARS_PER_LINE) {
+            line_buffer[pos] = '\0';
+            terminal_add_line(line_buffer, color);
+            pos = 0;
+        }
+        
+        line_buffer[pos++] = text[i];
+    }
 }
 
 /**
- * Print error message
+ * Print text with wrapping
+ */
+void terminal_print(const char* text) {
+    terminal_add_wrapped_text(text, TERM_TEXT_COLOR);
+}
+
+/**
+ * Print error message with wrapping
  */
 static void terminal_print_error(const char* text) {
-    terminal_add_line(text, TERM_ERROR_COLOR);
+    terminal_add_wrapped_text(text, TERM_ERROR_COLOR);
 }
 
 /**
@@ -94,7 +126,7 @@ static void term_exec_cmd(const char* cmd) {
     // Add cmd to history
     char prompt_line[CHARS_PER_LINE + 1];
     msnprintf(prompt_line, sizeof(prompt_line), "%s# %s", get_cwd(), cmd); 
-    terminal_add_line(prompt_line, TERM_PROMPT_COLOR);
+    terminal_add_wrapped_text(prompt_line, TERM_PROMPT_COLOR);
     
     if (strlen(cmd) == 0) {
         return; // empty
@@ -208,26 +240,8 @@ static void term_exec_cmd(const char* cmd) {
                 if (child && child->type == FILE_NODE && strEqual(child->name, filename)) {
                     found = true;
                     if (child->file.content && child->file.content_size > 0) {
-                        // Split content into multiple lines if needed
-                        char* content = child->file.content;
-                        char line[CHARS_PER_LINE + 1];
-                        int pos = 0;
-                        for (int j = 0; content[j] != '\0'; j++) {
-                            if (content[j] == '\n' || pos >= CHARS_PER_LINE - 1) {
-                                line[pos] = '\0';
-                                terminal_print(line);
-                                pos = 0;
-                                if (content[j] != '\n') {
-                                    line[pos++] = content[j];
-                                }
-                            } else {
-                                line[pos++] = content[j];
-                            }
-                        }
-                        if (pos > 0) {
-                            line[pos] = '\0';
-                            terminal_print(line);
-                        }
+                        // Print content directly - wrapping will be handled automatically
+                        terminal_print(child->file.content);
                     } else {
                         terminal_print("File is empty");
                     }
@@ -567,22 +581,27 @@ static void terminal_draw_win() {
  * Draw terminal content
  */
 static void term_draw_content() {
-    int y_pos = TERM_AREA_Y + 5;
-    int visible_lines = (TERM_AREA_HEIGHT - 35) / 10; 
+    int y_pos = TERM_AREA_Y + FONT_SPACING;
+    int visible_lines = (TERM_AREA_HEIGHT - 35) / FONT_HEIGHT;
+    
+    // Ensure we don't show more lines than we have stored
+    if (visible_lines > MAX_LINES) {
+        visible_lines = MAX_LINES;
+    } 
     
     int start_line = (current_line > visible_lines) ? current_line - visible_lines : 0;
     for (int i = start_line; i < current_line && i < start_line + visible_lines; i++) {
         if (terminal_lines[i][0] != '\0') {
-            draw_text(TERM_AREA_X + 5, y_pos, terminal_lines[i], TERM_TEXT_COLOR);
-            y_pos += 10;
+            draw_text(TERM_AREA_X + FONT_SPACING, y_pos, terminal_lines[i], TERM_TEXT_COLOR);
+            y_pos += FONT_HEIGHT;
         }
     }
     
     char prompt[CHARS_PER_LINE + 1];
     msnprintf(prompt, sizeof(prompt), "%s# %s", get_cwd(), command_buffer); 
-    draw_text(TERM_AREA_X + 5, y_pos, prompt, TERM_PROMPT_COLOR);
+    draw_text(TERM_AREA_X + FONT_SPACING, y_pos, prompt, TERM_PROMPT_COLOR);
     
-    int cursor_x = TERM_AREA_X + 5 + get_textwidth(prompt);
+    int cursor_x = TERM_AREA_X + FONT_SPACING + get_textwidth(prompt);
 
     /**
      * Currently, the cursor is a _
@@ -598,26 +617,31 @@ static void term_draw_content() {
  */
 static void term_redraw_prompt_only() {
     // Calculate prompt line position
-    int y_pos = TERM_AREA_Y + 5;
-    int visible_lines = (TERM_AREA_HEIGHT - 35) / 10;
+    int y_pos = TERM_AREA_Y + FONT_SPACING;
+    int visible_lines = (TERM_AREA_HEIGHT - 35) / FONT_HEIGHT;
+    
+    // Ensure we don't show more lines than we have stored
+    if (visible_lines > MAX_LINES) {
+        visible_lines = MAX_LINES;
+    }
     int start_line = (current_line > visible_lines) ? current_line - visible_lines : 0;
     
     // Skip to prompt line position
     for (int i = start_line; i < current_line; i++) {
         if (terminal_lines[i][0] != '\0') {
-            y_pos += 10;
+            y_pos += FONT_HEIGHT;
         }
     }
     
     // Clear the prompt line area (overwrite with background color)
-    draw_rect(TERM_AREA_X + 5, y_pos, TERM_AREA_WIDTH - 10, 10, TERM_BG_COLOR);
+    draw_rect(TERM_AREA_X + FONT_SPACING, y_pos, TERM_AREA_WIDTH - (2 * FONT_SPACING), FONT_HEIGHT, TERM_BG_COLOR);
     
     // Redraw only the prompt and cursor
     char prompt[CHARS_PER_LINE + 1];
     msnprintf(prompt, sizeof(prompt), "%s# %s", get_cwd(), command_buffer); 
-    draw_text(TERM_AREA_X + 5, y_pos, prompt, TERM_PROMPT_COLOR);
+    draw_text(TERM_AREA_X + FONT_SPACING, y_pos, prompt, TERM_PROMPT_COLOR);
     
-    int cursor_x = TERM_AREA_X + 5 + get_textwidth(prompt);
+    int cursor_x = TERM_AREA_X + FONT_SPACING + get_textwidth(prompt);
     draw_text(cursor_x, y_pos, "_", TERM_PROMPT_COLOR);
 }
 
