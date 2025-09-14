@@ -107,6 +107,10 @@ void paging_init(uint32_t memory_size) {
     enable_paging_asm();
 }
 
+/**
+ * @note enable_paging and disable_paging are not used.
+ * 
+ */
 void enable_paging(page_directory_t *dir) {
     current_directory = dir;
     load_page_directory((uint32_t*)dir);
@@ -159,6 +163,7 @@ void destroy_page_directory(page_directory_t *dir) {
     kfree_aligned(dir);
 }
 
+/** @note unused */
 page_directory_t *clone_page_directory(page_directory_t *src) {
     if (!src) {
         return NULL;
@@ -262,6 +267,7 @@ bool map_page(uint32_t virtual_addr, uint32_t physical_addr, uint32_t flags, pag
     return true;
 }
 
+/** @note unused */
 bool unmap_page(uint32_t virtual_addr, page_directory_t *dir) {
     page_table_t *table = get_page_table(virtual_addr, dir);
     if (!table) {
@@ -278,6 +284,7 @@ bool unmap_page(uint32_t virtual_addr, page_directory_t *dir) {
     return true;
 }
 
+/** @note unused */
 uint32_t get_physical_addr(uint32_t virtual_addr, page_directory_t *dir) {
     page_table_t *table = get_page_table(virtual_addr, dir);
     if (!table) {
@@ -295,7 +302,7 @@ uint32_t get_physical_addr(uint32_t virtual_addr, page_directory_t *dir) {
     return (page_entry & ~0xFFF) | page_offset;
 }
 
-// Frame allocator - simple implementation
+/** Frame allocator. @note unused */
 uint32_t alloc_frame(void) {
     uint32_t frame = next_frame;
     next_frame += PAGE_SIZE;
@@ -303,19 +310,22 @@ uint32_t alloc_frame(void) {
     return frame;
 }
 
+/** @note unused */
 void free_frame(uint32_t frame_addr) {
-    // Simple implementation - just decrement counter
-    // In a real OS, you'd maintain a free list of frames
+    // Just decrements counter
+    /** @todo Implement frame deallocation */
     if (frames_allocated > 0) {
         frames_allocated--;
     }
 }
 
+/** @note unused */
 bool is_frame_allocated(uint32_t frame_addr) {
     // Check if frame is within allocated range
     return (frame_addr >= 0x00500000 && frame_addr < next_frame);
 }
 
+/** @note unused */
 void identity_map_kernel(page_directory_t *dir) {
     // Identity map the kernel space (first 4MB) with kernel privileges
     for (uint32_t addr = 0; addr < KERNEL_END; addr += PAGE_SIZE) {
@@ -335,6 +345,7 @@ void *kmalloc_aligned(uint32_t size) {
     return (void*)frame;
 }
 
+/** @note unused */
 void *kmalloc_phys(uint32_t size, uint32_t *phys_addr) {
     void *virt_addr = kmalloc_aligned(size);
     if (phys_addr && virt_addr) {
@@ -349,35 +360,21 @@ void kfree_aligned(void *ptr) {
     frames_allocated--;
 }
 
-// Page fault handling - basic implementation
 void page_fault_handler(uint32_t error_code, uint32_t virtual_addr) {
-    // For now, just halt on page fault
-    // This is where you'd handle page faults in a real implementation
+    // Just halt on page fault
     asm volatile("hlt");
 }
 
-// Debug functions - basic implementations
-void dump_page_directory(page_directory_t *dir) {
-    if (!dir) return;
-    
-    // In a real implementation, you'd print to console/serial
-    // For now, this is just a placeholder that walks the directory
-    for (int i = 0; i < PAGE_DIRECTORY_SIZE; i++) {
-        if ((*dir)[i] & PAGE_PRESENT) {
-            // Directory entry is present
-            // You could print: "Page table %d: 0x%x\n", i, (*dir)[i]
-        }
-    }
-}
+void page_fault_handler_main(uint32_t error_code) {
+    if (handler_lock != 0) return;
+    handler_lock = 1;
 
-void dump_page_table(page_table_t *table) {
-    if (!table) return;
-    
-    // Walk through page table entries
-    for (int i = 0; i < PAGE_ENTRIES; i++) {
-        if ((*table)[i] & PAGE_PRESENT) {
-            // Page is present
-            // You could print: "Page %d: 0x%x\n", i, (*table)[i]
-        }
-    }
+    // Get the virtual address that caused the page fault
+    uint32_t faulting_address;
+    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
+
+    // Call the main page fault handler
+    page_fault_handler(error_code, faulting_address);
+
+    handler_lock = 0;
 }

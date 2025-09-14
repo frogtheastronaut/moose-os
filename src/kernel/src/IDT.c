@@ -148,17 +148,3 @@ void keyboard_handler_main(void)
 
     handler_lock = 0;
 }
-
-void page_fault_handler_main(uint32_t error_code) {
-    if (handler_lock != 0) return;
-    handler_lock = 1;
-
-    // Get the virtual address that caused the page fault
-    uint32_t faulting_address;
-    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
-
-    // Call the main page fault handler
-    page_fault_handler(error_code, faulting_address);
-
-    handler_lock = 0;
-}

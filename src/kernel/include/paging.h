@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "../../lib/include/lib.h"
+#include "lock.h"
 
 // Page size constants (4KB pages)
 #define PAGE_SIZE           4096
@@ -83,8 +84,5 @@ void page_fault_handler(uint32_t error_code, uint32_t virtual_addr);
 // Identity mapping for kernel
 void identity_map_kernel(page_directory_t *dir);
 
-// Debug functions
-void dump_page_directory(page_directory_t *dir);
-void dump_page_table(page_table_t *table);
 
 #endif // PAGING_H
