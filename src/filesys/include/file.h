@@ -122,6 +122,18 @@ int fs_remove_dir(const char* name);
 int fs_edit_file(const char* name, const char* new_content);
 void fs_init(void);
 
+// Internal helper functions (used by filesystem.c)
+bool name_in_CWD(const char* name, NodeType type);
+int set_file_content(File* file, const char* content);
+int add_child_to_dir(File* dir, File* child);
+int remove_child_from_dir(File* dir, File* child);
+int save_directory_recursive(File *dir, uint32_t dir_inode_num, uint32_t parent_inode);
+int load_directory_recursive(uint32_t inode_num, File* parent);
+
+// External variables that need to be accessible
+extern uint8_t disk_buffer[512];  // SECTOR_SIZE = 512
+extern superblock_t sb_cache;
+
 // Disk filesystem functions
 int fs_mount(uint8_t drive);
 int filesys_sync(void);

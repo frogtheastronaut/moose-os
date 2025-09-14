@@ -6,32 +6,8 @@ LD = i386-elf-ld
 GRUB_MKRESCUE = i686-elf-grub-mkrescue
 QEMU = qemu-system-i386
 
-# Make sure any additional file is listed in this SRC list.
-SRC = \
-    src/kernel/src/keyhandler.c \
-    src/kernel/src/IDT.c \
-    src/kernel/src/paging.c \
-    src/kernel/src/task.c \
-    src/kernel/src/kernel.c \
-    src/kernel/src/mouse.c \
-    src/kernel/src/keyboard.c \
-    src/kernel/src/disk.c \
-    src/kernel/src/vga.c \
-    src/gui/src/explorer.c \
-    src/gui/src/editor.c \
-    src/gui/src/dock.c \
-    src/gui/src/terminal.c \
-    src/gui/src/gui.c \
-    src/gui/src/fontdef.c \
-    src/gui/src/images.c \
-    src/time/src/rtc.c \
-    src/filesys/src/file.c \
-	src/kernel/src/lock.c \
-	src/lib/src/malloc.c \
-	src/lib/src/io.c \
-	src/lib/src/stdio.c \
-	src/lib/src/stdlib.c \
-	src/lib/src/string.c
+# Automatically find all .c files in src/ and subdirectories
+SRC = $(shell find src -name "*.c" -type f)
 
 OBJ = $(SRC:.c=.o)
 

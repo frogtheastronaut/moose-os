@@ -57,6 +57,10 @@ extern char* strcat(char* dest, const char* src);
 extern const char* strip_whitespace(const char* str);
 extern void dock_return(void); 
 extern void draw_cursor(void);
+extern const char* get_cwd();
+extern void terminal_print_error(const char* text);
+extern void terminal_add_wrapped_text(const char* text, uint8_t color);
+extern void clear_terminal(void);
 
 // External variables
 extern bool dialog_active;

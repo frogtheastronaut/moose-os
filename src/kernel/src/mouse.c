@@ -2,12 +2,10 @@
     MooseOS Mouse Driver
     Copyright (c) 2025 Ethan Zhang and Contributors.
     
-    ======================== OS THEORY: MOUSE INPUT & PS/2 PROTOCOL ========================
+    ======================== OS THEORY ========================
     
     WHAT IS PS/2 MOUSE PROTOCOL?
-    PS/2 is an old but still common interface for mice and keyboards. Think of it like
-    a specific "language" that mice use to talk to computers. Even modern USB mice
-    often emulate PS/2 protocol for compatibility!
+    PS/2 is an old but still common interface for mice and keyboards.
     
     HOW MICE REPORT MOVEMENT:
     Unlike keyboards that send "key pressed/released", mice continuously report:

@@ -49,6 +49,9 @@ typedef struct {
     bool is_modified;
 } cursor_pixel_t;
 
+extern uint8_t* vga_buffer;
+extern int last_mouse_x;
+extern int last_mouse_y;
 
 // External variables
 // Booleans for active apps

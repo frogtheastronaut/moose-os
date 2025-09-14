@@ -35,18 +35,6 @@ extern volatile bool key_pressed;
 extern volatile char last_keycode;
 
 
-struct GDT_entry {
-    unsigned short limit_low;
-    unsigned short base_low;
-    unsigned char base_middle;
-    unsigned char access;
-    unsigned char granularity;
-    unsigned char base_high;
-} __attribute__((packed));
-struct GDT_ptr {
-    unsigned short limit;
-    unsigned int base;
-} __attribute__((packed));
 // IDT entry structure
 struct IDT_entry {
 	unsigned short int offset_lowerbits;
@@ -56,11 +44,7 @@ struct IDT_entry {
 	unsigned short int offset_higherbits;
 };
 
-
-// gdts
-extern struct GDT_entry GDT[3];
-extern struct GDT_ptr gdt_ptr;
-// idt entry
+// IDT table
 extern struct IDT_entry IDT[IDT_SIZE];
 
 void idt_init(void);
