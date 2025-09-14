@@ -14,11 +14,11 @@
 #include "../../kernel/include/task.h"
 #include "images.h"
 #include "../../kernel/include/keydef.h"
-#include "../../filesys/file.h"
+#include "../../filesys/include/file.h"
 #include "../../kernel/include/keyboard.h"
-#include "../../lib/lib.h"
+#include "../../lib/include/lib.h"
 #include "terminal.h"
-#include "../../time/rtc.h"
+#include "../../time/include/rtc.h"
 
 // Definitions
 

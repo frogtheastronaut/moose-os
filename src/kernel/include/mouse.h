@@ -5,7 +5,7 @@
 #ifndef MOUSE_H
 #define MOUSE_H
 
-#include "../../lib/lib.h"
+#include "../../lib/include/lib.h"
 #include "lock.h"
 typedef struct {
     unsigned char left_button;

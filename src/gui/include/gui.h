@@ -12,9 +12,9 @@
 #include "images.h"
 #include "fontdef.h"
 #include "../../kernel/include/keydef.h"
-#include "../../filesys/file.h"
+#include "../../filesys/include/file.h"
 #include "../../kernel/include/keyboard.h" 
-#include "../../lib/lib.h"
+#include "../../lib/include/lib.h"
 #include "../../kernel/include/mouse.h"
 
 // Boolean definition

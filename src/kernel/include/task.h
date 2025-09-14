@@ -1,7 +1,7 @@
 #ifndef TASK_H
 #define TASK_H
 
-#include "../../lib/lib.h"
+#include "../../lib/include/lib.h"
 // includes
 typedef unsigned short uint16_t;
 typedef short int16_t;

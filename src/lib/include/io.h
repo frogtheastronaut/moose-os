@@ -6,38 +6,12 @@
 typedef unsigned short uint16_t;
 typedef short int16_t;
 
-// read byte from port
-static inline uint8_t inb(uint16_t port) {
-    uint8_t result;
-    asm volatile("inb %1, %0" : "=a"(result) : "Nd"(port));
-    return result;
-}
-
-// write byte to port
-static inline void outb(uint16_t port, uint8_t data) {
-    asm volatile("outb %0, %1" : : "a"(data), "Nd"(port));
-}
-
-// read word (16-bit) from port
-static inline uint16_t inw(uint16_t port) {
-    uint16_t result;
-    asm volatile("inw %1, %0" : "=a"(result) : "Nd"(port));
-    return result;
-}
-
-// write word (16-bit) to port
-static inline void outw(uint16_t port, uint16_t data) {
-    asm volatile("outw %0, %1" : : "a"(data), "Nd"(port));
-}
-
-// disable interrupts
-static inline void cli(void) {
-    asm volatile("cli");
-}
-
-// enable interrupts
-static inline void sti(void) {
-    asm volatile("sti");
-}
+// Port I/O function prototypes
+uint8_t inb(uint16_t port);
+void outb(uint16_t port, uint8_t data);
+uint16_t inw(uint16_t port);
+void outw(uint16_t port, uint16_t data);
+void cli(void);
+void sti(void);
 
 #endif

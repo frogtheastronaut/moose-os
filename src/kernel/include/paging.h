@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "../../lib/lib.h"
+#include "../../lib/include/lib.h"
 
 // Page size constants (4KB pages)
 #define PAGE_SIZE           4096

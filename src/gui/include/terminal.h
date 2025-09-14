@@ -11,9 +11,9 @@
 #include "gui.h"
 #include "../../kernel/include/keyboard.h"
 #include "../../kernel/include/keydef.h"
-#include "../../filesys/file.h"
-#include "../../lib/lib.h"
-#include "../../time/rtc.h"
+#include "../../filesys/include/file.h"
+#include "../../lib/include/lib.h"
+#include "../../time/include/rtc.h"
 
 // Definitions
 #define TERMINAL_WIDTH SCREEN_WIDTH

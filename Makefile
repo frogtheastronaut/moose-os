@@ -8,30 +8,34 @@ QEMU = qemu-system-i386
 
 # Make sure any additional file is listed in this SRC list.
 SRC = \
-    src/kernel/keyhandler.c \
-    src/kernel/IDT.c \
-    src/kernel/paging.c \
-    src/kernel/task.c \
-    src/kernel/kernel.c \
-    src/kernel/mouse.c \
-    src/kernel/keyboard.c \
-    src/kernel/disk.c \
-    src/kernel/vga.c \
-    src/gui/explorer.c \
-    src/gui/editor.c \
-    src/gui/dock.c \
-    src/gui/terminal.c \
-    src/gui/gui.c \
-    src/gui/fontdef.c \
-    src/gui/images.c \
-    src/time/rtc.c \
-    src/filesys/file.c \
-	src/kernel/lock.c \
-	src/lib/malloc.c
+    src/kernel/src/keyhandler.c \
+    src/kernel/src/IDT.c \
+    src/kernel/src/paging.c \
+    src/kernel/src/task.c \
+    src/kernel/src/kernel.c \
+    src/kernel/src/mouse.c \
+    src/kernel/src/keyboard.c \
+    src/kernel/src/disk.c \
+    src/kernel/src/vga.c \
+    src/gui/src/explorer.c \
+    src/gui/src/editor.c \
+    src/gui/src/dock.c \
+    src/gui/src/terminal.c \
+    src/gui/src/gui.c \
+    src/gui/src/fontdef.c \
+    src/gui/src/images.c \
+    src/time/src/rtc.c \
+    src/filesys/src/file.c \
+	src/kernel/src/lock.c \
+	src/lib/src/malloc.c \
+	src/lib/src/io.c \
+	src/lib/src/stdio.c \
+	src/lib/src/stdlib.c \
+	src/lib/src/string.c
 
 OBJ = $(SRC:.c=.o)
 
-ASM_SRC := src/kernel/boot.asm src/kernel/switchtask.asm
+ASM_SRC := src/kernel/src/boot.asm src/kernel/src/switchtask.asm
 ASM_OBJ := src/kasm.o src/switchtask.o
 
 build-elf: $(ASM_OBJ) $(OBJ)
@@ -40,10 +44,10 @@ build-elf: $(ASM_OBJ) $(OBJ)
 %.o: %.c
 	$(GCC) -c $< -o $@ -nostdlib -ffreestanding -O2
 
-src/kasm.o: src/kernel/boot.asm
+src/kasm.o: src/kernel/src/boot.asm
 	$(NASM) -f elf32 $< -o $@
 
-src/switchtask.o: src/kernel/switchtask.asm
+src/switchtask.o: src/kernel/src/switchtask.asm
 	$(NASM) -f elf32 $< -o $@
 
 
