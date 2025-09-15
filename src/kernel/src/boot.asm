@@ -25,7 +25,7 @@ global page_fault_handler_asm
 extern kernel_main	       
 extern keyboard_handler_main
 extern mouse_handler_main
-extern task_tick
+extern timer_interrupt_handler
 extern page_fault_handler_main
 
 start:
@@ -83,10 +83,8 @@ mouse_handler:
 ; timer
 timer_handler:
     pusha
-    call task_tick
+    call timer_interrupt_handler
     popa
-    mov al, 0x20
-    out 0x20, al
     iretd
 
 ; page fault handler (asm one)

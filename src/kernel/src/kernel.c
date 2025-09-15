@@ -41,6 +41,7 @@ simple code to run a simple OS
 #include "../../gui/include/gui.h"
 #include "../../gui/include/dock.h"
 #include "../../time/include/rtc.h"
+#include "../include/pit.h"
 #include "../include/vga.h"
 
 
@@ -136,15 +137,13 @@ void kernel_main(void)
 
     kb_init(); 
     
-    
-
-    // yeah idk either. this just happens to work
-    outb(0x43, 0x36); 
-    outb(0x40, 11932 & 0xFF); 
-    outb(0x40, 11932 >> 8);   
-
     dock_init();
+    
+    // Initialize RTC for initial time sync only
     rtc_init();
+    
+    // Initialize PIT for system timing (1000 Hz = 1ms intervals)
+    pit_init(PIT_TIMER_FREQUENCY);
     init_filesys();
     task_init();
 
