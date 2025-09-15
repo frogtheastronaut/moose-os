@@ -24,6 +24,15 @@
     MooseOS' FILE ALLOCATION:
     In MooseOS, each file/directory has an inode with file metadata. File content is stored in single disk blocks (up to 512 bytes per file currently).
     They are persistent as the inode table is saved on disk.
+
+    SUPERBLOCK
+    A superblock is a special block that contains metadata about the entire filesystem, such as:
+    - Total number of inodes
+    - Total number of data blocks
+    - Free inode count
+    - Free data block count
+    - Filesystem signature (to identify the filesystem type)
+    - Bitmaps for tracking used/free inodes and data blocks
     
     INODES:
     The OSDev wiki describes inodes as follows:

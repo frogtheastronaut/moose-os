@@ -63,7 +63,7 @@ static int current_task = -1;
 static int num_tasks = 0;
 
 // Simple task registry
-static task_func simple_tasks[MAX_SIMPLE_TASKS];
+static task_func simple_tasks[MAX_TASKS];
 static int simple_task_count = 0;
 
 // global tick counter
@@ -163,7 +163,7 @@ void task_schedule() {
 
 // Simple task registration system implementation
 void register_task(task_func task) {
-    if (simple_task_count < MAX_SIMPLE_TASKS) {
+    if (simple_task_count < MAX_TASKS) {
         simple_tasks[simple_task_count] = task;
         simple_task_count++;
     }

@@ -7,11 +7,9 @@ typedef unsigned short uint16_t;
 typedef short int16_t;
 
 // defs
-#define MAX_TASKS 8
+#define MAX_TASKS 16
 #define STACK_SIZE 4096
 
-// Simple task system definitions
-#define MAX_SIMPLE_TASKS 16
 typedef void (*task_func)();
 
 // task states
