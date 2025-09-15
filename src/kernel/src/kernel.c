@@ -90,35 +90,36 @@ void init_filesys() {
     }
 }
 
-void dock() {
-    //static bool first_run = true;
+void kernel_handle_interrupts() {
     static uint32_t last_cursor_update = 0;
-    // if (first_run) {
-    //     gui_updatemouse(); 
-    //     first_run = false;
-    // }
+    if (key_pressed) {
+        processKey(keyboard_map_normal[(unsigned char)last_keycode], last_keycode);
+        key_pressed = false;
+    }
     
+    if (ticks - last_cursor_update >= 2) {
+        gui_updatemouse();
+        last_cursor_update = ticks;
+    }
+    if (dock_is_active()) {
+        dock_handle_mouse();
+    } else if (explorer_active) {
+        explorer_handle_mouse();
+    }
+}
+
+void kernel_update_time() {
+    dock_update_time();
+}
+
+
+// Main kernel loop with simple cooperative scheduler
+void main_loop() {
     while (1) {
-        if (dock_is_active()) {
-            dock_handle_mouse();
-        } else if (explorer_active) {
-            explorer_handle_mouse();
-        }
-
-        // Keyboard event processing
-        if (key_pressed) {
-            processKey(keyboard_map_normal[(unsigned char)last_keycode], last_keycode);
-            key_pressed = false;
-        }
-
-        if (ticks - last_cursor_update >= 2) {
-            gui_updatemouse();
-            last_cursor_update = ticks;
-        }
-        dock_update_time();
+        run_tasks();
         task_yield();
     }
-}; 
+}
 
 void kernel_main(void) 
 {
@@ -147,8 +148,11 @@ void kernel_main(void)
     init_filesys();
     task_init();
 
-    // make dock
-    task_create(dock);
+    // Register tasks in our simple scheduler
+    register_task(kernel_handle_interrupts);
+    register_task(kernel_update_time);
+    task_create(main_loop);
+    
+    // Start the task system
     task_start();
-    while(1) {} // ...
 }

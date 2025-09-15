@@ -57,6 +57,10 @@ static task tasks[MAX_TASKS];
 static int current_task = -1;
 static int num_tasks = 0;
 
+// Simple task registry
+static task_func simple_tasks[MAX_SIMPLE_TASKS];
+static int simple_task_count = 0;
+
 // global tick counter
 volatile uint32_t ticks = 0;
 
@@ -74,19 +78,26 @@ void task_tick() {
     task_schedule();
 }
 
-// Start task
+// Start multitasking system
 void task_start() {
+    if (num_tasks == 0) return;
+    
+    // Find the first ready task and start it
     for (int i = 0; i < num_tasks; ++i) {
         if (tasks[i].state == TASK_READY) {
             current_task = i;
             tasks[i].state = TASK_RUNNING;
-            // Switch to the first task's stack and start running it
+            
+            // Jump to the first task - this will start the multitasking
+            // The task will call task_yield() which will trigger task_schedule()
             asm volatile (
                 "movl %0, %%esp\n"
-                "call *%1\n"
+                "jmp *%1\n"
                 :
                 : "r"(tasks[i].stack_ptr), "r"(tasks[i].entry)
+                : "memory"
             );
+            break;
         }
     }
 }
@@ -96,9 +107,19 @@ int task_create(void (*entry)(void)) {
     int id = num_tasks++;
     tasks[id].entry = entry;
     tasks[id].state = TASK_READY;
+    
+    // Set up the task's stack for proper task switching
     uint32_t* stack_top = (uint32_t*)(tasks[id].stack + STACK_SIZE);
-    *(--stack_top) = (uint32_t)(uintptr_t)entry; 
-    for (int i = 0; i < 4; ++i) *(--stack_top) = 0;
+    
+    // Push return address (task entry point)
+    *(--stack_top) = (uint32_t)(uintptr_t)entry;
+    
+    // Push registers in the order that task_switch expects to pop them
+    *(--stack_top) = 0; // ebp
+    *(--stack_top) = 0; // ebx  
+    *(--stack_top) = 0; // esi
+    *(--stack_top) = 0; // edi
+    
     tasks[id].stack_ptr = stack_top;
     return id;
 }
@@ -112,18 +133,42 @@ void task_schedule() {
     
     int prev_task = current_task;
     int next = (current_task + 1) % num_tasks;
+    
+    // Find next ready task
     for (int i = 0; i < num_tasks; ++i) {
         if (tasks[next].state == TASK_READY) {
-            if (prev_task != -1 && tasks[prev_task].state == TASK_RUNNING)
+            // Mark previous task as ready (if it was running)
+            if (prev_task != -1 && tasks[prev_task].state == TASK_RUNNING) {
                 tasks[prev_task].state = TASK_READY;
+            }
+            
+            // Switch to next task
             current_task = next;
             tasks[current_task].state = TASK_RUNNING;
-            // save old stack, switch to new stack
+            
+            // Perform task switch if we have a previous task
             if (prev_task != -1 && prev_task != current_task) {
                 task_switch(&tasks[prev_task].stack_ptr, tasks[current_task].stack_ptr);
             }
             return;
         }
         next = (next + 1) % num_tasks;
+    }
+}
+
+// Simple task registration system implementation
+void register_task(task_func task) {
+    if (simple_task_count < MAX_SIMPLE_TASKS) {
+        simple_tasks[simple_task_count] = task;
+        simple_task_count++;
+    }
+}
+
+void run_tasks(void) {
+    static uint32_t current_simple_task = 0;
+    
+    if (simple_task_count > 0) {
+        simple_tasks[current_simple_task]();
+        current_simple_task = (current_simple_task + 1) % simple_task_count;
     }
 }

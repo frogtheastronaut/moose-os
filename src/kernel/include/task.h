@@ -10,6 +10,10 @@ typedef short int16_t;
 #define MAX_TASKS 8
 #define STACK_SIZE 4096
 
+// Simple task system definitions
+#define MAX_SIMPLE_TASKS 16
+typedef void (*task_func)();
+
 // task states
 typedef enum {
     TASK_READY,
@@ -34,6 +38,10 @@ extern volatile uint32_t ticks;
 extern void task_switch(uint32_t **old_sp, uint32_t *new_sp);
 
 void task_start(void);
+
+// Simple task registration system
+void register_task(task_func task);
+void run_tasks(void);
 
 #endif // TASK_H
 
