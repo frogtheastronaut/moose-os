@@ -81,7 +81,7 @@ void init_filesys() {
                             "- Press Enter to open selection\n"
                         "- Press Escape to exit\n"
                         "- 'D' to make folder, 'F' to make file.\n"
-                        "You are running MooseOS version 0.5BETA. \nEnjoy!\n\n"
+                        "You are running MooseOS version 0.2 \nEnjoy!\n\n"
                         "Copyright 2025 Ethan Zhang\n");
     
     // Format the disk and save the default filesystem

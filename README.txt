@@ -61,4 +61,8 @@ A DETAILED LIST OF FEATURES
 
 10. Cooperate multitasking
 	HOW TO TEST: If everything works, it's proof that multitasking is working.
+	
+11. Audio
+	It plays rudimentary noises!
 
+	HOW TO TEST: There should be a noise at startup. Also, there is a terminal beep command.
