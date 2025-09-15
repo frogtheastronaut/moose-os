@@ -5,6 +5,11 @@
   
 /*
     ============================== OS THEORY ==============================
+    If you haven't read other OS theory files, basically MooseOS is an educational OS, so comments at the top of each 
+    file will explain the relevant OS theory. This is so that users can learn about OS concepts while reading the code, 
+    and maybe even make their own OS some day. 
+    Usually, there are external websites that describe OS Theory excellently. They will be quoted, and a link
+    will be provided.
 
     Paging is a system which allows each process to see a full virtual address space, 
     without actually requiring the full amount of physical memory to be available or present.

@@ -1,10 +1,11 @@
-#include "../include/terminal_cmd.h"
 /**
  * Execute a command
  * 
  * @todo: Add tokenization + other features commonly found in a shell.
  *        This is high priority.
  */
+
+#include "../include/terminal_cmd.h"
 void term_exec_cmd(const char* cmd) {
     // Strip whitespace
     cmd = strip_whitespace(cmd);

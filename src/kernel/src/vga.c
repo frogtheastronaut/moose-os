@@ -3,6 +3,11 @@
     Copyright (c) 2025 Ethan Zhang and Contributors.
     
     ====================== OS THEORY ======================
+    If you haven't read other OS theory files, basically MooseOS is an educational OS, so comments at the top of each 
+    file will explain the relevant OS theory. This is so that users can learn about OS concepts while reading the code, 
+    and maybe even make their own OS some day. 
+    Usually, there are external websites that describe OS Theory excellently. They will be quoted, and a link
+    will be provided.
     
     WHAT IS VGA?
     VGA (Video Graphics Array) is a graphics standard from 1987 that's still widely supported.

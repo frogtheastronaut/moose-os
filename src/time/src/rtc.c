@@ -1,8 +1,16 @@
 /*
-    MooseOS Real-Time Clock (RTC) Driver
+    MooseOS 
     Copyright (c) 2025 Ethan Zhang and Contributors.
-    
+*/
+
+/*    
     ====================== OS THEORY ======================
+    If you haven't read other OS theory files, basically MooseOS is an educational OS, so comments at the top of each 
+    file will explain the relevant OS theory. This is so that users can learn about OS concepts while reading the code, 
+    and maybe even make their own OS some day. 
+    Usually, there are external websites that describe OS Theory excellently. They will be quoted, and a link
+    will be provided.
+
     WHAT IS RTC?
     The Real-Time Clock (RTC) is a hardware component that keeps track of the current time
     and date, even when the computer is powered off. Within the chip is 64 bits of CMOS ram.
