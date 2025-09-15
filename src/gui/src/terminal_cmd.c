@@ -6,6 +6,9 @@
  */
 
 #include "../include/terminal_cmd.h"
+#include "../../kernel/include/speaker.h"
+#include "../../lib/include/stdlib.h"
+
 void term_exec_cmd(const char* cmd) {
     // Strip whitespace
     cmd = strip_whitespace(cmd);
@@ -34,6 +37,7 @@ void term_exec_cmd(const char* cmd) {
         terminal_print("save - Save current filesystem to disk");
         terminal_print("load - Load filesystem from disk");
         terminal_print("systest - Run system tests (disk, paging, interrupts)");
+        terminal_print("beep - Play system beep");
         terminal_print("help - Show this help");
         terminal_print("clear - Clear terminal");
     }
@@ -445,6 +449,35 @@ void term_exec_cmd(const char* cmd) {
         
         // Summary
         terminal_print("=== Test Complete ===");
+    }
+    
+    // Audio commands
+    else if (strEqual(cmd, "beep")) {
+        terminal_print("Playing system beep...");
+        speaker_system_beep();
+        terminal_print("Beep complete");
+    }
+    
+    // tone <frequency> - Play custom frequency
+    else if (cmd[0] == 't' && cmd[1] == 'o' && cmd[2] == 'n' && cmd[3] == 'e' && cmd[4] == ' ') {
+        const char* freq_str = cmd + 5;
+        if (strlen(freq_str) > 0) {
+            uint32_t frequency = atoi(freq_str);
+            if (frequency >= SPEAKER_MIN_FREQ && frequency <= SPEAKER_MAX_FREQ) {
+                char line[CHARS_PER_LINE + 1];
+                msnprintf(line, sizeof(line), "Playing %u Hz for 1 second...", frequency);
+                terminal_print(line);
+                speaker_beep(frequency, 1000);
+                terminal_print("Tone complete");
+            } else {
+                char line[CHARS_PER_LINE + 1];
+                msnprintf(line, sizeof(line), "Frequency must be between %u and %u Hz", 
+                         SPEAKER_MIN_FREQ, SPEAKER_MAX_FREQ);
+                terminal_print_error(line);
+            }
+        } else {
+            terminal_print_error("Usage: tone <frequency>");
+        }
     }
     
     // Unknown command

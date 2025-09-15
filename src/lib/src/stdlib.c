@@ -47,3 +47,33 @@ int int2str(int num, char* buffer, int buffer_size) {
     
     return i;
 }
+
+// Convert string to integer
+int atoi(const char* str) {
+    if (!str) return 0;
+    
+    int result = 0;
+    int sign = 1;
+    int i = 0;
+    
+    // Skip leading whitespace
+    while (str[i] == ' ' || str[i] == '\t' || str[i] == '\n') {
+        i++;
+    }
+    
+    // Check for sign
+    if (str[i] == '-') {
+        sign = -1;
+        i++;
+    } else if (str[i] == '+') {
+        i++;
+    }
+    
+    // Convert digits
+    while (str[i] >= '0' && str[i] <= '9') {
+        result = result * 10 + (str[i] - '0');
+        i++;
+    }
+    
+    return result * sign;
+}

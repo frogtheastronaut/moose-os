@@ -43,6 +43,7 @@ simple code to run a simple OS
 #include "../../time/include/rtc.h"
 #include "../include/pit.h"
 #include "../include/vga.h"
+#include "../include/speaker.h"
 
 
 extern bool explorer_active;
@@ -107,6 +108,7 @@ void kernel_handle_interrupts() {
     } else if (explorer_active) {
         explorer_handle_mouse();
     }
+    dock_update_time();
 }
 
 void kernel_update_time() {
@@ -144,13 +146,19 @@ void kernel_main(void)
     
     // Initialize PIT for system timing (1000 Hz = 1ms intervals)
     pit_init(PIT_TIMER_FREQUENCY);
+    
+    // Initialize PC Speaker for audio output
+    speaker_init();
+    
     init_filesys();
     task_init();
 
     // Register tasks in our simple scheduler
     register_task(kernel_handle_interrupts);
-    register_task(kernel_update_time);
     task_create(main_loop);
+    
+    // Test basic speaker functionality with a simple beep
+    speaker_startup_melody();
     
     // Start the task system
     task_start();
