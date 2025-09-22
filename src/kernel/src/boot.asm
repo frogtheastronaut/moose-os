@@ -15,7 +15,6 @@ global start
 global keyboard_handler
 global mouse_handler
 global read_port
-global write_port
 global timer_handler
 global page_fault_handler_asm
 
@@ -31,19 +30,6 @@ start:
   mov esp, stack_space	
   call kernel_main      ; kernel_main from kernel/kernel.c
   hlt		 	   
-
-; IO PORTS - READ PORT
-read_port:
-	mov edx, [esp + 4]
-	in al, dx	
-	ret
-
-; IO PORTS - WRITE PORT
-write_port:
-	mov   edx, [esp + 4]    
-	mov   al, [esp + 4 + 4]  
-	out   dx, al  
-	ret
 
 keyboard_handler:                 
 	call    keyboard_handler_main ; keyboard_handler_main from kernel/IDT.c
