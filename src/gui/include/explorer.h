@@ -11,7 +11,7 @@
 #include "gui.h"
 #include "editor.h"
 #include "dock.h"
-#include "../../kernel/include/mouse.h"
+#include "../../interrupts/include/mouse.h"
 
 // External functions
 extern void draw_cursor(void);

@@ -10,7 +10,7 @@
 
 // Includes
 #include "../../kernel/include/vga.h"
-#include "../../kernel/include/mouse.h"
+#include "../../interrupts/include/mouse.h"
 #include "../../kernel/include/task.h"
 #include "images.h"
 #include "../../drivers/include/scancode_map.h"

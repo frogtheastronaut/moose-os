@@ -34,7 +34,8 @@ simple code to run a simple OS
 #include "../../interrupts/include/IDT.h"
 #include "../include/paging.h"
 #include "../include/task.h"
-#include "../include/mouse.h"
+#include "../../interrupts/include/mouse.h"
+#include "../../interrupts/include/keyboard.h"
 #include "../include/disk.h"
 #include "../../lib/include/lib.h"
 #include "../../gui/include/explorer.h"
@@ -48,6 +49,9 @@ simple code to run a simple OS
 
 extern bool explorer_active;
 extern volatile uint32_t ticks;
+extern volatile bool key_pressed;
+extern unsigned char last_keycode;
+extern unsigned char keyboard_map_normal[128];
 
 void init_filesys() {
     // Initialize disk subsystem first

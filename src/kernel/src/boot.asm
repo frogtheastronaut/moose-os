@@ -11,15 +11,11 @@ section .text
 
 ; global
 global start
-global start
-global mouse_handler
-global read_port
 global timer_handler
 global page_fault_handler_asm
 
 ; external variables
 extern kernel_main	       
-extern mouse_handler_main
 extern timer_interrupt_handler
 extern page_fault_handler_main
 
@@ -28,12 +24,6 @@ start:
   mov esp, stack_space	
   call kernel_main      ; kernel_main from kernel/kernel.c
   hlt		 	   
-
-mouse_handler:
-	pusha                   
-	call    mouse_handler_main    ; mouse_handler_main from kernel/mouse.c
-	popa                     
-	iretd                       
 
 ; timer
 timer_handler:

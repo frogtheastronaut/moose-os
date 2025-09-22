@@ -15,7 +15,7 @@
 #include "../../filesys/include/file.h"
 #include "../../drivers/include/keyboard_scan_codes.h"
 #include "../../lib/include/lib.h"
-#include "../../kernel/include/mouse.h"
+#include "../../interrupts/include/mouse.h"
 
 // Boolean definition
 #ifndef __cplusplus
