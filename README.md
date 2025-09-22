@@ -82,20 +82,6 @@ This will automatically create a 10MB disk image (`bin/moose_disk.img`).
 - [Make](https://www.gnu.org/software/make/) - Runs Makefiles.
 - [Homebrew](https://brew.sh/) - Install Dependencies
 
-## Contributing
-
-Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
-
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning.
-
-## Authors
-
-- **Ethan Zhang** - *Initial work* - [frogtheastronaut](https://github.com/frogtheastronaut)
-
-We will add contributors once we get contributions.
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE) file for details
