@@ -44,12 +44,12 @@ struct IDT_entry {
 	unsigned short int offset_higherbits;
 };
 
-struct {
+struct idt_descriptor_t {
 	unsigned short limit;
 	unsigned int base;
-} __attribute__((packed)) idt_descriptor;
+} __attribute__((packed));
 
-// IDT table
+extern struct idt_descriptor_t idt_descriptor;
 extern struct IDT_entry IDT[IDT_SIZE];
 
 void idt_init(void);

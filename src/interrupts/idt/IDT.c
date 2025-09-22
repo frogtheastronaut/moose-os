@@ -46,6 +46,8 @@
 volatile bool key_pressed = false;
 volatile char last_keycode = 0;
 
+struct idt_descriptor_t idt_descriptor;
+
 // IDT entry table
 struct IDT_entry IDT[IDT_SIZE];
 
