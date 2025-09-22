@@ -31,7 +31,7 @@ simple code to run a simple OS
 */
 
 // #include "include/tty.h"
-#include "../include/IDT.h"
+#include "../../interrupts/include/IDT.h"
 #include "../include/paging.h"
 #include "../include/task.h"
 #include "../include/mouse.h"
@@ -126,15 +126,18 @@ void main_loop() {
 
 void kernel_main(void) 
 {
+    /** 
+     * We would now initialise every. Single. Thing.
+     * @note: initialisation order is important.
+     */
     vga_init_custom_palette();
-    // INNIT
     gui_init();
-    idt_init();
-    
-    // Initialize paging with 16MB of memory (adjust as needed)
-    paging_init(16 * 1024 * 1024);
 
-    
+    // Initialize paging with 16MB of memory 
+    paging_init(16 * 1024 * 1024);
+    // Must initialise IDT after paging because IDT also initialises GDT.
+    idt_init();
+
     mouse_init(); 
 
     kb_init(); 

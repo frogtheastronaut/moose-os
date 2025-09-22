@@ -16,9 +16,7 @@ global keyboard_handler
 global mouse_handler
 global read_port
 global write_port
-global load_idt
 global timer_handler
-global load_gdt
 global page_fault_handler_asm
 
 ; external variables
@@ -46,29 +44,6 @@ write_port:
 	mov   al, [esp + 4 + 4]  
 	out   dx, al  
 	ret
-
-; load IDT
-load_idt:
-	mov edx, [esp + 4]
-	lidt [edx]
-	sti
-	ret
-
-; gdt flush function
-load_gdt:
-	mov eax, [esp+4] 
-	lgdt [eax]      
-
-	mov ax, 0x10  
-	mov ds, ax     
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-	mov ss, ax
-	jmp 0x08:.flush
-.flush:
-	ret
-
 
 keyboard_handler:                 
 	call    keyboard_handler_main ; keyboard_handler_main from kernel/IDT.c

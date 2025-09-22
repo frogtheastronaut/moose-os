@@ -8,7 +8,7 @@ static bool shift_pressed = false;
 bool dialog_active = false;
 bool explorer_active = false;
 bool editor_active = false;
-bool caps = false;
+static bool caps = false;
 
 // turn a scancode into a char
 char scancode_to_char(unsigned char scancode, bool shift_pressed) {

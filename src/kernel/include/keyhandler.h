@@ -31,8 +31,6 @@ extern bool term_handlekey(unsigned char key, char scancode);
 extern bool dialog_active;
 extern bool explorer_active;
 extern bool editor_active;
-extern bool caps;
-
 void processKey(unsigned char key, char scancode);
 
 #endif

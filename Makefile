@@ -1,18 +1,17 @@
 # Assuming you have installed said dependancies
 # Dependancies are listed in README.md
+
 NASM = nasm
 GCC = i386-elf-gcc
 LD = i386-elf-ld
 GRUB_MKRESCUE = i686-elf-grub-mkrescue
 QEMU = qemu-system-i386
 
-# Automatically find all .c files in src/ and subdirectories
 SRC = $(shell find src -name "*.c" -type f)
-
 OBJ = $(SRC:.c=.o)
 
-ASM_SRC := src/kernel/src/boot.asm src/kernel/src/switchtask.asm
-ASM_OBJ := src/kasm.o src/switchtask.o
+ASM_SRC = $(shell find src -name "*.asm" -type f)
+ASM_OBJ = $(ASM_SRC:.asm=.o)
 
 build-elf: $(ASM_OBJ) $(OBJ)
 	$(LD) -m elf_i386 -T src/link.ld -o bin/MooseOS.elf $(ASM_OBJ) $(OBJ)
@@ -20,10 +19,7 @@ build-elf: $(ASM_OBJ) $(OBJ)
 %.o: %.c
 	$(GCC) -c $< -o $@ -nostdlib -ffreestanding -O2
 
-src/kasm.o: src/kernel/src/boot.asm
-	$(NASM) -f elf32 $< -o $@
-
-src/switchtask.o: src/kernel/src/switchtask.asm
+%.o: %.asm
 	$(NASM) -f elf32 $< -o $@
 
 
