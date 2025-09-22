@@ -1,4 +1,6 @@
 <h1 align="center"><img src="./resources/moose-logo.png"/></h1>
+![GitHub License](https://img.shields.io/github/license/frogtheastronaut/moose-os)
+
 
 MOOSE is a 80s-style operating system, currently designed to run on virtual machines. \
 A detailed list of features can be found in the [README.txt file](./README.txt)
