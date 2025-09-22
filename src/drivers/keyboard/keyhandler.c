@@ -2,8 +2,8 @@
     Copyright (c) 2025 Ethan Zhang and Contributors.
 */
 
-#include "../include/scancode_map.h"
-#include "../include/keyhandler.h"
+#include "../include/keyboard/scancode_map.h"
+#include "../include/keyboard/keyhandler.h"
 #include <stdbool.h>
 static bool shift_pressed = false;
 

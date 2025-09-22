@@ -3,7 +3,7 @@
     Copyright (c) 2025 Ethan Zhang and Contributors.
 */
 
-#include "../include/keyboard_scan_codes.h"
+#include "../include/keyboard/keyboard_scan_codes.h"
 
 unsigned char keyboard_map_normal[128] = {
     0,      // 0x00: (none)

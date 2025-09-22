@@ -9,8 +9,8 @@
 
 // Includes
 #include "gui.h"
-#include "../../drivers/include/keyboard_scan_codes.h"
-#include "../../drivers/include/scancode_map.h"
+#include "../../drivers/include/keyboard/keyboard_scan_codes.h"
+#include "../../drivers/include/keyboard/scancode_map.h"
 #include "../../filesys/include/file.h"
 #include "../../lib/include/lib.h"
 #include "../../time/include/rtc.h"

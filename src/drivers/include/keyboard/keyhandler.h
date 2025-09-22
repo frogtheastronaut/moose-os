@@ -5,7 +5,7 @@
 #include "../../gui/include/gui.h"
 #include "../../gui/include/dock.h"
 #include "../../gui/include/terminal.h"
-#include "scancode_map.h"
+#include "keyboard/scancode_map.h"
 #include "../../lib/include/lib.h"
 
 // external vars (dock.c)

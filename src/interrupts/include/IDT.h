@@ -5,7 +5,7 @@
 #ifndef IDT_H
 #define IDT_H
 
-#include "../../drivers/include/keyhandler.h"
+#include "../../drivers/include/keyboard/keyhandler.h"
 #include "../../kernel/include/lock.h"
 #include "../../gdt/include/GDT.h"
 #include "../../kernel/include/paging.h"
