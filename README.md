@@ -1,6 +1,8 @@
 <h1 align="center"><img src="./resources/moose-logo.png"/></h1>
 
-![GitHub License](https://img.shields.io/github/license/frogtheastronaut/moose-os)  ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/frogtheastronaut/moose-os/main) ![GitHub Repo stars](https://img.shields.io/github/stars/frogtheastronaut/moose-os)
+![GitHub License](https://img.shields.io/github/license/frogtheastronaut/moose-os)  ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/frogtheastronaut/moose-os/main) ![GitHub Repo stars](https://img.shields.io/github/stars/frogtheastronaut/moose-os) ![QEMU](https://img.shields.io/badge/runs%20with-QEMU-blue) ![ISO](https://img.shields.io/badge/build-bootable%20ISO-success)
+
+
 
 
 MOOSE is a 80s-style operating system, currently designed to run on virtual machines. \
