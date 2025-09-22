@@ -12,7 +12,6 @@ section .text
 ; global
 global start
 global start
-global keyboard_handler
 global mouse_handler
 global read_port
 global timer_handler
@@ -20,7 +19,6 @@ global page_fault_handler_asm
 
 ; external variables
 extern kernel_main	       
-extern keyboard_handler_main
 extern mouse_handler_main
 extern timer_interrupt_handler
 extern page_fault_handler_main
@@ -31,10 +29,6 @@ start:
   call kernel_main      ; kernel_main from kernel/kernel.c
   hlt		 	   
 
-keyboard_handler:                 
-	call    keyboard_handler_main ; keyboard_handler_main from kernel/IDT.c
-	iretd
- 
 mouse_handler:
 	pusha                   
 	call    mouse_handler_main    ; mouse_handler_main from kernel/mouse.c

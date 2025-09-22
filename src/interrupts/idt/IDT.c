@@ -87,25 +87,9 @@ static void initialise_all_entries(void)
  */
 void idt_init(void)
 {
-
-    /* init our gdt */
     gdt_init();
     initialise_all_entries();
-
-    write_port(0x20 , 0x11);
-    write_port(0xA0 , 0x11);
-
-    write_port(0x21 , 0x20);
-    write_port(0xA1 , 0x28);
-
-    write_port(0x21 , 0x00);
-    write_port(0xA1 , 0x00);
-
-    write_port(0x21 , 0x01);
-    write_port(0xA1 , 0x01);
-
-    write_port(0x21 , 0xff);
-    write_port(0xA1 , 0xff);
+    pic_remap();
 
     idt_descriptor.limit = sizeof(struct IDT_entry) * IDT_SIZE - 1;
     idt_descriptor.base = (unsigned int)IDT;

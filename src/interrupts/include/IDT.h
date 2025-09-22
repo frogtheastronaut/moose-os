@@ -5,7 +5,7 @@
 #ifndef IDT_H
 #define IDT_H
 
-#include "../../kernel/include/keyhandler.h"
+#include "../../drivers/include/keyhandler.h"
 #include "../../kernel/include/lock.h"
 #include "../../gdt/include/GDT.h"
 #include "../../kernel/include/paging.h"
@@ -30,6 +30,7 @@ extern void timer_handler(void);
 extern void page_fault_handler_asm(void);
 extern char read_port(unsigned short port);
 extern void write_port(unsigned short port, unsigned char data);
+extern void pic_remap(void);
 
 extern volatile bool key_pressed;
 extern volatile char last_keycode;

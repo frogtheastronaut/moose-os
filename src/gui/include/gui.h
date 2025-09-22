@@ -11,9 +11,9 @@
 #include "../../kernel/include/vga.h"
 #include "images.h"
 #include "fontdef.h"
-#include "../../kernel/include/keydef.h"
+#include "../../drivers/include/scancode_map.h"
 #include "../../filesys/include/file.h"
-#include "../../kernel/include/keyboard.h" 
+#include "../../drivers/include/keyboard.h" 
 #include "../../lib/include/lib.h"
 #include "../../kernel/include/mouse.h"
 
