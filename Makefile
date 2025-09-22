@@ -78,3 +78,9 @@ clean-o:
 
 clean-kernel:
 	@rm -f bin/MooseOS.elf
+
+run-bochs: create-disk
+	@echo "[MAKE] Running MooseOS with Bochs..."
+	@echo "[MAKE] Note: QEMU is reccommended for better performance."
+	@bochs -f bin/bochsrc.txt -q 
+	@echo "[MAKE] Bochs session ended."

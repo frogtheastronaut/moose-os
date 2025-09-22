@@ -1,0 +1,10 @@
+ata0-master: type=disk, path="bin/moose_disk.img", mode=flat, cylinders=20, heads=16, spt=63
+ata0-slave: type=cdrom, path="bin/MooseOS.iso", status=inserted
+boot: cdrom
+display_library: sdl2
+clock: sync=realtime
+panic: action=report
+error: action=ignore
+keyboard: type=mf
+mouse: type=ps2, enabled=1
+speaker: enabled=1, mode=system
