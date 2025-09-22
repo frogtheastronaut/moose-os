@@ -50,8 +50,8 @@
 */
 
 // Includes
-#include "../include/file/file.h"
-#include "../include/file/file_alloc.h"
+#include "file/file.h"
+#include "file/file_alloc.h"
 
 // Current file count
 int fileCount = 0;

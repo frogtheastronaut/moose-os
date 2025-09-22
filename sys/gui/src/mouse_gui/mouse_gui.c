@@ -1,5 +1,3 @@
-
-
 /**
  * Below are code for the mouse cursor
  * @todo: refactor this code

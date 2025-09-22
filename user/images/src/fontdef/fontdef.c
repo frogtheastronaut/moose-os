@@ -1,11 +1,10 @@
-#include "fontdef/fontdef.h"
-
-
 /**
  * This is the system MOOSE font
  *
  * @todo: Add other fonts. This is not an immediate priority.
  */
+
+#include "fontdef/fontdef.h"
 
 const uint8_t system_font[256][8] = {
     // Space 

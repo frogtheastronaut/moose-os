@@ -48,6 +48,6 @@ extern struct idt_descriptor_t idt_descriptor;
 extern struct IDT_entry IDT[IDT_SIZE];
 
 void idt_init(void);
-void kb_init(void);
+void keyboard_init(void);
 
 #endif

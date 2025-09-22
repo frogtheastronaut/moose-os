@@ -7,7 +7,7 @@
 #include "terminal.h"
 #include "keyboard/scancode_map.h"
 #include "libc/lib.h"
-#include "../include/keyboard/scancode_map.h"
+#include "keyboard/scancode_map.h"
 
 // external vars (dock.c)
 extern bool dialog_active;

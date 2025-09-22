@@ -144,7 +144,7 @@ void kernel_main(void)
 
     mouse_init(); 
 
-    kb_init(); 
+    keyboard_init(); 
     
     dock_init();
     

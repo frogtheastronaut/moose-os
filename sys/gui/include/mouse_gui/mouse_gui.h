@@ -2,5 +2,6 @@
 #define MOUSE_GUI_H
 
 #include "gui/gui.h"
+#include "mouse/mouse.h"
 
 #endif

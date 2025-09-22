@@ -1,6 +1,6 @@
 #include "keyboard/keyboard.h"
 
-void kb_init(void)
+void keyboard_init(void)
 {
 	write_port(0x21 , 0xF9);
 	write_port(0xA1 , 0xEF);  

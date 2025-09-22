@@ -1,4 +1,5 @@
 #include "irq/irq.h"
+
 void irq_remap(void)
 {
 	write_port(0x20 , 0x11); // Initialise PIC1 and PIC2

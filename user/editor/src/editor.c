@@ -4,7 +4,7 @@
  * @todo: Simplify the logic
  */
 
-#include "../include/editor.h"
+#include "editor.h"
 
 /**
  * Draw editor

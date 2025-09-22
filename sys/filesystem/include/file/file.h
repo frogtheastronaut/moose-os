@@ -9,8 +9,6 @@
 #define FILE_H
 
 #include <stdint.h>
-// tty.h is deprecated.
-// #include "../kernel/include/tty.h"
 #include "libc/lib.h"
 #include "disk/disk.h"
 #include "malloc/malloc.h"
