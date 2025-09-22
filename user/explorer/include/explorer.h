@@ -1,0 +1,22 @@
+/*
+    Moose Operating System
+    Copyright (c) 2025 Ethan Zhang and Contributors.
+
+    Header file for ../explorer.c
+*/
+#ifndef EXPLROR_H
+#define EXPLROR_H
+
+// Includes
+#include "gui/gui.h"
+#include "editor.h"
+#include "dock.h"
+#include "malloc/malloc.h"
+
+// External functions
+extern void draw_cursor(void);
+
+// Function prototypes
+bool explorer_handle_mouse(void);
+
+#endif

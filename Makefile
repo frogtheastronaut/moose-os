@@ -3,21 +3,25 @@
 
 NASM = nasm
 GCC = i386-elf-gcc
+INCLUDE_PATHS=$(shell find . -type d -name include)
+NESTED_INCLUDE_PATHS=$(shell find . -type d -path '*/include/*')
+ALL_INCLUDE_PATHS=$(INCLUDE_PATHS) $(NESTED_INCLUDE_PATHS)
+INCLUDES=$(addprefix -I,$(ALL_INCLUDE_PATHS))
 LD = i386-elf-ld
 GRUB_MKRESCUE = i686-elf-grub-mkrescue
 QEMU = qemu-system-i386
 
-SRC = $(shell find src -name "*.c" -type f)
+SRC = $(shell find sys user -name "*.c" -type f)
 OBJ = $(SRC:.c=.o)
 
-ASM_SRC = $(shell find src -name "*.asm" -type f)
+ASM_SRC = $(shell find sys user -name "*.asm" -type f)
 ASM_OBJ = $(ASM_SRC:.asm=.o)
 
 build-elf: $(ASM_OBJ) $(OBJ)
-	$(LD) -m elf_i386 -T src/link.ld -o bin/MooseOS.elf $(ASM_OBJ) $(OBJ)
+	$(LD) -m elf_i386 -T sys/link.ld -o bin/MooseOS.elf $(ASM_OBJ) $(OBJ)
 
 %.o: %.c
-	$(GCC) -c $< -o $@ -nostdlib -ffreestanding -O2
+	$(GCC) -c $< -o $@ -nostdlib -ffreestanding -O2 $(INCLUDES)
 
 %.o: %.asm
 	$(NASM) -f elf32 $< -o $@
