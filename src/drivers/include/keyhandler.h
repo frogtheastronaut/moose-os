@@ -1,7 +1,7 @@
 #ifndef KEYHANDLER_H
 #define KEYHANDLER_H
 
-#include "keyboard.h"
+#include "keyboard_scan_codes.h"
 #include "../../gui/include/gui.h"
 #include "../../gui/include/dock.h"
 #include "../../gui/include/terminal.h"

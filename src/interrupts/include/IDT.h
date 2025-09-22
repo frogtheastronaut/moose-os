@@ -11,8 +11,6 @@
 #include "../../kernel/include/paging.h"
 
 // defines
-#define KEYBOARD_DATA_PORT 0x60
-#define KEYBOARD_STATUS_PORT 0x64
 #define IDT_SIZE 256
 #define INTERRUPT_GATE 0x8e
 #define KERNEL_CODE_SEGMENT_OFFSET 0x08
@@ -31,9 +29,6 @@ extern void page_fault_handler_asm(void);
 extern char read_port(unsigned short port);
 extern void write_port(unsigned short port, unsigned char data);
 extern void pic_remap(void);
-
-extern volatile bool key_pressed;
-extern volatile char last_keycode;
 
 
 // IDT entry structure

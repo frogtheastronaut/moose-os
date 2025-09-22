@@ -42,6 +42,7 @@
 */
 
 #include "../include/IDT.h"
+#include "../include/irq.h"
 
 volatile bool key_pressed = false;
 volatile char last_keycode = 0;
@@ -89,7 +90,7 @@ void idt_init(void)
 {
     gdt_init();
     initialise_all_entries();
-    pic_remap();
+    irq_remap();
 
     idt_descriptor.limit = sizeof(struct IDT_entry) * IDT_SIZE - 1;
     idt_descriptor.base = (unsigned int)IDT;
@@ -97,30 +98,3 @@ void idt_init(void)
     idt_load(&idt_descriptor);
 }
 
-void kb_init(void)
-{
-	write_port(0x21 , 0xF9);
-	write_port(0xA1 , 0xEF);  
-}
-
-void keyboard_handler_main(void)
-{
-    if (handler_lock != 0) return;
-    handler_lock = 1;
-
-    unsigned char status;
-    char keycode;
-
-    /* write EOI */
-    write_port(0x20, 0x20);
-
-
-    status = read_port(KEYBOARD_STATUS_PORT);
-    if (status & 0x01) {
-        keycode = read_port(KEYBOARD_DATA_PORT);
-        last_keycode = keycode;
-        key_pressed = true;
-    }
-
-    handler_lock = 0;
-}

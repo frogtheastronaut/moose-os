@@ -13,7 +13,7 @@
 #include "fontdef.h"
 #include "../../drivers/include/scancode_map.h"
 #include "../../filesys/include/file.h"
-#include "../../drivers/include/keyboard.h" 
+#include "../../drivers/include/keyboard_scan_codes.h"
 #include "../../lib/include/lib.h"
 #include "../../kernel/include/mouse.h"
 
