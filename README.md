@@ -53,7 +53,7 @@ Finally, install GRUB. We use GRUB to make the ISO.
 brew install i686-elf-grub
 ```
 
-### Installing
+### Building
 
 Since MOOSE has not yet been tested on a real device, here are the steps to install MOOSE on QEMU. Again, these instructions are for MacOS. Please adjust for your Operating System.
 
@@ -64,23 +64,13 @@ git clone https://github.com/frogtheastronaut/moose-os.git
 cd moose-os
 ```
 
-Then, build the OS. This step is optional as there is most likely a pre-built binary in the bin/ directory. (MooseOS.iso)
+Then, just type
 
 ```shell
-make build-iso
+make
 ```
 
-Then, to run MooseOS:
-
-```shell
-# Run
-make run
-
-# Or run fullscreen
-make run-fullscreen
-```
-
-This will automatically create a 10MB disk image (`bin/moose_disk.img`).
+And it should install. It also tells you if it can't find any dependancies.
 
 ## Built With
 
