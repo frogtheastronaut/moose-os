@@ -57,7 +57,7 @@ void init_filesys() {
     filesystem_make_dir("Apps");
     filesystem_make_dir("Photos");
     filesystem_make_dir("Library");
-    // sample file
+    // Sample
     filesystem_make_file("HELP.txt", "Hello! Welcome to MooseOS!\n"
                         "Controls:\n"
                         "- Use arrow keys to navigate\n"

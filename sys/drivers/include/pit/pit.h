@@ -56,7 +56,6 @@ void pit_init(uint32_t frequency);
 void pit_set_frequency(uint32_t frequency);
 uint32_t pit_get_ticks(void);
 uint32_t pit_get_seconds(void);
-void pit_wait(uint32_t milliseconds);
 void timer_interrupt_handler(void);
 
 #endif

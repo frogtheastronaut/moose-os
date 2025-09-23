@@ -93,18 +93,6 @@ uint32_t pit_get_seconds(void) {
 }
 
 /**
- * Wait for a specified number of milliseconds
- * @param milliseconds Number of milliseconds to wait
- */
-void pit_wait(uint32_t milliseconds) {
-    uint32_t target_ticks = system_ticks + (milliseconds * ticks_per_second) / 1000;
-    while (system_ticks < target_ticks) {
-        // Busy wait - in a real OS you'd yield to other processes here
-        asm volatile("hlt"); // Halt until next interrupt
-    }
-}
-
-/**
  * Timer interrupt handler - called on every PIT interrupt
  * This function is called from the assembly interrupt handler
  */
