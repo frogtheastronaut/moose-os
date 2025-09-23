@@ -109,38 +109,49 @@ void main_loop() {
 
 void kernel_main(void) 
 {
+    debugf("[MOOSE]: Running in QEMU environment.\n");
     /** 
      * We would now initialise every. Single. Thing.
      * @note: initialisation order is important.
      */
     vga_init_custom_palette();
+
     gui_init();
+    debugf("[MOOSE]: GUI initialised\n");
 
     // Initialize paging with 16MB of memory 
     paging_init(16 * 1024 * 1024);
+    debugf("[MOOSE]: Paging initialised\n");
     // Must initialise IDT after paging because IDT also initialises GDT.
     idt_init();
+    debugf("[MOOSE]: IDT initialised\n");
 
     mouse_init(); 
+    debugf("[MOOSE]: Mouse initialised\n");
 
     keyboard_init(); 
-    
+    debugf("[MOOSE]: Keyboard initialised\n");
+
     dock_init();
+    debugf("[MOOSE]: Dock initialised\n");
     
     // Initialize RTC for initial time sync only
     rtc_init();
+    debugf("[MOOSE]: RTC initialised\n");
     
     // Initialize PIT for system timing (1000 Hz = 1ms intervals)
     pit_init(PIT_TIMER_FREQUENCY);
-    
+    debugf("[MOOSE]: PIT initialised\n");
+
     // Initialize PC Speaker for audio output
     speaker_init();
+    debugf("[MOOSE]: PC Speaker initialised\n");
     
     init_filesys();
+    debugf("[MOOSE]: Filesystem initialised\n");
     task_init();
-    if (detect_qemu()) {
-        debugf("[MOOSE]: Running in QEMU environment.\n");
-    }
+    debugf("[MOOSE]: Multitasking initialised\n");
+
     // Register tasks in our simple scheduler
     register_task(kernel_handle_interrupts);
     task_create(main_loop);
@@ -150,5 +161,5 @@ void kernel_main(void)
     
     // Start the task system
     task_start();
-    
+    debugf("[MOOSE]: Tasks started\n");
 }
