@@ -3,24 +3,6 @@
     Copyright (c) 2025 Ethan Zhang and Contributors.
 */
 
-/*    
-    ====================== OS THEORY ======================
-    If you haven't read other OS theory files, basically MooseOS is an educational OS, so comments at the top of each 
-    file will explain the relevant OS theory. This is so that users can learn about OS concepts while reading the code, 
-    and maybe even make their own OS some day. 
-    Usually, there are external websites that describe OS Theory excellently. They will be quoted, and a link
-    will be provided.
-
-    WHAT IS RTC?
-    The Real-Time Clock (RTC) is a hardware component that keeps track of the current time
-    and date, even when the computer is powered off. Within the chip is 64 bits of CMOS ram.
-
-    Typically, an OS will use the APIC or PIT for timing purposes and will depend on the RTC 
-    only to sync its clock at boot time. However, MooseOS does not yet have APIC or PIT support.
-
-    Our RTC driver reads the current time from the RTC chip.
-/*
-
 /**
     @todo Some comments here do not always use proper grammar/are concise.
           They are still readable, so that is not an immediate priority.
@@ -31,19 +13,20 @@
 static const uint8_t days_in_month[13] = {
     0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
-// timezone offset
+
+// Timezone offset
 int timezone_offset = 0;  // UTC +0
 
 // read from RTC register
 uint8_t rtc_readregister(uint8_t reg) {
-    outb(RTC_INDEX_PORT, reg);
-    return inb(RTC_DATA_PORT);
+    outb(CMOS_REGISTER_A, reg);
+    return inb(CMOS_REGISTER_B);
 }
 
 // check if RTC is updating 
 int rtc_is_updating(void) {
-    outb(RTC_INDEX_PORT, RTC_STATUS_A);
-    return (inb(RTC_DATA_PORT) & 0x80);
+    outb(CMOS_REGISTER_A, RTC_STATUS_A);
+    return (inb(CMOS_REGISTER_B) & 0x80);
 }
 
 // Gets the rtc time
@@ -69,13 +52,14 @@ rtc_time rtc_gettime(void) {
         time.day++;
         uint8_t max_day = days_in_month[time.month];
         if (time.month == 2) {
-            // checkleap year
+            // Check leap year
+            // This stops at 2100, but oh well (Y2K again)
             uint16_t full_year = 2000 + time.year; // crude, but RTC returns 0-99
             if ((full_year % 4 == 0 && full_year % 100 != 0) || (full_year % 400 == 0)) {
                 max_day = 29;
             }
         }
-        // adds adds ADDS
+        // Day overflow handling
         if (time.day > max_day) {
             time.day = 1;
             time.month++;
@@ -91,7 +75,7 @@ rtc_time rtc_gettime(void) {
         time.day--;
         uint8_t max_day = days_in_month[time.month];
         if (time.month == 2) {
-            // check leap year
+            // Check leap year
             uint16_t full_year = 2000 + time.year;
             if ((full_year % 4 == 0 && full_year % 100 != 0) || (full_year % 400 == 0)) {
                 max_day = 29;
@@ -125,22 +109,23 @@ void rtc_init(void) {
     // Disable interrupts
     cli();
     
-    // set status for register b
-    outb(RTC_INDEX_PORT, RTC_STATUS_B);
-    uint8_t status_b = inb(RTC_DATA_PORT);
+    // set status for Register B
+    outb(CMOS_REGISTER_A, RTC_STATUS_B);
+    uint8_t status_b = inb(CMOS_REGISTER_B);
     
     // set rtc to 24 hour, binary mode
     /** @note: 0x02 = 24-hour format, 0x04 = binary mode */
-    outb(RTC_INDEX_PORT, RTC_STATUS_B);
-    outb(RTC_DATA_PORT, status_b | 0x02 | 0x04); 
+    outb(CMOS_REGISTER_A, RTC_STATUS_B);
+    outb(CMOS_REGISTER_B, status_b | 0x02 | 0x04); 
+
     // Disables rtc interrupts for now
-    outb(RTC_INDEX_PORT, RTC_STATUS_C);
-    inb(RTC_DATA_PORT);  // clears interrupts
+    outb(CMOS_REGISTER_A, RTC_STATUS_C);
+    inb(CMOS_REGISTER_B);  // clears interrupts
 
     // Enable interrupts
     sti();
-    
-    // verify rtc is working
+
+    // Verify RTC is working
     rtc_time test_time = rtc_gettime();
 }
 

@@ -60,7 +60,7 @@ void processKey(unsigned char key, char scancode) {
     bool key_released = (raw_scancode & 0x80) != 0;
     unsigned char base_scancode = raw_scancode & 0x7F; 
         
-    // shift - handle press and release properly
+    // Shift
     if (base_scancode == LSHIFT_KEY_CODE || base_scancode == RSHIFT_KEY_CODE) {
         if (key_released) {
             shift_pressed = false;

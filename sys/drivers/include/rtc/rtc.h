@@ -1,8 +1,6 @@
 /**
     Moose Operating System
     Copyright (c) 2025 Ethan Zhang and Contributors.
-
-    .h file for ./rtc.c
 */
 #ifndef RTC_H
 #define RTC_H
@@ -12,12 +10,11 @@
 typedef unsigned short uint16_t;
 typedef short int16_t;
 
-// some ports
-#define RTC_INDEX_PORT 0x70
-#define RTC_DATA_PORT  0x71
-#define RTC_STATUS_C    0x0C
+// Ports
+#define CMOS_REGISTER_A 0x70
+#define CMOS_REGISTER_B  0x71
 
-// register addresses 
+// Register Addresses
 #define RTC_SECONDS     0x00
 #define RTC_MINUTES     0x02
 #define RTC_HOURS       0x04
@@ -26,6 +23,7 @@ typedef short int16_t;
 #define RTC_YEAR        0x09
 #define RTC_STATUS_A    0x0A
 #define RTC_STATUS_B    0x0B
+#define RTC_STATUS_C    0x0C
 
 // this is rtc_time
 typedef struct {

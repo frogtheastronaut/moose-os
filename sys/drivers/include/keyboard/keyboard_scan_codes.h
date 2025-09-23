@@ -1,5 +1,5 @@
 /*
-	SimpleM
+	MooseOs Operating System
 	Copyright (c) 2025 Ethan Zhang
 */
 #ifndef KEYBOARD_H
