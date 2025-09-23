@@ -140,9 +140,6 @@ void kernel_main(void)
     task_init();
     if (detect_qemu()) {
         debugf("[MOOSE]: Running in QEMU environment.\n");
-    } else {
-        // clear GUI
-        gui_clear(VGA_COLOR_BLACK);
     }
     // Register tasks in our simple scheduler
     register_task(kernel_handle_interrupts);
