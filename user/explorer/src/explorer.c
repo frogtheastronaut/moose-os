@@ -8,6 +8,9 @@
 
 #include "explorer.h"
 
+// Current selection for files/folders
+int current_selection = 0;
+
 /**
  * Draw file explorer
  */

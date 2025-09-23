@@ -6,6 +6,15 @@
 
 #include "editor.h"
 
+// Editor variables
+char editor_content[MAX_CONTENT] = "";
+char editor_filename[MAX_NAME_LEN] = "";
+int editor_cursor_pos = 0;
+int editor_scroll_line = 0;
+int editor_cursor_line = 0;
+int editor_cursor_col = 0;
+bool editor_modified = false;
+
 /**
  * Draw editor
  */
@@ -466,4 +475,50 @@ void editor_cursor_visible() {
         editor_scroll_line = total_lines - 1;
         if (editor_scroll_line < 0) editor_scroll_line = 0;
     }
+}
+
+// Convert a cursor position to the line column
+void cursorpos2linecol(int pos, int* line, int* col) {
+    *line = 0;  // Reset to 0
+    *col = 0;   // Reset to 0
+    
+    // Bounds check
+    if (pos < 0) pos = 0;
+    if (pos > strlen(editor_content)) pos = strlen(editor_content);
+    
+    for (int i = 0; i < pos && editor_content[i]; i++) {
+        if (editor_content[i] == '\n') {
+            (*line)++;
+            *col = 0;  // Reset column on new line
+        } else {
+            (*col)++;
+        }
+    }
+}
+
+// Convert a line column to cursor position
+int linecol2cursorpos(int line, int col) {
+    int pos = 0;
+    int current_line = 0;
+    
+    // Bounds check
+    if (line < 0) line = 0;
+    if (col < 0) col = 0;
+    
+    // Find the start of the target line
+    while (current_line < line && editor_content[pos]) {
+        if (editor_content[pos] == '\n') {
+            current_line++;
+        }
+        pos++;
+    }
+    
+    // Move to the target column within the line
+    int current_col = 0;
+    while (current_col < col && editor_content[pos] && editor_content[pos] != '\n') {
+        pos++;
+        current_col++;
+    }
+    
+    return pos;
 }

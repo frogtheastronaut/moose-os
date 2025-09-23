@@ -16,6 +16,9 @@
 // External functions
 extern void draw_cursor(void);
 
+// Current selection for files/folders
+extern int current_selection;
+
 // Function prototypes
 bool explorer_handle_mouse(void);
 

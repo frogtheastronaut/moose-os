@@ -14,5 +14,6 @@ int filesys_disk_status();
 void filesys_flush_cache();
 int fs_get_disk_info(char *info_buffer, int buffer_size);
 int filesys_get_memory_stats(char *stats_buffer, int buffer_size);
+char* get_file_content(const char* filename);
 
 #endif

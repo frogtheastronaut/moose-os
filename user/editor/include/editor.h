@@ -8,12 +8,24 @@
 #define EDITOR_H
 
 #include "gui/gui.h"
+#include "file/file.h"
 
 // External variable
 extern bool terminal_active;
 
+// Editor variables
+extern char editor_content[MAX_CONTENT];
+extern char editor_filename[MAX_NAME_LEN];
+extern int editor_cursor_pos;
+extern int editor_scroll_line;
+extern int editor_cursor_line;
+extern int editor_cursor_col;
+extern bool editor_modified;
+
 // Functions
 void editor_cursor_visible();
 void editor_draw(void);
+void cursorpos2linecol(int pos, int* line, int* col);
+int linecol2cursorpos(int line, int col);
 
 #endif
