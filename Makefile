@@ -55,14 +55,16 @@ build-iso: build-elf
 	@rm -rf iso
 
 build-run: build-iso create-disk
-	@$(QEMU) -cdrom bin/MooseOS.iso -drive file=bin/moose_disk.img,format=raw,if=ide -m 512M -audiodev coreaudio,id=speaker -machine pcspk-audiodev=speaker
+	@echo "Running with following flags: -cdrom bin/MooseOS.iso -drive file=bin/moose_disk.img,format=raw,if=ide -m 512M -audiodev coreaudio,id=speaker -machine pcspk-audiodev=speaker -serial stdio"	
+	@$(QEMU) -cdrom bin/MooseOS.iso -drive file=bin/moose_disk.img,format=raw,if=ide -m 512M -audiodev coreaudio,id=speaker -machine pcspk-audiodev=speaker -serial stdio
+	
 
 run: create-disk
 	@echo "[MAKE] Running QEMU..."
-	@$(QEMU) -cdrom bin/MooseOS.iso -drive file=bin/moose_disk.img,format=raw,if=ide -m 512M -audiodev coreaudio,id=speaker -machine pcspk-audiodev=speaker
+	@$(QEMU) -cdrom bin/MooseOS.iso -drive file=bin/moose_disk.img,format=raw,if=ide -m 512M -audiodev coreaudio,id=speaker -machine pcspk-audiodev=speaker -serial stdio
 
 run-fullscreen:
-	@$(QEMU) -display cocoa,zoom-to-fit=on -cdrom bin/MooseOS.iso -drive file=bin/moose_disk.img,format=raw,if=ide -full-screen -m 512M
+	@$(QEMU) -display cocoa,zoom-to-fit=on -cdrom bin/MooseOS.iso -drive file=bin/moose_disk.img,format=raw,if=ide -full-screen -m 512M -serial stdio
 
 # Note: There is no build-run-fullscreen target
 

@@ -98,15 +98,3 @@ void gui_init() {
      */
     vga_buffer = (uint8_t*)0xA0000;
 }
-
-
-
-
-
-
-
-
-
-
-
-

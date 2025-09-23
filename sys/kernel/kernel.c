@@ -2,28 +2,6 @@
     Moose Operating System
     Copyright (c) 2025 Ethan Zhang and Contributors.
 */
-
-/*
-    ================================ OS THEORY ================================
-    If you haven't read other OS theory files, basically MooseOS is an educational OS, so comments at the top of each 
-    file will explain the relevant OS theory. This is so that users can learn about OS concepts while reading the code, 
-    and maybe even make their own OS some day. 
-    Usually, there are external websites that describe OS Theory excellently. They will be quoted, and a link
-    will be provided.
-    
-    The kernel is the CORE of any operating system. When your computer boots up, the kernel is the first program
-    that runs and it never stops running until you shut down. This file is very important!
-    
-    WHAT DOES THE KERNEL DO?
-    1. HARDWARE MANAGEMENT: Controls CPU, memory, disk, keyboard, mouse, graphics
-    2. PROCESS MANAGEMENT: Runs multiple programs at the same time (multitasking)
-    3. MEMORY MANAGEMENT: Decides which programs get which parts of memory
-    4. SECURITY: Prevents programs from interfering with each other
-    5. RESOURCE ALLOCATION: Shares CPU time, memory, and hardware between programs
-
-    Source: https://wiki.osdev.org/Kernel
-*/
-
 /*
 simple code to run a simple OS
  - MooseOS guy 
@@ -36,7 +14,7 @@ simple code to run a simple OS
 #include "task/task.h"
 #include "mouse/mouse.h"
 #include "keyboard/keyboard.h"
-#include "disk/disk.h"
+#include "ata/ata.h"
 #include "libc/lib.h"
 #include "explorer.h"
 #include "gui/gui.h"
@@ -45,7 +23,8 @@ simple code to run a simple OS
 #include "pit/pit.h"
 #include "vga/vga.h"
 #include "speaker/speaker.h"
-
+#include "stdio/qstdio.h"
+#include "qemu/qemu.h"
 
 extern bool explorer_active;
 extern volatile uint32_t ticks;
@@ -159,7 +138,12 @@ void kernel_main(void)
     
     init_filesys();
     task_init();
-
+    if (detect_qemu()) {
+        debugf("[MOOSE]: Running in QEMU environment.\n");
+    } else {
+        // clear GUI
+        gui_clear(VGA_COLOR_BLACK);
+    }
     // Register tasks in our simple scheduler
     register_task(kernel_handle_interrupts);
     task_create(main_loop);
@@ -169,4 +153,5 @@ void kernel_main(void)
     
     // Start the task system
     task_start();
+    
 }

@@ -552,8 +552,6 @@ int filesys_get_memory_stats(char *stats_buffer, int buffer_size) {
     strcat(stats_buffer, temp);
     strcat(stats_buffer, " bytes\n");
     
-    strcat(stats_buffer, "Note: + dynamic content/children\n");
-    
     return 0;
 }
 

@@ -4,7 +4,7 @@
 */
 
 #include "terminal.h"
-#include "disk/disk.h"
+#include "ata/ata.h"
 #include "paging/paging.h"
 #include "terminal_cmd.h"
 

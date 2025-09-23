@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 #include "libc/lib.h"
-#include "disk/disk.h"
+#include "ata/ata.h"
 #include "malloc/malloc.h"
 
 // Definitions
