@@ -4,7 +4,7 @@
 */
 
 #include "gui/gui.h"
-#include "gui/gfx.h"
+#include "elements/gfx.h"
 
 /**
  * Draw a character
@@ -68,7 +68,7 @@ int get_textwidth(const char* text) {
     return width;
 }
 
-// Draw text with scrolling enabled
+// Draw text with scrolling
 void draw_text_scroll(int x, int y, const char* text, int max_width, uint8_t color, uint8_t bg_color) {
     int text_width = get_textwidth(text);
     if (text_width <= max_width) {

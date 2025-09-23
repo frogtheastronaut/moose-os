@@ -8,6 +8,7 @@
 #define GUI_WINDOWS_H
 
 #include "vga/vga.h"
+#include "gui/gui.h"
 
 // Shape drawing functions
 void draw_line_horizontal(int x1, int x2, int y, uint8_t color);

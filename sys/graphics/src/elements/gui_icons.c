@@ -4,8 +4,8 @@
 */
 
 #include "gui/gui.h"
-#include "gui/gfx.h"
-#include "gui/gui_text.h"
+#include "elements/gfx.h"
+#include "elements/gui_text.h"
 
 /**
  * Draw icons

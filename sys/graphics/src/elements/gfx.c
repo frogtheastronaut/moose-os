@@ -4,7 +4,7 @@
 */
 
 #include "gui/gui.h"
-#include "gui/gui_text.h"
+#include "elements/gui_text.h"
 
 /**
  * Draw a horizontal line

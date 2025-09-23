@@ -16,7 +16,7 @@ void draw_text(int x, int y, const char* text, uint8_t color);
 int get_textwidth(const char* text);
 void draw_text_scroll(int x, int y, const char* text, int max_width, uint8_t color, uint8_t bg_color);
 
-// Line manipulation functions
+// Line functions
 int count_lines(const char* text);
 const char* get_line_start(const char* text, int line_num);
 int len_line(const char* line_start);

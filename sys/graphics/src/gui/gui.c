@@ -10,9 +10,9 @@
  */
 
 #include "gui/gui.h"
-#include "gui/gfx.h"
-#include "gui/gui_text.h"
-#include "gui/gui_icons.h"
+#include "elements/gfx.h"
+#include "elements/gui_text.h"
+#include "elements/gui_icons.h"
 
 // Variables
 uint8_t* vga_buffer = (uint8_t*)0xA0000;
@@ -93,6 +93,9 @@ void gui_init() {
     outb(0x3C0, 0x20);
     
     // Pointer towards VGA graphics memory
+    /**
+     * @note We don't really need this line
+     */
     vga_buffer = (uint8_t*)0xA0000;
 }
 
