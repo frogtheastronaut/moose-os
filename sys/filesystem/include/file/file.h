@@ -112,13 +112,13 @@ extern uint8_t boot_drive;
 // Functions
 File* file_alloc(void);
 void file_free(File* file);
-int fs_make_dir(const char* name);
-int fs_make_file(const char* name, const char* content);
+int filesystem_make_dir(const char* name);
+int filesystem_make_file(const char* name, const char* content);
 int fs_change_dir(const char* name);
 int fs_remove(const char* name);
 int fs_remove_dir(const char* name);
 int fs_edit_file(const char* name, const char* new_content);
-void fs_init(void);
+void filesystem_init(void);
 
 // Internal helper functions (used by filesystem.c)
 bool name_in_CWD(const char* name, NodeType type);
@@ -135,8 +135,8 @@ extern superblock_t sb_cache;
 // Disk filesystem functions
 int fs_mount(uint8_t drive);
 int filesys_sync(void);
-int fs_format(uint8_t drive);
-int fs_save_to_disk(void);
+int filesystem_format(uint8_t drive);
+int filesystem_save_to_disk(void);
 int fs_load_from_disk(void);
 uint32_t allocate_inode(void);
 uint32_t allocate_data_block(void);

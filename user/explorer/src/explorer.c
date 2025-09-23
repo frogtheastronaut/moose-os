@@ -125,10 +125,10 @@ void dialog_create_item() {
         
         if (dialog_type == 0) {
             // Create directory
-            fs_make_dir(dialog_input);
+            filesystem_make_dir(dialog_input);
         } else {
             // Create file
-            fs_make_file(dialog_input, "");
+            filesystem_make_file(dialog_input, "");
         }
         
         if (cwd->folder.childCount > previous_item_count) {

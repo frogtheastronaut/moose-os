@@ -6,13 +6,13 @@
 static void auto_save_filesystem(void) {
     if (filesystem_mounted && superblock) {
         filesys_sync();
-        fs_save_to_disk();
+        filesystem_save_to_disk();
         filesys_flush_cache();
     }
 }
 
 // Initialise filesystem.
-void fs_init() {
+void filesystem_init() {
     root = file_alloc();
     if (!root) return; // Root does not exist (file_alloc failed)
     copyStr(root->name, "/"); // Root is /
@@ -32,7 +32,7 @@ void fs_init() {
  * Create file
  * @return number depending on success
  */
-int fs_make_file(const char* name, const char* content) {
+int filesystem_make_file(const char* name, const char* content) {
     if (!name || strlen(name) == 0 || strlen(name) >= MAX_NAME_LEN) return -2; // Invalid name - too long/empty
     if (!content) return -3; // Content is NULL
     if (name_in_CWD(name, FILE_NODE)) return -4; // Duplicate file name
@@ -65,7 +65,7 @@ int fs_make_file(const char* name, const char* content) {
  * Create directory
  * @return 0 on success, negative on failure
  */
-int fs_make_dir(const char* name) {
+int filesystem_make_dir(const char* name) {
     if (!name || strlen(name) == 0 || strlen(name) >= MAX_NAME_LEN) return -2; // Invalid name - too long/empty
     if (name_in_CWD(name, FOLDER_NODE)) return -4; // Duplicate directory name
 
@@ -196,7 +196,7 @@ int fs_edit_file(const char* name, const char* new_content) {
 /**
  * Format a disk with MooseOS custom filesystem format
  */
-int fs_format(uint8_t drive) {
+int filesystem_format(uint8_t drive) {
     // Initialize superblock
     superblock = &sb_cache;
     superblock->signature = FILESYSTEM_SIGNATURE;
@@ -341,7 +341,7 @@ int filesys_sync(void) {
 /**
  * Save current filesystem to disk
  */
-int fs_save_to_disk(void) {
+int filesystem_save_to_disk(void) {
     if (!filesystem_mounted || !superblock || !root) return -1;
     
     // Clear all inodes except root
@@ -506,7 +506,7 @@ void filesys_flush_cache(void) {
         filesys_sync();
         
         // Then save all filesystem data
-        fs_save_to_disk();
+        filesystem_save_to_disk();
         
         // Force hardware cache flush
         disk_force_flush(boot_drive);

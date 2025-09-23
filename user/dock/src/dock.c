@@ -613,7 +613,7 @@ void dock_mkopen_file() {
         cwd = root;  // go 2 root
         
         // create new file
-        fs_make_file(dialog_input, "");
+        filesystem_make_file(dialog_input, "");
         
         // restor original dir
         cwd = original_cwd;

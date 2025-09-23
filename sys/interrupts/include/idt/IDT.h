@@ -49,5 +49,6 @@ extern struct IDT_entry IDT[IDT_SIZE];
 
 void idt_init(void);
 void keyboard_init(void);
+void idt_set_entry(unsigned char num, unsigned long base, unsigned short selector, unsigned char flags);
 
 #endif

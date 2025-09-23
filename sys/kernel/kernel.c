@@ -8,7 +8,6 @@ simple code to run a simple OS
  (Do not remove)
 */
 
-// #include "include/tty.h"
 #include "idt/IDT.h"
 #include "paging/paging.h"
 #include "task/task.h"
@@ -25,6 +24,7 @@ simple code to run a simple OS
 #include "speaker/speaker.h"
 #include "stdio/qstdio.h"
 #include "qemu/qemu.h"
+#include "isr/isr.h"
 
 extern bool explorer_active;
 extern volatile uint32_t ticks;
@@ -37,7 +37,7 @@ void init_filesys() {
     disk_init();
     
     // Initialize in-memory filesystem structure
-    fs_init();
+    filesystem_init();
     
     // Try to mount existing filesystem from disk
     int mount_result = fs_mount(0);
@@ -52,13 +52,13 @@ void init_filesys() {
     }
     
     // No valid filesystem found or load failed, create default filesystem
-    fs_make_dir("Documents");
-    fs_make_dir("Desktop");
-    fs_make_dir("Apps");
-    fs_make_dir("Photos");
-    fs_make_dir("Library");
+    filesystem_make_dir("Documents");
+    filesystem_make_dir("Desktop");
+    filesystem_make_dir("Apps");
+    filesystem_make_dir("Photos");
+    filesystem_make_dir("Library");
     // sample file
-    fs_make_file("HELP.txt", "Hello! Welcome to MooseOS!\n"
+    filesystem_make_file("HELP.txt", "Hello! Welcome to MooseOS!\n"
                         "Controls:\n"
                         "- Use arrow keys to navigate\n"
                             "- Press Enter to open selection\n"
@@ -68,10 +68,10 @@ void init_filesys() {
                         "Copyright 2025 Ethan Zhang\n");
     
     // Format the disk and save the default filesystem
-    int format_result = fs_format(0);
+    int format_result = filesystem_format(0);
     if (format_result == 0) {
-        // Format succeeded, now save the current in-memory filesystem to disk
-        fs_save_to_disk();
+        // Format succeeded, now save memory to disk
+        filesystem_save_to_disk();
     }
 }
 
@@ -109,7 +109,8 @@ void main_loop() {
 
 void kernel_main(void) 
 {
-    debugf("[MOOSE]: Running in QEMU environment.\n");
+    // Debugf only prints in QEMU environment.
+    debugf("[MOOSE]: QEMU Environment Detected\n");
     /** 
      * We would now initialise every. Single. Thing.
      * @note: initialisation order is important.
@@ -125,6 +126,8 @@ void kernel_main(void)
     // Must initialise IDT after paging because IDT also initialises GDT.
     idt_init();
     debugf("[MOOSE]: IDT initialised\n");
+    isr_init();
+    debugf("[MOOSE]: ISR handlers installed\n");
 
     mouse_init(); 
     debugf("[MOOSE]: Mouse initialised\n");
@@ -150,6 +153,7 @@ void kernel_main(void)
     init_filesys();
     debugf("[MOOSE]: Filesystem initialised\n");
     task_init();
+    
     debugf("[MOOSE]: Multitasking initialised\n");
 
     // Register tasks in our simple scheduler
@@ -159,7 +163,8 @@ void kernel_main(void)
     // Test basic speaker functionality with a simple beep
     speaker_startup_melody();
     
+    
     // Start the task system
     task_start();
-    debugf("[MOOSE]: Tasks started\n");
+    
 }

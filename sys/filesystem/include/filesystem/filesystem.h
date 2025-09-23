@@ -4,11 +4,11 @@
 #include "file/file.h"
 
 // Function prototypes
-void fs_init();
+void filesystem_init();
 int fs_mount(uint8_t drive);
 int filesys_sync();
-int fs_format(uint8_t drive);
-int fs_save_to_disk();
+int filesystem_format(uint8_t drive);
+int filesystem_save_to_disk();
 int fs_load_from_disk();
 int filesys_disk_status();
 void filesys_flush_cache();

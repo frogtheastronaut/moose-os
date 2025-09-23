@@ -88,7 +88,7 @@ extern bool terminal_active;
 extern volatile uint32_t ticks;
 extern File* root;
 extern File* cwd;
-extern int fs_make_file(const char* name, const char* content);
+extern int filesystem_make_file(const char* name, const char* content);
 
 // Functions
 void dock_mkopen_file(void);
