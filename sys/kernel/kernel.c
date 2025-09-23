@@ -22,8 +22,9 @@ simple code to run a simple OS
 #include "pit/pit.h"
 #include "vga/vga.h"
 #include "speaker/speaker.h"
-#include "stdio/qstdio.h"
+#include "print/debug.h"
 #include "qemu/qemu.h"
+#include "isr/test_interrupts.h"
 #include "isr/isr.h"
 
 extern bool explorer_active;

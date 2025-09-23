@@ -1,6 +1,7 @@
-#include "stdio/qstdio.h"
+#include "print/debug.h"
 #include "libc/lib.h"
 #include "isr/isr.h"
+#include "panic/panic.h"
 #include <stdint.h>
 
 void isr_handler(void* stack_ptr) {
@@ -29,5 +30,5 @@ void isr_handler(void* stack_ptr) {
     }
     debugf("\n");
 
-    while (1);  // halt CPU
+    panic(exception_messages[vector]);
 }
