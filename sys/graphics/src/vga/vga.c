@@ -1,37 +1,6 @@
 /*
     MooseOS
     Copyright (c) 2025 Ethan Zhang and Contributors.
-    
-    ====================== OS THEORY ======================
-    If you haven't read other OS theory files, basically MooseOS is an educational OS, so comments at the top of each 
-    file will explain the relevant OS theory. This is so that users can learn about OS concepts while reading the code, 
-    and maybe even make their own OS some day. 
-    Usually, there are external websites that describe OS Theory excellently. They will be quoted, and a link
-    will be provided.
-    
-    WHAT IS VGA?
-    VGA (Video Graphics Array) is a graphics standard from 1987 that's still widely supported.
-    It defines resolutions, color depths, and how to interface with the graphics hardware.
-    Common VGA modes include 320x200 with 256 colors and 640x480 with 16 colors.
-    
-    HOW VGA COLORS WORK:
-    VGA has two color systems:
-    
-    1. DIRECT COLOR (high-res modes): Each pixel directly specifies RGB values
-    2. PALETTE/INDEXED COLOR (256-color mode): Each pixel is an "index" into a palette
-    
-    VGA DAC REGISTERS:
-    - DAC_WRITE_INDEX (0x3C8): Select which palette entry to modify
-    - DAC_DATA (0x3C9): Write RGB values (must write R, then G, then B)
-    - DAC_READ_INDEX (0x3C7): Select palette entry to read
-
-    COMMON VGA MODES:
-    - Mode 3: 80×25 text mode, 16 colors
-    - Mode 13h: 320×200 graphics, 256 colors (famous for games!)
-    - Mode 12h: 640×480 graphics, 16 colors
-
-    More information can be found here: https://wiki.osdev.org/VGA_Hardware
-    
 */
 
 #include "vga/vga.h"
