@@ -9,7 +9,7 @@
 
 // Includes
 #include "vga/vga.h"
-#include "images/images.h"
+#include "icons/icons.h"
 #include "fontdef/fontdef.h"
 #include "keyboard/scancode_map.h"
 #include "file/file.h"

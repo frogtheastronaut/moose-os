@@ -12,7 +12,7 @@
 #include "vga/vga.h"
 #include "malloc/malloc.h"
 #include "task/task.h"
-#include "images/images.h"
+#include "icons/icons.h"
 #include "keyboard/scancode_map.h"
 #include "file/file.h"
 #include "keyboard/keyboard_scan_codes.h"

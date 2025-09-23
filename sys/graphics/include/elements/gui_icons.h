@@ -8,7 +8,7 @@
 #define GUI_ICONS_H
 
 #include "vga/vga.h"
-#include "images/images.h"
+#include "icons/icons.h"
 #include "fontdef/fontdef.h"
 
 // Icon drawing functions

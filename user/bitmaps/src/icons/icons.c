@@ -5,7 +5,7 @@
  * 
  */
 
-#include "images/images.h"
+#include "icons/icons.h"
 
 const uint8_t folder_icon[16][16] = {
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
