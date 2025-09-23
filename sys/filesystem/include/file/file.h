@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include "libc/lib.h"
 #include "ata/ata.h"
-#include "malloc/malloc.h"
+#include "heap/malloc.h"
 
 // Definitions
 #define MAX_NAME_LEN 128

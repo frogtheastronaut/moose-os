@@ -15,7 +15,7 @@
 #include "file/file.h"
 #include "keyboard/keyboard_scan_codes.h"
 #include "libc/lib.h"
-#include "malloc/malloc.h"
+#include "heap/malloc.h"
 
 // Boolean definition
 #ifndef __cplusplus

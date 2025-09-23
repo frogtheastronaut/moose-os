@@ -17,7 +17,7 @@
     Read more here: https://wiki.osdev.org/Memory_Allocation
 */
 
-#include "malloc/malloc.h"
+#include "heap/malloc.h"
 #include "string/string.h"
 
 // Simple assert for kernel use

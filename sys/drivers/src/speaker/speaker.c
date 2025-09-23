@@ -57,33 +57,29 @@ uint16_t speaker_calculate_divisor(uint32_t frequency) {
 }
 
 /**
- * Low-level function to set PIT Channel 2 frequency directly
+ * Set PIT Channel 2 frequency
  * @param divisor PIT divisor value (1-65535)
  */
 void speaker_set_pit_frequency(uint16_t divisor) {
-    // Send the divisor to PIT Channel 2 (low byte first, then high byte)
-    outb(PIT_SPEAKER_CHANNEL, divisor & 0xFF);
-    outb(PIT_SPEAKER_CHANNEL, (divisor >> 8) & 0xFF);
+    outb(PIT_SPEAKER_CHANNEL, divisor & 0xFF); // Low byte
+    outb(PIT_SPEAKER_CHANNEL, (divisor >> 8) & 0xFF); // High byte
 }
 
 /**
- * Enable the speaker gate (connect PIT Channel 2 to speaker)
+ * Enable speaker gate
  */
 void speaker_enable_gate(void) {
     uint8_t current_state = inb(SPEAKER_PORT);
-    // Set gate bit (bit 0) to connect PIT Channel 2 to speaker
-    // Set data bit (bit 1) to enable speaker output  
     outb(SPEAKER_PORT, current_state | (SPEAKER_GATE_BIT | SPEAKER_DATA_BIT));
     speaker_playing = 1;
 }
 
 /**
- * Disable the speaker gate (disconnect PIT Channel 2 from speaker)
+ * Disable speaker gate
  */
 void speaker_disable_gate(void) {
     uint8_t current_state = inb(SPEAKER_PORT);
-    // Clear gate bit (bit 0) to disconnect PIT from speaker
-    // Keep other bits intact to avoid affecting other hardware
+    // Clear gate bit (bit 0)
     outb(SPEAKER_PORT, current_state & ~SPEAKER_GATE_BIT);
     speaker_playing = 0;
 }
@@ -97,10 +93,8 @@ void speaker_play_tone(uint32_t frequency) {
         speaker_init();
     }
     
-    // Calculate and set the PIT divisor for the desired frequency
     uint16_t divisor = speaker_calculate_divisor(frequency);
     
-    // Configure PIT Channel 2 for the new frequency
     outb(PIT_COMMAND, PIT_SPEAKER_CMD);
     speaker_set_pit_frequency(divisor);
     
