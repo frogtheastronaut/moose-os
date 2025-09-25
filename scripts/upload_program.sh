@@ -16,6 +16,6 @@ xxd -i ../programs/hello.elf >> ../programs/upload_elf.c
 cat >> ../programs/upload_elf.c <<EOF
 
 void upload_hello_elf(void) {
-    filesystem_make_binary("/hello.elf", ___programs_hello_elf, sizeof(___programs_hello_elf));
+    filesystem_make_binary("hello.elf", ___programs_hello_elf, sizeof(___programs_hello_elf));
 }
 EOF

@@ -66,5 +66,5 @@ unsigned char ___programs_hello_elf[] = {
 unsigned int ___programs_hello_elf_len = 672;
 
 void upload_hello_elf(void) {
-    filesystem_make_binary("/hello.elf", ___programs_hello_elf, sizeof(___programs_hello_elf));
+    filesystem_make_binary("hello.elf", ___programs_hello_elf, sizeof(___programs_hello_elf));
 }
