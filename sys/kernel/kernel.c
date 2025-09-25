@@ -26,7 +26,7 @@ simple code to run a simple OS
 #include "qemu/qemu.h"
 #include "isr/test_interrupts.h"
 #include "isr/isr.h"
-
+#include "../../../programs/upload_elf.h"
 extern bool explorer_active;
 extern volatile uint32_t ticks;
 extern volatile bool key_pressed;
@@ -153,10 +153,12 @@ void kernel_main(void)
     
     init_filesys();
     debugf("[MOOSE]: Filesystem initialised\n");
+
+    upload_hello_elf();
     task_init();
     
     debugf("[MOOSE]: Multitasking initialised\n");
-
+    debugf("[MOOSE]: Debug script loaded.\n");
     // Register tasks in our simple scheduler
     register_task(kernel_handle_interrupts);
     task_create(main_loop);

@@ -15,8 +15,10 @@ int split_string(const char *input, char delimiter, char output[MAX_PARTS][MAX_P
 char* strcat(char* dest, const char* src);
 const char* strip_whitespace(const char* str);
 
-// Memory function prototypes
-void* memcpy(void* dest, const void* src, size_t n);
-void* memset(void* ptr, int value, size_t n);
+void itoa(int value, char* str, int base);
+char* utoa(unsigned int value, char* str, int base);
+
+void *memcpy(void* dest, const void* src, size_t n);
+void *memset(void* ptr, int value, size_t n);
 
 #endif

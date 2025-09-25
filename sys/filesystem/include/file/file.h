@@ -151,5 +151,6 @@ int fs_get_disk_info(char *info_buffer, int buffer_size);
 int filesys_get_memory_stats(char *stats_buffer, int buffer_size);
 int filesys_disk_status(void);
 void filesys_flush_cache(void);
+int filesystem_make_binary(const char* name, const void* data, size_t size);
 
 #endif

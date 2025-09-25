@@ -20,10 +20,10 @@ LD = i386-elf-ld
 GRUB_MKRESCUE = i686-elf-grub-mkrescue
 QEMU = qemu-system-i386
 
-SRC = $(shell find sys user -name "*.c" -type f)
+SRC = $(shell find sys user programs -name "*.c" -type f)
 OBJ = $(SRC:.c=.o)
 
-ASM_SRC = $(shell find sys user -name "*.asm" -type f)
+ASM_SRC = $(shell find sys user programs -name "*.asm" -type f)
 ASM_OBJ = $(ASM_SRC:.asm=.o)
 
 all: preclean check_dependancies build-run clean-all

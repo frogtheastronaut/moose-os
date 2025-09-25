@@ -568,3 +568,40 @@ char* get_file_content(const char* filename) {
     }
     return NULL;
 }
+
+/**
+ * Create binary file
+ * @return 0 on success, negative on failure
+ */
+int filesystem_make_binary(const char* name, const void* data, size_t size) {
+    if (!name || strlen(name) == 0 || strlen(name) >= MAX_NAME_LEN) return -2; // Invalid name
+    if (!data || size == 0) return -3; // Data is NULL or size is zero
+    if (name_in_CWD(name, FILE_NODE)) return -4; // Duplicate file name
+
+    File* node = file_alloc();
+    if (!node) return -1;
+    copyStr(node->name, name);
+    node->type = FILE_NODE;
+
+    // Set binary content
+    if (node->file.content) {
+        free(node->file.content);
+    }
+    node->file.content = (char*)malloc(size);
+    if (!node->file.content) {
+        file_free(node);
+        return -1;
+    }
+    memcpy(node->file.content, data, size);
+    node->file.content_size = size;
+    node->file.content_capacity = size;
+
+    // Add to current directory
+    if (add_child_to_dir(cwd, node) != 0) {
+        file_free(node);
+        return -1;
+    }
+
+    auto_save_filesystem();
+    return 0;
+}
