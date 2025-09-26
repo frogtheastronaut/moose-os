@@ -2,59 +2,6 @@
     MooseOS Multitasking System
     Copyright (c) 2025 Ethan Zhang and Contributors.
     
-    ============================ OS THEORY ============================
-    If you haven't read other OS theory files, basically MooseOS is an educational OS, so comments at the top of each 
-    file will explain the relevant OS theory. This is so that users can learn about OS concepts while reading the code, 
-    and maybe even make their own OS some day. 
-    Usually, there are external websites that describe OS Theory excellently. They will be quoted, and a link
-    will be provided.
-    
-    WHAT IS MULTITASKING?
-    With multiple programs running, the CPU needs to switch between them quickly.
-    This is called multitasking. The CPU gives each program a tiny "time slice"
-    (like 10-100 milliseconds) before switching to the next one. It happens so fast
-    that it APPEARS like all programs are running simultaneously.
-    
-    TWO TYPES OF MULTITASKING:
-    1. COOPERATIVE MULTITASKING (what MooseOS uses):
-       - Programs voluntarily give up control (like polite people taking turns)
-       - A program runs until it decides to yield to others
-       - If a program never yields, it can freeze the entire system!
-       - Simpler to implement, but less robust
-       
-    2. PREEMPTIVE MULTITASKING (modern systems):
-       - OS forcibly switches between programs using timer interrupts
-       - Each program gets a fixed time slice whether it likes it or not
-       - More complex but prevents one program from hogging the CPU
-    
-    TASK CONTROL BLOCKS (TCBs):
-    Each running program needs information that contains:
-    - Program ID and name
-    - Current state (running, waiting, stopped)
-    - CPU register values when paused
-    - Memory information (which pages it owns)
-    - Priority level
-    
-    CONTEXT SWITCHING:
-    When switching between programs, the OS must:
-    1. Save the current program's CPU registers
-    2. Load the next program's CPU registers
-    3. Switch to the new program's memory space
-    4. Jump to where the program left off
-    
-    
-    SCHEDULING:
-    The OS needs to decide which program runs next. Common algorithms:
-    - Round Robin: Take turns in order (fair but simple)
-    - Priority: Important programs go first
-    - Shortest Job First: Quick tasks before long ones
-    MooseOS uses Round Robin scheduling.
-    
-    PROCESS vs THREAD:
-    - PROCESS: A complete program with its own memory space
-    - THREAD: A lightweight task within a process (shares memory)
-
-    Source: https://wiki.osdev.org/Multitasking_Systems
 */
 #include "task/task.h"
 #include "elf/elf.h"
