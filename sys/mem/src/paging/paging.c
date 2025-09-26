@@ -37,16 +37,19 @@
 
 #include "paging/paging.h"
 
-// Static page directory and first page table - 4kb
+// Static page directory and page tables - 4kb each
 uint32_t page_directory[1024] __attribute__((aligned(4096)));
 uint32_t first_page_table[1024] __attribute__((aligned(4096)));
+uint32_t second_page_table[1024] __attribute__((aligned(4096)));
+uint32_t third_page_table[1024] __attribute__((aligned(4096)));
+uint32_t fourth_page_table[1024] __attribute__((aligned(4096)));
 
 // Global variables
 page_directory_t *kernel_directory = (page_directory_t*)page_directory;
 page_directory_t *current_directory = (page_directory_t*)page_directory;
 
 // Frame allocator globals
-static uint32_t next_frame = 0x00500000; // Start after kernel (5MB)
+static uint32_t next_frame = 0x00800000; // Start at 8MB (within mapped region, away from kernel)
 static uint32_t frames_allocated = 0;
 
 // Assembly functions for CR3 register manipulation
@@ -91,18 +94,37 @@ void paging_init(uint32_t memory_size) {
         page_directory[i] = 0x00000002;
     }
 
-    // Create first page table
-    // We will fill all 1024 entries in the table, mapping 4 megabytes
+    // Create page tables to map 16MB (0x00000000 - 0x01000000)
+    // First page table: 0x00000000 - 0x00400000 (4MB)
     for (unsigned int i = 0; i < 1024; i++) {
-        // As the address is page aligned, it will always leave 12 bits zeroed.
-        // Those bits are used by the attributes
-        // attributes: supervisor level, read/write, present.
-        first_page_table[i] = (i * 0x1000) | 3;
+        // VGA memory area (0xB8000-0xBFFFF) should be user accessible
+        if (i >= 0xB8 && i <= 0xBF) {
+            first_page_table[i] = (i * 0x1000) | 7; // Present, writable, user
+        } else {
+            first_page_table[i] = (i * 0x1000) | 3; // Present, writable, supervisor
+        }
     }
     
-    // Put the page table in the page directory
-    // attributes: supervisor level, read/write, present
-    page_directory[0] = ((unsigned int)first_page_table) | 3;
+    // Second page table: 0x00400000 - 0x00800000 (4MB-8MB)
+    for (unsigned int i = 0; i < 1024; i++) {
+        second_page_table[i] = ((0x400000 + i * 0x1000)) | 3;
+    }
+    
+    // Third page table: 0x00800000 - 0x00C00000 (8MB-12MB)
+    for (unsigned int i = 0; i < 1024; i++) {
+        third_page_table[i] = ((0x800000 + i * 0x1000)) | 3;
+    }
+    
+    // Fourth page table: 0x00C00000 - 0x01000000 (12MB-16MB)
+    for (unsigned int i = 0; i < 1024; i++) {
+        fourth_page_table[i] = ((0xC00000 + i * 0x1000)) | 3;
+    }
+    
+    // Put all page tables in the page directory
+    page_directory[0] = ((unsigned int)first_page_table) | 3;   // 0-4MB
+    page_directory[1] = ((unsigned int)second_page_table) | 3;  // 4-8MB  
+    page_directory[2] = ((unsigned int)third_page_table) | 3;   // 8-12MB
+    page_directory[3] = ((unsigned int)fourth_page_table) | 3;  // 12-16MB
     
     // Enable paging
     // Load page directory into CR3
@@ -144,8 +166,11 @@ page_directory_t *create_page_directory(void) {
         (*new_dir)[i] = 0x00000002; // Supervisor, writable, not present
     }
     
-    // Copy kernel mappings (first 4MB) from kernel directory
-    (*new_dir)[0] = (*kernel_directory)[0];
+    // Copy kernel mappings (first 16MB) from kernel directory
+    (*new_dir)[0] = (*kernel_directory)[0]; // 0-4MB
+    (*new_dir)[1] = (*kernel_directory)[1]; // 4-8MB
+    (*new_dir)[2] = (*kernel_directory)[2]; // 8-12MB
+    (*new_dir)[3] = (*kernel_directory)[3]; // 12-16MB
     
     return new_dir;
 }
@@ -155,8 +180,8 @@ void destroy_page_directory(page_directory_t *dir) {
         return; // Don't destroy kernel directory or NULL
     }
     
-    // Free all page tables (except kernel ones)
-    for (int i = 1; i < PAGE_DIRECTORY_SIZE; i++) {
+    // Free all page tables (except kernel ones - first 4 entries)
+    for (int i = 4; i < PAGE_DIRECTORY_SIZE; i++) {
         if ((*dir)[i] & PAGE_PRESENT) {
             // Free the page table
             page_table_t *table = (page_table_t*)((*dir)[i] & ~0xFFF);
@@ -307,18 +332,24 @@ uint32_t get_physical_addr(uint32_t virtual_addr, page_directory_t *dir) {
     return (page_entry & ~0xFFF) | page_offset;
 }
 
-/** Frame allocator. @note unused */
+/** Frame allocator with better tracking */
 uint32_t alloc_frame(void) {
+    // Align to page boundary
+    next_frame = PAGE_ALIGN_UP(next_frame);
+    
     uint32_t frame = next_frame;
     next_frame += PAGE_SIZE;
     frames_allocated++;
+    
+    // Clear the frame
+    memset((void*)frame, 0, PAGE_SIZE);
+    
     return frame;
 }
 
-/** @note unused */
 void free_frame(uint32_t frame_addr) {
-    // Just decrements counter
-    /** @todo Implement frame deallocation */
+    // Basic frame deallocation - just decrements counter
+    // In a real implementation, you'd maintain a free list
     if (frames_allocated > 0) {
         frames_allocated--;
     }
@@ -342,10 +373,19 @@ void *kmalloc_aligned(uint32_t size) {
     // Align size to page boundary
     size = PAGE_ALIGN_UP(size);
     
+    // Check if we have enough memory
+    if (next_frame + size > 0x01000000) { // 16MB limit
+        return NULL; // Out of memory
+    }
+    
     // For simplicity, allocate from our frame allocator
+    // Since we're identity mapped, the frame address IS the virtual address
     uint32_t frame = next_frame;
     next_frame += size;
     frames_allocated++;
+    
+    // Zero out the allocated memory
+    memset((void*)frame, 0, size);
     
     return (void*)frame;
 }

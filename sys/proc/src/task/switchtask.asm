@@ -27,3 +27,19 @@ task_switch:
     pop ebp
     
     ret
+
+    global task_switch_user
+
+task_switch_user:
+    ; Switch to user mode task
+    ; Parameter: edx = new stack pointer with iret frame
+    mov esp, edx          ; esp = new_sp
+    
+    ; Restore registers  
+    pop edi
+    pop esi
+    pop ebx
+    pop ebp
+    
+    ; Use iret to switch to user mode
+    iret                  ; Pops EIP, CS, EFLAGS, ESP, SS

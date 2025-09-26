@@ -5,24 +5,16 @@
 #include "print/debug.h"
 
 int exec_elf(void* elf_data) {
-    elf_hdr* hdr = get_elf_hdr(elf_data);
-    if (!validate_elf_hdr(hdr)) {
-        debugf("[ELF] Invalid ELF header\n");
+    if (!elf_data) {
+        debugf("[ELF] NULL ELF data\n");
         return -1;
     }
 
-    // Load ELF and get entry point
-    uint32_t entry = load_elf(hdr);
-    if (!entry) {
-        debugf("[ELF] Failed to load ELF\n");
-        return -2;
-    }
-
-    // Create a new task
-    int tid = task_create((void (*)(void))entry);
+    // Create a new task from ELF data (includes validation and loading)
+    int tid = task_create_from_elf(elf_data);
     if (tid < 0) {
-        debugf("[ELF] Failed to create task\n");
-        return -3;
+        debugf("[ELF] Failed to create task from ELF\n");
+        return tid;
     }
 
     return tid;

@@ -9,6 +9,7 @@
 
 // String function prototypes
 void copyStr(char* dest, const char* src);
+char* strcpy(char* dest, const char* src);
 int strEqual(const char* a, const char* b);
 size_t strlen(const char* str);
 int split_string(const char *input, char delimiter, char output[MAX_PARTS][MAX_PART_LEN]);

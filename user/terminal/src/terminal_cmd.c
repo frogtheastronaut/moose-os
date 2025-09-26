@@ -8,6 +8,7 @@
 #include "terminal_cmd.h"
 #include "speaker/speaker.h"
 #include "stdlib/stdlib.h"
+#include "elf/launcher.h"
 
 void term_exec_cmd(const char* cmd) {
     // Strip whitespace
@@ -38,6 +39,8 @@ void term_exec_cmd(const char* cmd) {
         terminal_print("load - Load filesystem from disk");
         terminal_print("systest - Run system tests (disk, paging, interrupts)");
         terminal_print("beep - Play system beep");
+        terminal_print("launch <file> - Launch any ELF program");
+        terminal_print("launcher-status - Show launched program status");
         terminal_print("help - Show this help");
         terminal_print("clear - Clear terminal");
     }
@@ -478,6 +481,47 @@ void term_exec_cmd(const char* cmd) {
         } else {
             terminal_print_error("Usage: tone <frequency>");
         }
+    }
+    
+    // launch <filename> - Launch any ELF file
+    else if (cmd[0] == 'l' && cmd[1] == 'a' && cmd[2] == 'u' && cmd[3] == 'n' && cmd[4] == 'c' && cmd[5] == 'h' && cmd[6] == ' ') {
+        const char* filename = cmd + 7;
+        if (strlen(filename) > 0) {
+            char line[CHARS_PER_LINE + 1];
+            msnprintf(line, sizeof(line), "Launching program: %s", filename);
+            terminal_print(line);
+            
+            int task_id = launch_program(filename);
+            if (task_id >= 0) {
+                msnprintf(line, sizeof(line), "Program launched with task ID: %d", task_id);
+                terminal_print(line);
+            } else {
+                switch (task_id) {
+                    case LAUNCHER_FILE_NOT_FOUND:
+                        terminal_print_error("File not found or failed to load");
+                        break;
+                    case LAUNCHER_INVALID_ELF:
+                        terminal_print_error("Invalid ELF file");
+                        break;
+                    case LAUNCHER_TASK_FAILED:
+                        terminal_print_error("Failed to create task");
+                        break;
+                    case LAUNCHER_OUT_OF_MEMORY:
+                        terminal_print_error("Out of memory");
+                        break;
+                    default:
+                        terminal_print_error("Unknown error occurred");
+                        break;
+                }
+            }
+        } else {
+            terminal_print_error("Usage: launch <filename>");
+        }
+    }
+    
+    // launcher-status - Show status of launched programs
+    else if (strEqual(cmd, "launcher-status")) {
+        launcher_status();
     }
     
     // Unknown command

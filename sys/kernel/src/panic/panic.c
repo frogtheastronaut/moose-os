@@ -11,7 +11,7 @@ void panic(const char* message) {
 	draw_text(10, 50, "KERNEL PANIC", VGA_COLOR_WHITE);
 	draw_text(10, 70, message, VGA_COLOR_WHITE);
 	draw_text(10, 100, "System halted. Please restart.", VGA_COLOR_WHITE);
-	debugf("[MOOSE] PANIC!");
+	debugf("[MOOSE] PANIC!\n");
 	
 	// Halt the CPU indefinitely
 	while (1) {

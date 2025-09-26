@@ -104,6 +104,11 @@ typedef struct {
 #define PT_LOAD     1
 #define PT_DYNAMIC  2
 
+// Program Header Flags
+#define PF_X        0x1  // Execute
+#define PF_W        0x2  // Write
+#define PF_R        0x4  // Read
+
 // Dynamic Section Tags
 #define DT_NULL     0
 #define DT_NEEDED   1
@@ -135,11 +140,17 @@ typedef struct {
 #define ELF32_R_SYM(i)  ((i) >> 8)
 #define ELF32_R_TYPE(i) ((i) & 0xff)
 
+// Forward declaration for paging
+typedef uint32_t page_directory_t[1024];
+
 elf_hdr* get_elf_hdr(void* data);
 int validate_elf_hdr(elf_hdr* hdr);
 uint32_t load_elf(elf_hdr* hdr);
-void apply_relocations(uint8_t* base, uint32_t rela_vaddr, uint32_t relasz, uint32_t relaent,
-                      uint32_t symtab_vaddr, uint32_t strtab_vaddr);
+uint32_t load_elf_with_paging(elf_hdr* hdr, page_directory_t* page_dir);
+int process_dynamic_section(elf_dynamic* dynamic, page_directory_t* page_dir);
+int apply_relocations(uint32_t rela_vaddr, uint32_t relasz, uint32_t relaent,
+                     uint32_t symtab_vaddr, uint32_t strtab_vaddr, page_directory_t* page_dir);
+void free_elf_memory(elf_hdr* hdr, page_directory_t* page_dir);
 
 
 #endif // ELF_H

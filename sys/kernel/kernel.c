@@ -26,6 +26,7 @@ simple code to run a simple OS
 #include "qemu/qemu.h"
 #include "isr/test_interrupts.h"
 #include "isr/isr.h"
+#include "elf/launcher.h"
 #include "../../../programs/upload_elf.h"
 extern bool explorer_active;
 extern volatile uint32_t ticks;
@@ -155,19 +156,31 @@ void kernel_main(void)
     debugf("[MOOSE]: Filesystem initialised\n");
 
     upload_hello_elf();
+    
     task_init();
+    debugf("[MOOSE]: Task system initialised\n");
+    
+    // Initialize the ELF launcher
+    launcher_init();
+    debugf("[MOOSE]: ELF Launcher initialised\n");
     
     debugf("[MOOSE]: Multitasking initialised\n");
     debugf("[MOOSE]: Debug script loaded.\n");
-    // Register tasks in our simple scheduler
+    
+    // Register tasks in our simple scheduler (comment out for debugging)
+    debugf("[MOOSE]: Registering kernel interrupt handler task\n");
     register_task(kernel_handle_interrupts);
-    task_create(main_loop);
+    
+    debugf("[MOOSE]: Main loop will be called directly\n");
+    
+    debugf("[MOOSE]: Tasks setup completed\n");
     
     // Test basic speaker functionality with a simple beep
     speaker_startup_melody();
     
+    debugf("[MOOSE]: About to start task system\n");
+    main_loop();
     
-    // Start the task system
-    task_start();
-    
+    debugf("[MOOSE]: Kernel initialization complete - should not reach here\n");
+
 }

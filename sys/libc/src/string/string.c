@@ -14,6 +14,22 @@ void copyStr(char* dest, const char* src) {
     dest[i] = '\0';
 }
 
+// Standard strcpy implementation - copy string from src to dest
+char* strcpy(char* dest, const char* src) {
+    if (!dest || !src) {
+        return dest;
+    }
+    
+    char* original_dest = dest;
+    
+    // Copy characters including null terminator
+    while ((*dest++ = *src++)) {
+        // Loop continues until null terminator is copied
+    }
+    
+    return original_dest;
+}
+
 // Check if two strings are equal
 int strEqual(const char* a, const char* b) {
     int i = 0;
