@@ -302,7 +302,7 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
             
         case ENTER_KEY_CODE:
             if (cwd != root && current_selection == 0) {
-                fs_change_dir("..");
+                filesystem_change_dir("..");
                 current_selection = 0;
                 draw_explorer();
                 return true;
@@ -314,7 +314,7 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
                     cwd->folder.children && cwd->folder.children[actual_index]) {
                     File* child = cwd->folder.children[actual_index];
                     if (child->type == FOLDER_NODE) {
-                        fs_change_dir(child->name);
+                        filesystem_change_dir(child->name);
                         current_selection = 0;
                         draw_explorer();
                         return true;
@@ -359,10 +359,10 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
                     
                     if (child->type == FOLDER_NODE) {
                         // Delete folder
-                        fs_remove_dir(child->name);
+                        filesystem_remove_dir(child->name);
                     } else {
                         // Delete file
-                        fs_remove(child->name);
+                        filesystem_remove(child->name);
                     }
                     
                     if (cwd->folder.childCount > 0) {
@@ -422,7 +422,7 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
                     editor_scroll_line = editor_cursor_line - EDITOR_LINES_VISIBLE + 1;
                 }
                 editor_modified = true;
-                fs_edit_file(editor_filename, editor_content);
+                filesystem_edit_file(editor_filename, editor_content);
                 editor_modified = false;
                 editor_draw();
             }
@@ -439,7 +439,7 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
                     editor_scroll_line = editor_cursor_line;
                 }
                 editor_modified = true;
-                fs_edit_file(editor_filename, editor_content);
+                filesystem_edit_file(editor_filename, editor_content);
                 editor_modified = false;
                 editor_draw();
             }
@@ -527,7 +527,7 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
                         editor_scroll_line = editor_cursor_line - EDITOR_LINES_VISIBLE + 1;
                     }
                     editor_modified = true;
-                    fs_edit_file(editor_filename, editor_content);
+                    filesystem_edit_file(editor_filename, editor_content);
                     editor_modified = false;
                     editor_draw();
                 }

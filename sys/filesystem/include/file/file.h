@@ -125,14 +125,14 @@ File* file_alloc(void);
 void file_free(File* file);
 int filesystem_make_dir(const char* name);
 int filesystem_make_file(const char* name, const char* content);
-int fs_change_dir(const char* name);
-int fs_remove(const char* name);
-int fs_remove_dir(const char* name);
-int fs_edit_file(const char* name, const char* new_content);
+int filesystem_change_dir(const char* name);
+int filesystem_remove(const char* name);
+int filesystem_remove_dir(const char* name);
+int filesystem_edit_file(const char* name, const char* new_content);
 void filesystem_init(void);
 
 // internal helper functions (used by filesystem.c)
-bool name_in_CWD(const char* name, file_node type);
+bool name_in_cwd(const char* name, file_node type);
 int set_file_content(File* file, const char* content);
 int add_child_to_dir(File* dir, File* child);
 int remove_child_from_dir(File* dir, File* child);

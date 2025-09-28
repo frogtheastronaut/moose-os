@@ -4,20 +4,6 @@
     All rights reserved
 */
 
-/**
- * 
- * @todo: there is no code that limits the speaker's
- * amplitude or frequency. 
- * users will be politely advised not to blast their
- * ears off.
- * no ears have been harmed yet. if you get harmed,
- * please open a pull request and change the counter here:
- * 
- * ears_harmed = 0
- * 
- * we are not responsible for any hearing damage. thank you
- */
-
 #include "speaker/speaker.h"
 #include "io/io.h"
 
