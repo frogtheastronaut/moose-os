@@ -84,7 +84,7 @@ void kernel_handle_interrupts() {
     }
     
     if (ticks - last_cursor_update >= 2) {
-        gui_updatemouse();
+        gui_update_mouse();
         last_cursor_update = ticks;
     }
     if (dock_is_active()) {

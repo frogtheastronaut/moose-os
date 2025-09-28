@@ -53,7 +53,7 @@ void draw_explorer() {
         copyStr(full_path, temp);
     }
     
-    int path_x = 10 + get_textwidth(path_text);
+    int path_x = 10 + draw_text_width(path_text);
     int available_width = SCREEN_WIDTH - path_x - 10; 
     draw_text_scroll(path_x, 6, full_path, available_width, VGA_COLOUR_WHITE, VGA_COLOUR_BLUE);
     

@@ -1,16 +1,17 @@
 /*
-    MooseOS GUI Text - Text Drawing and Manipulation Functions
-    Copyright (c) 2025 Ethan Zhang and Contributors.
+    MooseOS GUI text code
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
 */
 
 #include "gui/gui.h"
 #include "elements/gfx.h"
 
 /**
- * Draw a character
+ * draw a character
  * @param x X coordinate of the character
  * @param y Y coordinate of the character
- * @param c Character to draw
+ * @param c character to draw
  * @param colour colour of the character
  */
 void draw_char(int x, int y, char c, uint8_t colour) {
@@ -34,10 +35,10 @@ void draw_char(int x, int y, char c, uint8_t colour) {
 }
 
 /**
- * Draw text
+ * draw text
  * @param x X coordinate of the text
  * @param y Y coordinate of the text
- * @param text Pointer to the string to draw
+ * @param text pointer to the string to draw
  * @param colour colour of the text
  */
 void draw_text(int x, int y, const char* text, uint8_t colour) {
@@ -57,8 +58,8 @@ void draw_text(int x, int y, const char* text, uint8_t colour) {
         }
     }
 }
-// Get width of text
-int get_textwidth(const char* text) {
+// get width of text
+int draw_text_width(const char* text) {
     int width = 0;
     for (int i = 0; text[i] != '\0'; i++) {
         unsigned char c = (unsigned char)text[i];
@@ -68,9 +69,9 @@ int get_textwidth(const char* text) {
     return width;
 }
 
-// Draw text with scrolling
+// draw text with scrolling
 void draw_text_scroll(int x, int y, const char* text, int max_width, uint8_t colour, uint8_t bg_colour) {
-    int text_width = get_textwidth(text);
+    int text_width = draw_text_width(text);
     if (text_width <= max_width) {
         draw_text(x, y, text, colour);
         return;
@@ -79,7 +80,7 @@ void draw_text_scroll(int x, int y, const char* text, int max_width, uint8_t col
     int text_len = strlen(text);
     int i = 0;
     int current_width = text_width;
-    int ellipsis_width = get_textwidth("...");
+    int ellipsis_width = draw_text_width("...");
     while (i < text_len && current_width > max_width - ellipsis_width) {
         current_width -= (char_widths[(unsigned char)text[i]] + 1);
         i++;
@@ -87,7 +88,7 @@ void draw_text_scroll(int x, int y, const char* text, int max_width, uint8_t col
     draw_text(x, y, "...", colour);
     draw_text(x + ellipsis_width, y, &text[i], colour);
 }
-
+// count number of lines in text
 int count_lines(const char* text) {
     int lines = 1;
     for (int i = 0; text[i]; i++) {
@@ -97,7 +98,7 @@ int count_lines(const char* text) {
     }
     return lines;
 }
-
+// get line start
 const char* get_line_start(const char* text, int line_num) {
     if (line_num == 0) return text;
     
@@ -113,7 +114,7 @@ const char* get_line_start(const char* text, int line_num) {
     return text; 
 }
 
-// Get line length
+// get line length
 int len_line(const char* line_start) {
     int length = 0;
     while (line_start[length] && line_start[length] != '\n') {

@@ -38,7 +38,7 @@ typedef short int16_t;
 extern void editor_open(const char* filename);
 extern void draw_explorer();
 extern void draw_cursor(void);
-extern void gui_clearmouse(void);
+extern void gui_clear_mouse(void);
 
 // Window height, width, and position
 // Window height/width is the screen height/width

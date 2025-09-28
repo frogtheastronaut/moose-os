@@ -1,7 +1,8 @@
-/**
- * Below are code for the mouse cursor
- * @todo: refactor this code
- */
+/*
+    MooseOS GUI text code
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
+*/
 
 #include "mouse_gui/mouse_gui.h"
 #include "mouse/mouse.h"
@@ -11,6 +12,9 @@ static int num_cursor_pixels = 0;
 
 int last_mouse_x = -1;
 int last_mouse_y = -1;
+
+extern bool dialog_active;
+extern bool editor_active;
 
 void draw_mouse(int x, int y) {
     num_cursor_pixels = 0;
@@ -22,16 +26,16 @@ void draw_mouse(int x, int y) {
             if (screen_x >= 0 && screen_x < SCREEN_WIDTH && 
                 screen_y >= 0 && screen_y < SCREEN_HEIGHT) {
                 uint8_t pattern = cursor_icon[j][i];
-                // Only draw and track non-transparent pixels
+                // only draw and track non-transparent pixels
                 if (pattern == 1 || pattern == 2) {
-                    // Save original pixel
+                    // save original pixel
                     cursor_pixels[num_cursor_pixels].x = screen_x;
                     cursor_pixels[num_cursor_pixels].y = screen_y;
                     cursor_pixels[num_cursor_pixels].original_colour = vga_buffer[screen_y * SCREEN_WIDTH + screen_x];
                     cursor_pixels[num_cursor_pixels].is_modified = true;
                     num_cursor_pixels++;
                     
-                    // Draw cursor pixel
+                    // draw cursor pixel
                     if (pattern == 1) {
                         vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOUR_BLACK;
                     } else if (pattern == 2) {
@@ -43,6 +47,7 @@ void draw_mouse(int x, int y) {
     }
 }
 
+// restore pixels under the cursor
 void restore_cursor_pixels(void) {
     for (int i = 0; i < num_cursor_pixels; i++) {
         if (cursor_pixels[i].is_modified) {
@@ -52,15 +57,12 @@ void restore_cursor_pixels(void) {
     num_cursor_pixels = 0;
 }
 
+// update mouse position and redraw cursor
 void update_mouse(void) {
-
-    extern bool dialog_active;
     if (dialog_active) {
         return;
     }
     
-    
-    extern bool editor_active;
     if (editor_active) {
         return;
     }
@@ -91,7 +93,7 @@ void update_mouse(void) {
     }
 }
 
-void gui_clearmouse(void) {
+void gui_clear_mouse(void) {
     if (last_mouse_x >= 0 && last_mouse_y >= 0) {
         restore_cursor_pixels();
     }
@@ -100,9 +102,7 @@ void gui_clearmouse(void) {
     last_mouse_y = -1;
 }
 
-void gui_updatemouse(void) {
-    
-    extern bool dialog_active;
+void gui_update_mouse(void) {
     if (dialog_active) {
         return;
     }
@@ -111,7 +111,6 @@ void gui_updatemouse(void) {
 }
 
 void draw_cursor(void) {
-    extern bool dialog_active;
     if (dialog_active) {
         return;
     }

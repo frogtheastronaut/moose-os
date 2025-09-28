@@ -74,7 +74,7 @@ static void dock_draw_app(int app_index, const char* filename, int x, int y) {
     bool is_selected = (app_index == selected_app);
     
     // Selection Area
-    int text_width = get_textwidth(filename);
+    int text_width = draw_text_width(filename);
     // Commented out line uses text width for selection_width
     // int selection_width = (text_width > ICON_SIZE) ? text_width : ICON_SIZE;
     int selection_width = 70;
@@ -320,7 +320,7 @@ static void dock_draw_window() {
  */
 void draw_dock() {
 
-    gui_clearmouse();
+    gui_clear_mouse();
     gui_init();
     
     last_time_str[0] = '\0';
@@ -399,7 +399,7 @@ static bool dock_handle_mouse_click(int mouse_x, int mouse_y) {
  */
 static void launch_selected_app() {
     
-    gui_clearmouse();
+    gui_clear_mouse();
     
     switch (selected_app) {
         case 0: // File explorer
@@ -583,7 +583,7 @@ bool dock_is_active() {
  * Return to dock
  */
 void dock_return() {
-    gui_clearmouse();
+    gui_clear_mouse();
     explorer_active = false;
     editor_active = false;
     terminal_active = false;

@@ -163,7 +163,7 @@ void draw_dialog(const char* title, const char* prompt) {
         cursor_char_width += char_widths[(unsigned char)dialog_input[i]] + 1;
     }
     
-    int text_width = get_textwidth(dialog_input);
+    int text_width = draw_text_width(dialog_input);
     int max_visible_width = input_box_width - 4;  
     
     if (text_width <= max_visible_width) {

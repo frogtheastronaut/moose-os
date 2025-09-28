@@ -144,7 +144,7 @@ static void term_draw_content() {
     msnprintf(prompt, sizeof(prompt), "%s# %s", get_cwd(), command_buffer); 
     draw_text(TERM_AREA_X + FONT_SPACING, y_pos, prompt, TERM_PROMPT_COLOUR);
     
-    int cursor_x = TERM_AREA_X + FONT_SPACING + get_textwidth(prompt);
+    int cursor_x = TERM_AREA_X + FONT_SPACING + draw_text_width(prompt);
 
     /**
      * Currently, the cursor is a _
@@ -184,7 +184,7 @@ static void term_redraw_prompt_only() {
     msnprintf(prompt, sizeof(prompt), "%s# %s", get_cwd(), command_buffer); 
     draw_text(TERM_AREA_X + FONT_SPACING, y_pos, prompt, TERM_PROMPT_COLOUR);
     
-    int cursor_x = TERM_AREA_X + FONT_SPACING + get_textwidth(prompt);
+    int cursor_x = TERM_AREA_X + FONT_SPACING + draw_text_width(prompt);
     draw_text(cursor_x, y_pos, "_", TERM_PROMPT_COLOUR);
 }
 

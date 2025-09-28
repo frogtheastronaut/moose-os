@@ -1,5 +1,5 @@
 /*
-    MooseOS GUI Text code
+    MooseOS GUI text code
     Copyright (c) 2025 Ethan Zhang
     All rights reserved
 */
@@ -12,7 +12,7 @@
 // text drawing functions
 void draw_char(int x, int y, char c, uint8_t colour);
 void draw_text(int x, int y, const char* text, uint8_t colour);
-int get_textwidth(const char* text);
+int draw_text_width(const char* text);
 void draw_text_scroll(int x, int y, const char* text, int max_width, uint8_t colour, uint8_t bg_colour);
 
 // line functions

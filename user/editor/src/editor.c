@@ -30,7 +30,7 @@ void editor_draw() {
     draw_text(10, 6, label, VGA_COLOUR_WHITE);
     
     // File name, scroll if too big
-    int label_width = get_textwidth(label);
+    int label_width = draw_text_width(label);
     int filename_x = 10 + label_width;
     int max_filename_width = SCREEN_WIDTH - filename_x - 10;
     draw_text_scroll(filename_x, 6, editor_filename, max_filename_width, VGA_COLOUR_WHITE, VGA_COLOUR_BLUE);
@@ -213,8 +213,8 @@ void editor_open(const char* filename) {
     terminal_active = false;
     dialog_active = false;
 
-    extern void gui_clearmouse(void);
-    gui_clearmouse();
+    extern void gui_clear_mouse(void);
+    gui_clear_mouse();
     // Draw editor
     editor_draw();
 }

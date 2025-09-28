@@ -71,7 +71,7 @@ extern bool editor_modified;
 
 // GUI functions
 void update_mouse(void);
-void gui_updatemouse(void);
+void gui_update_mouse(void);
 void draw_cursor(void);
 void draw_windowbox(int x, int y, int width, int height, uint8_t outer_colour, uint8_t inner_colour, uint8_t face_colour);
 void draw_title(int x, int y, int width, int title_height, uint8_t title_colour);
@@ -81,7 +81,7 @@ void gui_open_terminal(void);
 void gui_clear(uint8_t colour);
 void draw_rect(int x, int y, int width, int height, uint8_t colour);
 void draw_text(int x, int y, const char* text, uint8_t colour);
-int get_textwidth(const char* text);
+int draw_text_width(const char* text);
 void gui_init(void);
 void draw_text_scroll(int x, int y, const char* text, int max_width, uint8_t colour, uint8_t bg_colour);
 void draw_line_vertical(int x, int y1, int y2, uint8_t colour);

@@ -41,7 +41,7 @@ void draw_icon(int x, int y, const uint8_t icon[][16], int width, int height, ui
  * @param is_dir flag indicating if the file is a directory
  * @param is_selected flag indicating if the file is selected
  *
- * Here, we're assuming folder and file icons are bitmaps and they exist as assumed
+ * @note here, we're assuming folder and file icons are bitmaps and they exist as assumed
  */
 void draw_file(int x, int y, const char* name, int is_dir, int is_selected) {
     int item_width = 60;
@@ -69,7 +69,7 @@ void draw_file(int x, int y, const char* name, int is_dir, int is_selected) {
     uint8_t text_colour = is_selected ? VGA_COLOUR_WHITE : VGA_COLOUR_BLACK;
     uint8_t bg_colour = is_selected ? VGA_COLOUR_BLUE : VGA_COLOUR_LIGHT_GREY;
     int text_y = icon_y + icon_height + 2;
-    int name_width = get_textwidth(name);
+    int name_width = draw_text_width(name);
     int max_name_width = item_width - 4; 
     
     if (name_width <= max_name_width) {
@@ -81,7 +81,7 @@ void draw_file(int x, int y, const char* name, int is_dir, int is_selected) {
         int i = 0;
         int current_width = 0;
         while (name[i] != '\0' && 
-               current_width + char_widths[(unsigned char)name[i]] < max_name_width - get_textwidth("..")) {
+               current_width + char_widths[(unsigned char)name[i]] < max_name_width - draw_text_width("..")) {
             truncated[i] = name[i];
             current_width += char_widths[(unsigned char)name[i]] + 1;
             i++;
@@ -89,7 +89,7 @@ void draw_file(int x, int y, const char* name, int is_dir, int is_selected) {
         truncated[i] = '.';
         truncated[i+1] = '.';
         truncated[i+2] = '\0';
-        int text_x = center_x - (current_width + get_textwidth("..")) / 2;
+        int text_x = center_x - (current_width + draw_text_width("..")) / 2;
         draw_rect(text_x - 1, text_y, max_name_width + 2, 10, bg_colour);
         draw_text(text_x, text_y, truncated, text_colour);
     }
