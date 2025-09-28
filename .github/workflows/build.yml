@@ -20,13 +20,6 @@ jobs:
             sudo apt-get install -y nasm
           fi
 
-      - name: Install QEMU if missing
-        run: |
-          if ! command -v qemu-system-i386 >/dev/null; then
-            sudo apt-get update
-            sudo apt-get install -y qemu-system-x86
-          fi
-
       - name: Pre-clean Build Artifacts
         run: make preclean
 
