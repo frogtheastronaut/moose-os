@@ -13,7 +13,7 @@
     Source: https://wiki.osdev.org/Global_Descriptor_Table
 */
 
-#include "gdt/GDT.h"
+#include "gdt/gdt.h"
 
 // GDT entries and pointer
 struct GDT_entry GDT[6];

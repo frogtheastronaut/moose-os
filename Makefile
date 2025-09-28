@@ -48,7 +48,6 @@ build-elf: $(ASM_OBJ) $(OBJ)
 	@$(LD) -m elf_i386 -T sys/link.ld -o bin/MooseOS.elf $(ASM_OBJ) $(OBJ)
 
 %.o: %.c
-	@echo "Include paths: $(ALL_INCLUDE_PATHS)"
 	@$(GCC) -c $< -o $@ -nostdlib -ffreestanding -O2 $(INCLUDES)
 
 %.o: %.asm

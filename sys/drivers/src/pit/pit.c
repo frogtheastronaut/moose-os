@@ -28,7 +28,7 @@
 */
 
 #include "pit/pit.h"
-#include "idt/IDT.h"
+#include "idt/idt.h"
 #include "task/task.h"
 
 // Global timer variables

@@ -6,7 +6,7 @@
 #define IDT_H
 
 #include "keyhandler.h"
-#include "gdt/GDT.h"
+#include "gdt/gdt.h"
 #include "paging/paging.h"
 
 // defines

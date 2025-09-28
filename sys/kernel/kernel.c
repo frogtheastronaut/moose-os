@@ -8,7 +8,7 @@ simple code to run a simple OS
  (Do not remove)
 */
 
-#include "idt/IDT.h"
+#include "idt/idt.h"
 #include "paging/paging.h"
 #include "task/task.h"
 #include "mouse/mouse.h"

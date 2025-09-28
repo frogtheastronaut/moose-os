@@ -1,7 +1,7 @@
 #ifndef IRQ_H
 #define IRQ_H
 
-#include "idt/IDT.h"
+#include "idt/idt.h"
 void irq_remap(void);
 
 #endif

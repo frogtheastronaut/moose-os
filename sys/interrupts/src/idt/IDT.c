@@ -41,7 +41,7 @@
             https://wiki.osdev.org/Interrupt_Descriptor_Table
 */
 
-#include "idt/IDT.h"
+#include "idt/idt.h"
 #include "irq/irq.h"
 
 volatile bool key_pressed = false;
