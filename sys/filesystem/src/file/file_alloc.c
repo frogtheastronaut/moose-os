@@ -6,7 +6,7 @@
  * @return pointer to File, or NULL if out of memory
  */
 File* file_alloc() {
-    File* new_file = (File*)malloc(sizeof(File));
+    File* new_file = (File*)kmalloc(sizeof(File));
     if (new_file) {
         // Clear the allocated memory
         uint8_t* file_ptr = (uint8_t*)new_file;
@@ -39,7 +39,7 @@ void file_free(File* file) {
     if (file->type == FILE_NODE) {
         // Free content
         if (file->file.content) {
-            free(file->file.content);
+            kfree(file->file.content);
             file->file.content = NULL;
         }
     } else if (file->type == FOLDER_NODE) {
@@ -51,13 +51,13 @@ void file_free(File* file) {
         }
         // Free the children array
         if (file->folder.children) {
-            free(file->folder.children);
+            kfree(file->folder.children);
             file->folder.children = NULL;
         }
     }
     
     // Free the file and decrease fileCount because we just deleted the file.
-    free(file);
+    kfree(file);
     fileCount--;
 }
 

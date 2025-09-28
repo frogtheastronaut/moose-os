@@ -10,7 +10,7 @@
 
 // Includes
 #include "vga/vga.h"
-#include "heap/malloc.h"
+#include "heap/heap.h"
 #include "task/task.h"
 #include "icons/icons.h"
 #include "keyboard/scancode_map.h"

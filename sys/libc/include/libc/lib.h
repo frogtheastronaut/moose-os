@@ -6,5 +6,6 @@
 #include "stdlib/stdlib.h"
 #include "io/io.h"
 #include "stdlib/clisti.h"
+#include "assert/assert.h"
 
-#endif
+#endif // LIB_H_

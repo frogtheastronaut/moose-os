@@ -11,7 +11,7 @@
 #include "gui/gui.h"
 #include "editor.h"
 #include "dock.h"
-#include "heap/malloc.h"
+#include "heap/heap.h"
 
 // External functions
 extern void draw_cursor(void);

@@ -89,11 +89,11 @@ int set_file_content(File* file, const char* content) {
     
     // Free old content
     if (file->file.content) {
-        free(file->file.content);
+        kfree(file->file.content);
     }
     
     // Allocate new content (with null terminator)
-    file->file.content = (char*)malloc(new_size + 1);
+    file->file.content = (char*)kmalloc(new_size + 1);
     if (!file->file.content) {
         file->file.content_size = 0;
         file->file.content_capacity = 0;
@@ -126,7 +126,7 @@ int add_child_to_dir(File* dir, File* child) {
          * @note We could make this bigger
          */
         dir->folder.capacity = 4; 
-        dir->folder.children = (File**)malloc(dir->folder.capacity * sizeof(File*));
+        dir->folder.children = (File**)kmalloc(dir->folder.capacity * sizeof(File*));
         if (!dir->folder.children) return -1;
         dir->folder.childCount = 0;
     }
@@ -134,7 +134,7 @@ int add_child_to_dir(File* dir, File* child) {
     // Grow array if needed
     if (dir->folder.childCount >= dir->folder.capacity) {
         int new_capacity = dir->folder.capacity * 2;
-        File** new_children = (File**)realloc(dir->folder.children, new_capacity * sizeof(File*));
+        File** new_children = (File**)krealloc(dir->folder.children, new_capacity * sizeof(File*));
         if (!new_children) return -1; // Out of memory
         
         dir->folder.children = new_children;
@@ -393,7 +393,7 @@ static File* convert_disk_to_memory_file(disk_inode_t *disk_inode) {
             
             if (disk_read_sector(boot_drive, disk_inode->data_blocks[0], content_buffer) == 0) {
                 // Allocate content
-                memory_file->file.content = (char*)malloc(disk_inode->size + 1);
+                memory_file->file.content = (char*)kmalloc(disk_inode->size + 1);
                 if (memory_file->file.content) {
                     // Copy content to memory file
                     uint32_t content_len = disk_inode->size;

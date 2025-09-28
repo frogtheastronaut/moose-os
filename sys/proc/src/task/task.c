@@ -1,60 +1,6 @@
 /*
-    MooseOS Multitasking System
+    MooseOS
     Copyright (c) 2025 Ethan Zhang and Contributors.
-    
-    ============================ OS THEORY ============================
-    If you haven't read other OS theory files, basically MooseOS is an educational OS, so comments at the top of each 
-    file will explain the relevant OS theory. This is so that users can learn about OS concepts while reading the code, 
-    and maybe even make their own OS some day. 
-    Usually, there are external websites that describe OS Theory excellently. They will be quoted, and a link
-    will be provided.
-    
-    WHAT IS MULTITASKING?
-    With multiple programs running, the CPU needs to switch between them quickly.
-    This is called multitasking. The CPU gives each program a tiny "time slice"
-    (like 10-100 milliseconds) before switching to the next one. It happens so fast
-    that it APPEARS like all programs are running simultaneously.
-    
-    TWO TYPES OF MULTITASKING:
-    1. COOPERATIVE MULTITASKING (what MooseOS uses):
-       - Programs voluntarily give up control (like polite people taking turns)
-       - A program runs until it decides to yield to others
-       - If a program never yields, it can freeze the entire system!
-       - Simpler to implement, but less robust
-       
-    2. PREEMPTIVE MULTITASKING (modern systems):
-       - OS forcibly switches between programs using timer interrupts
-       - Each program gets a fixed time slice whether it likes it or not
-       - More complex but prevents one program from hogging the CPU
-    
-    TASK CONTROL BLOCKS (TCBs):
-    Each running program needs information that contains:
-    - Program ID and name
-    - Current state (running, waiting, stopped)
-    - CPU register values when paused
-    - Memory information (which pages it owns)
-    - Priority level
-    
-    CONTEXT SWITCHING:
-    When switching between programs, the OS must:
-    1. Save the current program's CPU registers
-    2. Load the next program's CPU registers
-    3. Switch to the new program's memory space
-    4. Jump to where the program left off
-    
-    
-    SCHEDULING:
-    The OS needs to decide which program runs next. Common algorithms:
-    - Round Robin: Take turns in order (fair but simple)
-    - Priority: Important programs go first
-    - Shortest Job First: Quick tasks before long ones
-    MooseOS uses Round Robin scheduling.
-    
-    PROCESS vs THREAD:
-    - PROCESS: A complete program with its own memory space
-    - THREAD: A lightweight task within a process (shares memory)
-
-    Source: https://wiki.osdev.org/Multitasking_Systems
 */
 #include "task/task.h"
 
@@ -63,10 +9,10 @@ static int current_task = -1;
 static int num_tasks = 0;
 
 // Simple task registry
-static task_func simple_tasks[MAX_TASKS];
-static int simple_task_count = 0;
+static task_func registered_tasks[MAX_TASKS];
+static int registered_task_count = 0;
 
-// global tick counter
+// Global tick counter
 volatile uint32_t ticks = 0;
 
 void task_init() {
@@ -83,7 +29,6 @@ void task_tick() {
     task_schedule();
 }
 
-// Start multitasking system
 void task_start() {
     if (num_tasks == 0) return;
     
@@ -113,13 +58,11 @@ int task_create(void (*entry)(void)) {
     tasks[id].entry = entry;
     tasks[id].state = TASK_READY;
     
-    // Set up the task's stack for proper task switching
+    // Set up the task's stack
     uint32_t* stack_top = (uint32_t*)(tasks[id].stack + STACK_SIZE);
     
-    // Push return address (task entry point)
     *(--stack_top) = (uint32_t)(uintptr_t)entry;
     
-    // Push registers in the order that task_switch expects to pop them
     *(--stack_top) = 0; // ebp
     *(--stack_top) = 0; // ebx  
     *(--stack_top) = 0; // esi
@@ -134,7 +77,7 @@ void task_yield() {
 }
 
 void task_schedule() {
-    if (num_tasks == 0) return; // no tasks to schedule
+    if (num_tasks == 0) return; // No tasks to schedule
     
     int prev_task = current_task;
     int next = (current_task + 1) % num_tasks;
@@ -142,7 +85,7 @@ void task_schedule() {
     // Find next ready task
     for (int i = 0; i < num_tasks; ++i) {
         if (tasks[next].state == TASK_READY) {
-            // Mark previous task as ready (if it was running)
+            // Mark previous task as ready
             if (prev_task != -1 && tasks[prev_task].state == TASK_RUNNING) {
                 tasks[prev_task].state = TASK_READY;
             }
@@ -161,19 +104,19 @@ void task_schedule() {
     }
 }
 
-// Simple task registration system implementation
+// Register task
 void register_task(task_func task) {
-    if (simple_task_count < MAX_TASKS) {
-        simple_tasks[simple_task_count] = task;
-        simple_task_count++;
+    if (registered_task_count < MAX_TASKS) {
+        registered_tasks[registered_task_count] = task;
+        registered_task_count++;
     }
 }
 
 void run_tasks(void) {
-    static uint32_t current_simple_task = 0;
+    static uint32_t current_registered_task = 0;
     
-    if (simple_task_count > 0) {
-        simple_tasks[current_simple_task]();
-        current_simple_task = (current_simple_task + 1) % simple_task_count;
+    if (registered_task_count > 0) {
+        registered_tasks[current_registered_task]();
+        current_registered_task = (current_registered_task + 1) % registered_task_count;
     }
 }
