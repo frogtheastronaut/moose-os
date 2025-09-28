@@ -6,11 +6,11 @@
 void panic(const char* message) {
 	asm volatile("cli");
 	
-	gui_clear(VGA_COLOR_BLUE);
+	gui_clear(VGA_COLOUR_BLUE);
 	
-	draw_text(10, 50, "KERNEL PANIC", VGA_COLOR_WHITE);
-	draw_text(10, 70, message, VGA_COLOR_WHITE);
-	draw_text(10, 100, "System halted. Please restart.", VGA_COLOR_WHITE);
+	draw_text(10, 50, "KERNEL PANIC", VGA_COLOUR_WHITE);
+	draw_text(10, 70, message, VGA_COLOUR_WHITE);
+	draw_text(10, 100, "System halted. Please restart.", VGA_COLOUR_WHITE);
 	debugf("[MOOSE] PANIC!");
 	
 	// Halt the CPU indefinitely

@@ -30,7 +30,7 @@ void clear_terminal() {
 /**
  * Add a line to the terminal
  */
-static void terminal_add_line(const char* text, uint8_t color) {
+static void terminal_add_line(const char* text, uint8_t colour) {
     if (current_line >= MAX_LINES) {
         // scroll up
         for (int i = 0; i < MAX_LINES - 1; i++) {
@@ -57,7 +57,7 @@ static void terminal_add_line(const char* text, uint8_t color) {
 /**
  * Wrap text and add multiple lines to terminal if needed
  */
-void terminal_add_wrapped_text(const char* text, uint8_t color) {
+void terminal_add_wrapped_text(const char* text, uint8_t colour) {
     if (!text) return;
     
     int text_len = strlen(text);
@@ -69,7 +69,7 @@ void terminal_add_wrapped_text(const char* text, uint8_t color) {
         if (text[i] == '\0' || text[i] == '\n') {
             line_buffer[pos] = '\0';
             if (pos > 0) {
-                terminal_add_line(line_buffer, color);
+                terminal_add_line(line_buffer, colour);
             }
             pos = 0;
             continue;
@@ -78,7 +78,7 @@ void terminal_add_wrapped_text(const char* text, uint8_t color) {
         // If line is getting too long, wrap it
         if (pos >= CHARS_PER_LINE) {
             line_buffer[pos] = '\0';
-            terminal_add_line(line_buffer, color);
+            terminal_add_line(line_buffer, colour);
             pos = 0;
         }
         
@@ -90,14 +90,14 @@ void terminal_add_wrapped_text(const char* text, uint8_t color) {
  * Print text with wrapping
  */
 void terminal_print(const char* text) {
-    terminal_add_wrapped_text(text, TERM_TEXT_COLOR);
+    terminal_add_wrapped_text(text, TERM_TEXT_COLOUR);
 }
 
 /**
  * Print error message with wrapping
  */
 void terminal_print_error(const char* text) {
-    terminal_add_wrapped_text(text, TERM_ERROR_COLOR);
+    terminal_add_wrapped_text(text, TERM_ERROR_COLOUR);
 }
 
 /**
@@ -116,8 +116,8 @@ const char* get_cwd() {
  * Draw terminal window
  */
 static void terminal_draw_win() {
-    gui_clear(VGA_COLOR_LIGHT_GREY);
-    draw_rect(TERM_AREA_X, TERM_AREA_Y, TERM_AREA_WIDTH, TERM_AREA_HEIGHT, TERM_BG_COLOR);
+    gui_clear(VGA_COLOUR_LIGHT_GREY);
+    draw_rect(TERM_AREA_X, TERM_AREA_Y, TERM_AREA_WIDTH, TERM_AREA_HEIGHT, TERM_BG_COLOUR);
 }
 
 /**
@@ -135,14 +135,14 @@ static void term_draw_content() {
     int start_line = (current_line > visible_lines) ? current_line - visible_lines : 0;
     for (int i = start_line; i < current_line && i < start_line + visible_lines; i++) {
         if (terminal_lines[i][0] != '\0') {
-            draw_text(TERM_AREA_X + FONT_SPACING, y_pos, terminal_lines[i], TERM_TEXT_COLOR);
+            draw_text(TERM_AREA_X + FONT_SPACING, y_pos, terminal_lines[i], TERM_TEXT_COLOUR);
             y_pos += FONT_HEIGHT;
         }
     }
     
     char prompt[CHARS_PER_LINE + 1];
     msnprintf(prompt, sizeof(prompt), "%s# %s", get_cwd(), command_buffer); 
-    draw_text(TERM_AREA_X + FONT_SPACING, y_pos, prompt, TERM_PROMPT_COLOR);
+    draw_text(TERM_AREA_X + FONT_SPACING, y_pos, prompt, TERM_PROMPT_COLOUR);
     
     int cursor_x = TERM_AREA_X + FONT_SPACING + get_textwidth(prompt);
 
@@ -152,7 +152,7 @@ static void term_draw_content() {
      * @todo: add different types of cursors. This is low priority.
      */
 
-    draw_text(cursor_x, y_pos, "_", TERM_PROMPT_COLOR);
+    draw_text(cursor_x, y_pos, "_", TERM_PROMPT_COLOUR);
 }
 
 /**
@@ -176,16 +176,16 @@ static void term_redraw_prompt_only() {
         }
     }
     
-    // Clear the prompt line area (overwrite with background color)
-    draw_rect(TERM_AREA_X + FONT_SPACING, y_pos, TERM_AREA_WIDTH - (2 * FONT_SPACING), FONT_HEIGHT, TERM_BG_COLOR);
+    // Clear the prompt line area (overwrite with background colour)
+    draw_rect(TERM_AREA_X + FONT_SPACING, y_pos, TERM_AREA_WIDTH - (2 * FONT_SPACING), FONT_HEIGHT, TERM_BG_COLOUR);
     
     // Redraw only the prompt and cursor
     char prompt[CHARS_PER_LINE + 1];
     msnprintf(prompt, sizeof(prompt), "%s# %s", get_cwd(), command_buffer); 
-    draw_text(TERM_AREA_X + FONT_SPACING, y_pos, prompt, TERM_PROMPT_COLOR);
+    draw_text(TERM_AREA_X + FONT_SPACING, y_pos, prompt, TERM_PROMPT_COLOUR);
     
     int cursor_x = TERM_AREA_X + FONT_SPACING + get_textwidth(prompt);
-    draw_text(cursor_x, y_pos, "_", TERM_PROMPT_COLOR);
+    draw_text(cursor_x, y_pos, "_", TERM_PROMPT_COLOUR);
 }
 
 
@@ -195,8 +195,8 @@ static void term_redraw_prompt_only() {
  */
 void draw_term() {
     // Always ensure background is drawn first
-    gui_clear(VGA_COLOR_LIGHT_GREY);
-    draw_rect(TERM_AREA_X, TERM_AREA_Y, TERM_AREA_WIDTH, TERM_AREA_HEIGHT, TERM_BG_COLOR);
+    gui_clear(VGA_COLOUR_LIGHT_GREY);
+    draw_rect(TERM_AREA_X, TERM_AREA_Y, TERM_AREA_WIDTH, TERM_AREA_HEIGHT, TERM_BG_COLOUR);
     
     // Set terminal state
     terminal_active = true;
@@ -255,8 +255,8 @@ void term_init() {
     clear_terminal();
     
     // Draw the background immediately when initializing
-    gui_clear(VGA_COLOR_LIGHT_GREY);
-    draw_rect(TERM_AREA_X, TERM_AREA_Y, TERM_AREA_WIDTH, TERM_AREA_HEIGHT, TERM_BG_COLOR);
+    gui_clear(VGA_COLOUR_LIGHT_GREY);
+    draw_rect(TERM_AREA_X, TERM_AREA_Y, TERM_AREA_WIDTH, TERM_AREA_HEIGHT, TERM_BG_COLOUR);
     
     terminal_print("Welcome to MooseOS Terminal");
     terminal_print("Type 'help' for available commands");

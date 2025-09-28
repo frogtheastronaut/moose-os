@@ -1,22 +1,32 @@
 /*
-    MooseOS GUI Windows - Shape and Window Drawing Functions
-    Copyright (c) 2025 Ethan Zhang and Contributors.
+    MooseOS GUI elements code
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
 */
 
 #include "gui/gui.h"
 #include "elements/gui_text.h"
+#include "print/debug.h"
+
+// dialog-related variables
+char dialog_input[MAX_DIALOG_INPUT_LEN + 1] = "";
+int dialog_input_pos = 0;
+int dialog_type = 0;
 
 /**
- * Draw a horizontal line
+ * draw a horizontal line
  * 
- * @param x1 Starting x coordinate
- * @param x2 Ending x coordinate
+ * @param x1 starting x coordinate
+ * @param x2 ending x coordinate
  * @param y Y coordinate
- * @param color Colour of the line
+ * @param colour colour of the line
  */
-void draw_line_horizontal(int x1, int x2, int y, uint8_t color) {
-    if (y < 0 || y >= SCREEN_HEIGHT) return;
-    
+void draw_line_horizontal(int x1, int x2, int y, uint8_t colour) {
+    if (y < 0 || y >= SCREEN_HEIGHT) {
+        debugf("[GFX] Y coordinate out of bounds\n");
+        return;
+    }
+
     if (x1 > x2) {
         int temp = x1;
         x1 = x2;
@@ -27,20 +37,23 @@ void draw_line_horizontal(int x1, int x2, int y, uint8_t color) {
     if (x2 >= SCREEN_WIDTH) x2 = SCREEN_WIDTH - 1;
     
     for (int x = x1; x <= x2; x++) {
-        vga_buffer[y * SCREEN_WIDTH + x] = color;
+        vga_buffer[y * SCREEN_WIDTH + x] = colour;
     }
 }
 
 /**
- * Draw a vertical line
+ * draw a vertical line
  * 
  * @param x X coordinate
- * @param y1 Starting Y coordinate
- * @param y2 Ending Y coordinate
- * @param color Colour of the line
+ * @param y1 starting Y coordinate
+ * @param y2 ending Y coordinate
+ * @param colour colour of the line
  */
-void draw_line_vertical(int x, int y1, int y2, uint8_t color) {
-    if (x < 0 || x >= SCREEN_WIDTH) return;
+void draw_line_vertical(int x, int y1, int y2, uint8_t colour) {
+    if (x < 0 || x >= SCREEN_WIDTH) {
+        debugf("[GFX] X coordinate out of bounds\n");
+        return;
+    }
     
     if (y1 > y2) {
         int temp = y1;
@@ -52,13 +65,13 @@ void draw_line_vertical(int x, int y1, int y2, uint8_t color) {
     if (y2 >= SCREEN_HEIGHT) y2 = SCREEN_HEIGHT - 1;
     
     for (int y = y1; y <= y2; y++) {
-        vga_buffer[y * SCREEN_WIDTH + x] = color;
+        vga_buffer[y * SCREEN_WIDTH + x] = colour;
     }
 }
 
-// Draw a rectangle
-// The params are self-explanatory
-void draw_rect(int x, int y, int width, int height, uint8_t color) {
+// draw a rectangle
+// the params are self-explanatory
+void draw_rect(int x, int y, int width, int height, uint8_t colour) {
     int x_end = x + width;
     int y_end = y + height;
     
@@ -69,71 +82,62 @@ void draw_rect(int x, int y, int width, int height, uint8_t color) {
     
     for (int j = y; j < y_end; j++) {
         for (int i = x; i < x_end; i++) {
-            vga_buffer[j * SCREEN_WIDTH + i] = color;
+            vga_buffer[j * SCREEN_WIDTH + i] = colour;
         }
     }
 }
 
-// Draw a hollow rectangle
-void draw_rectoutline(int x, int y, int width, int height, uint8_t color) {
-    draw_line_horizontal(x, x + width - 1, y, color);
-    draw_line_horizontal(x, x + width - 1, y + height - 1, color);
+// draw a hollow rectangle
+void draw_rectoutline(int x, int y, int width, int height, uint8_t colour) {
+    draw_line_horizontal(x, x + width - 1, y, colour);
+    draw_line_horizontal(x, x + width - 1, y + height - 1, colour);
     
-    draw_line_vertical(x, y, y + height - 1, color);
-    draw_line_vertical(x + width - 1, y, y + height - 1, color);
+    draw_line_vertical(x, y, y + height - 1, colour);
+    draw_line_vertical(x + width - 1, y, y + height - 1, colour);
 }
 
 /**
- * Draw a 3d-style box
+ * draw a 3d-style box
  * 
  * @param x X coordinate of top-left corner
  * @param y Y coordinate of top-left corner
- * @param width Width of the box
- * @param height Height of the box
- * @param face_color Color of the box face
- * @param highlight_color Color of the highlight
- * @param shadow_color Color of the shadow
+ * @param width width of the box
+ * @param height height of the box
+ * @param face_colour colour of the box face
+ * @param highlight_colour colour of the highlight
+ * @param shadow_colour colour of the shadow
  */
 void draw_3dbox(int x, int y, int width, int height, 
-                    uint8_t face_color, 
-                    uint8_t highlight_color, 
-                    uint8_t shadow_color) {
-    draw_rect(x + 1, y + 1, width - 2, height - 2, face_color);
+                    uint8_t face_colour, 
+                    uint8_t highlight_colour, 
+                    uint8_t shadow_colour) {
+    draw_rect(x + 1, y + 1, width - 2, height - 2, face_colour);
     
-    draw_line_horizontal(x, x + width - 1, y, highlight_color);
-    draw_line_vertical(x, y, y + height - 1, highlight_color);
+    draw_line_horizontal(x, x + width - 1, y, highlight_colour);
+    draw_line_vertical(x, y, y + height - 1, highlight_colour);
     
-    draw_line_horizontal(x + 1, x + width - 1, y + height - 1, shadow_color);
-    draw_line_vertical(x + width - 1, y + 1, y + height - 1, shadow_color);
+    draw_line_horizontal(x + 1, x + width - 1, y + height - 1, shadow_colour);
+    draw_line_vertical(x + width - 1, y + 1, y + height - 1, shadow_colour);
 }
 
-// Draw a window box
+// draw a window box
 void draw_windowbox(int x, int y, int width, int height,
-                        uint8_t outer_color,
-                        uint8_t inner_color,
-                        uint8_t face_color) {
+                        uint8_t outer_colour,
+                        uint8_t inner_colour,
+                        uint8_t face_colour) {
     
-    draw_rectoutline(x, y, width, height, outer_color);
-    
-    
-    draw_rectoutline(x + 1, y + 1, width - 2, height - 2, inner_color);
-    
-    
-    draw_rect(x + 2, y + 2, width - 4, height - 4, face_color);
+    draw_rectoutline(x, y, width, height, outer_colour);
+    draw_rectoutline(x + 1, y + 1, width - 2, height - 2, inner_colour);
+    draw_rect(x + 2, y + 2, width - 4, height - 4, face_colour);
 }
 
-// Draw a title bar
-void draw_title(int x, int y, int width, int height, uint8_t title_color) {
-    draw_rect(x + 2, y + 2, width - 4, height - 4, title_color);
-    draw_line_horizontal(x + 2, x + width - 3, y + height - 3, VGA_COLOR_BLACK);
+// draw a title bar
+void draw_title(int x, int y, int width, int height, uint8_t title_colour) {
+    draw_rect(x + 2, y + 2, width - 4, height - 4, title_colour);
+    draw_line_horizontal(x + 2, x + width - 3, y + height - 3, VGA_COLOUR_BLACK);
 }
 
-// Dialog-related variables
-char dialog_input[MAX_DIALOG_INPUT_LEN + 1] = "";
-int dialog_input_pos = 0;
-int dialog_type = 0;
-
-// Draw a dialog
+// draw a dialog
 void draw_dialog(const char* title, const char* prompt) {
     int width = 200;
     int height = 80;
@@ -141,18 +145,18 @@ void draw_dialog(const char* title, const char* prompt) {
     int x = (SCREEN_WIDTH - width) / 2;
     int y = (SCREEN_HEIGHT - height) / 2;
     
-    draw_rect(x + 4, y + 4, width, height, VGA_COLOR_DARK_GREY); 
+    draw_rect(x + 4, y + 4, width, height, VGA_COLOUR_DARK_GREY); 
     draw_windowbox(x, y, width, height,
-                      VGA_COLOR_BLACK,
-                      VGA_COLOR_WHITE,
-                      VGA_COLOR_LIGHT_GREY);
+                      VGA_COLOUR_BLACK,
+                      VGA_COLOUR_WHITE,
+                      VGA_COLOUR_LIGHT_GREY);
     
-    draw_title(x, y, width, 15, VGA_COLOR_BLUE);
-    draw_text(x + 10, y + 4, title, VGA_COLOR_WHITE);
-    draw_text(x + 10, y + 25, prompt, VGA_COLOR_BLACK);
+    draw_title(x, y, width, 15, VGA_COLOUR_BLUE);
+    draw_text(x + 10, y + 4, title, VGA_COLOUR_WHITE);
+    draw_text(x + 10, y + 25, prompt, VGA_COLOUR_BLACK);
     int input_box_width = width - 20;
-    draw_rect(x + 10, y + 40, input_box_width, 14, VGA_COLOR_WHITE);
-    draw_rectoutline(x + 10, y + 40, input_box_width, 14, VGA_COLOR_BLACK);
+    draw_rect(x + 10, y + 40, input_box_width, 14, VGA_COLOUR_WHITE);
+    draw_rectoutline(x + 10, y + 40, input_box_width, 14, VGA_COLOUR_BLACK);
     
     int cursor_char_width = 0;
     for (int i = 0; i < dialog_input_pos && dialog_input[i] != '\0'; i++) {
@@ -163,10 +167,10 @@ void draw_dialog(const char* title, const char* prompt) {
     int max_visible_width = input_box_width - 4;  
     
     if (text_width <= max_visible_width) {
-        draw_rect(x + 11, y + 41, input_box_width - 2, 12, VGA_COLOR_WHITE);
-        draw_text(x + 12, y + 42, dialog_input, VGA_COLOR_BLACK);
+        draw_rect(x + 11, y + 41, input_box_width - 2, 12, VGA_COLOUR_WHITE);
+        draw_text(x + 12, y + 42, dialog_input, VGA_COLOUR_BLACK);
         int cursor_x = x + 12 + cursor_char_width;
-        draw_line_vertical(cursor_x, y + 42, y + 42 + 8, VGA_COLOR_BLACK);
+        draw_line_vertical(cursor_x, y + 42, y + 42 + 8, VGA_COLOUR_BLACK);
     } else {
         static int scroll_offset = 0;
         int padding = 10;
@@ -179,7 +183,7 @@ void draw_dialog(const char* title, const char* prompt) {
             
             scroll_offset = cursor_char_width - max_cursor_x;
         }
-        draw_rect(x + 11, y + 41, input_box_width - 2, 12, VGA_COLOR_WHITE);
+        draw_rect(x + 11, y + 41, input_box_width - 2, 12, VGA_COLOUR_WHITE);
         int draw_x = x + 12;
         int current_width = 0;
         for (int i = 0; dialog_input[i] != '\0'; i++) {
@@ -190,7 +194,7 @@ void draw_dialog(const char* title, const char* prompt) {
                 
                 
                 if (char_x < x + 12 + max_visible_width && char_x + char_width > x + 12) {
-                    draw_char(char_x, y + 42, dialog_input[i], VGA_COLOR_BLACK);
+                    draw_char(char_x, y + 42, dialog_input[i], VGA_COLOUR_BLACK);
                 }
             }
             current_width += char_width;
@@ -200,9 +204,9 @@ void draw_dialog(const char* title, const char* prompt) {
         }
         
         int cursor_x = x + 12 + (cursor_char_width - scroll_offset);
-        draw_line_vertical(cursor_x, y + 42, y + 42 + 8, VGA_COLOR_BLACK);
+        draw_line_vertical(cursor_x, y + 42, y + 42 + 8, VGA_COLOUR_BLACK);
     }
     
-    draw_text(x + 10, y + 62, "ENTER: OK", VGA_COLOR_DARK_GREY);
-    draw_text(x + width - 70, y + 62, "ESC: Cancel", VGA_COLOR_DARK_GREY);
+    draw_text(x + 10, y + 62, "ENTER: OK", VGA_COLOUR_DARK_GREY);
+    draw_text(x + width - 70, y + 62, "ESC: Cancel", VGA_COLOUR_DARK_GREY);
 }

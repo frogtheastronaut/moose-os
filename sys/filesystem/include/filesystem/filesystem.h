@@ -22,4 +22,4 @@ int filesystem_get_disk_info(char *info_buffer, int buffer_size);
 int filesystem_get_memory_stats(char *stats_buffer, int buffer_size);
 char* get_file_content(const char* filename);
 
-#endif
+#endif // FILESYSTEM_H

@@ -18,18 +18,18 @@
 uint8_t* vga_buffer = (uint8_t*)0xA0000;
 
 // Set a pixel on the screen
-void gui_set_pixel(int x, int y, uint8_t color) {
+void gui_set_pixel(int x, int y, uint8_t colour) {
     if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT) {
-        vga_buffer[y * SCREEN_WIDTH + x] = color;
+        vga_buffer[y * SCREEN_WIDTH + x] = colour;
     }
 }
 
 
 
 // Clear the screen
-void gui_clear(uint8_t color) {
+void gui_clear(uint8_t colour) {
     for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
-        vga_buffer[i] = color;
+        vga_buffer[i] = colour;
     }
 }
 

@@ -16,7 +16,7 @@ void term_exec_cmd(const char* cmd) {
     // Add cmd to history
     char prompt_line[CHARS_PER_LINE + 1];
     msnprintf(prompt_line, sizeof(prompt_line), "%s# %s", get_cwd(), cmd); 
-    terminal_add_wrapped_text(prompt_line, TERM_PROMPT_COLOR);
+    terminal_add_wrapped_text(prompt_line, TERM_PROMPT_COLOUR);
     
     if (strlen(cmd) == 0) {
         return; // empty

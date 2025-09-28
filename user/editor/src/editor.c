@@ -20,25 +20,25 @@ bool editor_modified = false;
  */
 void editor_draw() {
     // Clear screen
-    draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, VGA_COLOR_LIGHT_GREY);
+    draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, VGA_COLOUR_LIGHT_GREY);
     
     // Title bar
-    draw_title(0, 0, SCREEN_WIDTH, 15, VGA_COLOR_BLUE);
+    draw_title(0, 0, SCREEN_WIDTH, 15, VGA_COLOUR_BLUE);
     
     // Label on title bar
     char label[] = "Text Editor - ";
-    draw_text(10, 6, label, VGA_COLOR_WHITE);
+    draw_text(10, 6, label, VGA_COLOUR_WHITE);
     
     // File name, scroll if too big
     int label_width = get_textwidth(label);
     int filename_x = 10 + label_width;
     int max_filename_width = SCREEN_WIDTH - filename_x - 10;
-    draw_text_scroll(filename_x, 6, editor_filename, max_filename_width, VGA_COLOR_WHITE, VGA_COLOR_BLUE);
+    draw_text_scroll(filename_x, 6, editor_filename, max_filename_width, VGA_COLOUR_WHITE, VGA_COLOUR_BLUE);
 
 
     // Draw numbers area (line numbers)
-    draw_rect(0, 20, EDITOR_LINE_NUM_WIDTH, SCREEN_HEIGHT - 20, VGA_COLOR_LIGHT_GREY);
-    draw_line_vertical(EDITOR_LINE_NUM_WIDTH, 20, SCREEN_HEIGHT, VGA_COLOR_DARK_GREY);
+    draw_rect(0, 20, EDITOR_LINE_NUM_WIDTH, SCREEN_HEIGHT - 20, VGA_COLOUR_LIGHT_GREY);
+    draw_line_vertical(EDITOR_LINE_NUM_WIDTH, 20, SCREEN_HEIGHT, VGA_COLOUR_DARK_GREY);
 
     // Draw content with scrolling
     int y_pos = EDITOR_START_Y + 5;
@@ -67,12 +67,12 @@ void editor_draw() {
             // Draw line number
             char line_num[8];
             int2str(line + 1, line_num, sizeof(line_num));
-            draw_text(10, y_pos, line_num, VGA_COLOR_DARK_GREY);
+            draw_text(10, y_pos, line_num, VGA_COLOUR_DARK_GREY);
 
             // Draw cursor if it's on this empty line
             if (line == editor_cursor_line && editor_cursor_col == 0) {
                 int cursor_x = EDITOR_LINE_NUM_WIDTH + 5; // Start after line numbers
-                draw_line_vertical(cursor_x, y_pos, y_pos + 8, VGA_COLOR_BLUE);
+                draw_line_vertical(cursor_x, y_pos, y_pos + 8, VGA_COLOUR_BLUE);
             }
             
             y_pos += EDITOR_LINE_HEIGHT;
@@ -87,7 +87,7 @@ void editor_draw() {
             if (line_start_col == 0) {
                 char line_num[8];
                 int2str(line + 1, line_num, sizeof(line_num));
-                draw_text(10, y_pos, line_num, VGA_COLOR_DARK_GREY);
+                draw_text(10, y_pos, line_num, VGA_COLOUR_DARK_GREY);
             }
             
             int chars_that_fit = 0;
@@ -119,7 +119,7 @@ void editor_draw() {
             line_buffer[chars_to_draw] = '\0';
             
             // Draw line content - start after line numbers
-            draw_text(EDITOR_LINE_NUM_WIDTH + 5, y_pos, line_buffer, VGA_COLOR_BLACK);
+            draw_text(EDITOR_LINE_NUM_WIDTH + 5, y_pos, line_buffer, VGA_COLOUR_BLACK);
 
             // Draw cursor if it's on this line segment
             if (line == editor_cursor_line) {
@@ -133,7 +133,7 @@ void editor_draw() {
                         cursor_x += char_widths[(unsigned char)line_buffer[i]] + 1;
                     }
                     
-                    draw_line_vertical(cursor_x, y_pos, y_pos + 8, VGA_COLOR_BLUE);
+                    draw_line_vertical(cursor_x, y_pos, y_pos + 8, VGA_COLOUR_BLUE);
                 }
                 // If cursor is at the end of the line, we move the cursor to the next line
                 else if (editor_cursor_col == line_start_col + chars_that_fit && 
@@ -141,7 +141,7 @@ void editor_draw() {
                     for (int i = 0; i < chars_to_draw; i++) {
                         cursor_x += char_widths[(unsigned char)line_buffer[i]] + 1;
                     }
-                    draw_line_vertical(cursor_x, y_pos, y_pos + 8, VGA_COLOR_BLUE);
+                    draw_line_vertical(cursor_x, y_pos, y_pos + 8, VGA_COLOUR_BLUE);
                 }
             }
             
@@ -160,7 +160,7 @@ void editor_draw() {
     }
 
     // Draw status bar
-    draw_rect(0, 190, SCREEN_WIDTH, 10, VGA_COLOR_DARK_GREY);
+    draw_rect(0, 190, SCREEN_WIDTH, 10, VGA_COLOUR_DARK_GREY);
 
     // Show cursor/line info and scroll position
     char status[64] = "Line: ";
@@ -173,7 +173,7 @@ void editor_draw() {
     strcat(status, ", Col: ");
     strcat(status, col_str);
     
-    draw_text(5, SCREEN_HEIGHT - 8, status, VGA_COLOR_WHITE); // Bottom of screen
+    draw_text(5, SCREEN_HEIGHT - 8, status, VGA_COLOUR_WHITE); // Bottom of screen
 }
 
 

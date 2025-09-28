@@ -1,4 +1,4 @@
-# Color codes for terminal output
+# colour codes for terminal output
 BLUE='\033[0;34m'
 NC='\033[0m'
 DPC_PREFIX="[${BLUE}DPC${NC}]"

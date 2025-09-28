@@ -75,16 +75,16 @@ const uint8_t cursor_icon[8][8] = {
     {0,0,0,0,0,0,0,0}
 };
 
-const uint8_t icon_color_map[] = {
-    VGA_COLOR_LIGHT_GREY,  // 0 = background (using light grey instead of transparent)
-    VGA_COLOR_BLACK,       // 1 = outline
-    VGA_COLOR_DARK_GREY,   // 2 = shadow
-    VGA_COLOR_LIGHT_CYAN,  // 3 = folder color (using light blue)
-    VGA_COLOR_RED,         // 4 = accent color
-    VGA_COLOR_GREEN,       // 5 = alternate color
-    VGA_COLOR_BLUE,        // 6 = another accent color
-    VGA_COLOR_WHITE,       // 7 = document color
-    VGA_COLOR_DARK_GREY,   // 8-10 = misc colors
-    VGA_COLOR_LIGHT_GREEN,
-    VGA_COLOR_LIGHT_BLUE
+const uint8_t icon_colour_map[] = {
+    VGA_COLOUR_LIGHT_GREY,  // 0 = background (using light grey instead of transparent)
+    VGA_COLOUR_BLACK,       // 1 = outline
+    VGA_COLOUR_DARK_GREY,   // 2 = shadow
+    VGA_COLOUR_LIGHT_CYAN,  // 3 = folder colour (using light blue)
+    VGA_COLOUR_RED,         // 4 = accent colour
+    VGA_COLOUR_GREEN,       // 5 = alternate colour
+    VGA_COLOUR_BLUE,        // 6 = another accent colour
+    VGA_COLOUR_WHITE,       // 7 = document colour
+    VGA_COLOUR_DARK_GREY,   // 8-10 = misc colours
+    VGA_COLOUR_LIGHT_GREEN,
+    VGA_COLOUR_LIGHT_BLUE
 };

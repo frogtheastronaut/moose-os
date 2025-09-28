@@ -29,10 +29,10 @@
 #define TERM_AREA_HEIGHT TERMINAL_HEIGHT
 
 // Colours
-#define TERM_BG_COLOR VGA_COLOR_BLACK
-#define TERM_TEXT_COLOR VGA_COLOR_WHITE
-#define TERM_PROMPT_COLOR VGA_COLOR_GREEN
-#define TERM_ERROR_COLOR VGA_COLOR_RED
+#define TERM_BG_COLOUR VGA_COLOUR_BLACK
+#define TERM_TEXT_COLOUR VGA_COLOUR_WHITE
+#define TERM_PROMPT_COLOUR VGA_COLOUR_GREEN
+#define TERM_ERROR_COLOUR VGA_COLOUR_RED
 
 // Terminal settings
 #define MAX_COMMAND_LEN 64
@@ -60,7 +60,7 @@ extern void dock_return(void);
 extern void draw_cursor(void);
 extern const char* get_cwd();
 extern void terminal_print_error(const char* text);
-extern void terminal_add_wrapped_text(const char* text, uint8_t color);
+extern void terminal_add_wrapped_text(const char* text, uint8_t colour);
 extern void clear_terminal(void);
 
 // External variables

@@ -6,7 +6,7 @@
 #include "mouse_gui/mouse_gui.h"
 #include "mouse/mouse.h"
 
-static cursor_pixel_t cursor_pixels[64];
+static cursor_pixel cursor_pixels[64];
 static int num_cursor_pixels = 0;
 
 int last_mouse_x = -1;
@@ -27,15 +27,15 @@ void draw_mouse(int x, int y) {
                     // Save original pixel
                     cursor_pixels[num_cursor_pixels].x = screen_x;
                     cursor_pixels[num_cursor_pixels].y = screen_y;
-                    cursor_pixels[num_cursor_pixels].original_color = vga_buffer[screen_y * SCREEN_WIDTH + screen_x];
+                    cursor_pixels[num_cursor_pixels].original_colour = vga_buffer[screen_y * SCREEN_WIDTH + screen_x];
                     cursor_pixels[num_cursor_pixels].is_modified = true;
                     num_cursor_pixels++;
                     
                     // Draw cursor pixel
                     if (pattern == 1) {
-                        vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOR_BLACK;
+                        vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOUR_BLACK;
                     } else if (pattern == 2) {
-                        vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOR_WHITE;
+                        vga_buffer[screen_y * SCREEN_WIDTH + screen_x] = VGA_COLOUR_WHITE;
                     }
                 }
             }
@@ -46,7 +46,7 @@ void draw_mouse(int x, int y) {
 void restore_cursor_pixels(void) {
     for (int i = 0; i < num_cursor_pixels; i++) {
         if (cursor_pixels[i].is_modified) {
-            vga_buffer[cursor_pixels[i].y * SCREEN_WIDTH + cursor_pixels[i].x] = cursor_pixels[i].original_color;
+            vga_buffer[cursor_pixels[i].y * SCREEN_WIDTH + cursor_pixels[i].x] = cursor_pixels[i].original_colour;
         }
     }
     num_cursor_pixels = 0;

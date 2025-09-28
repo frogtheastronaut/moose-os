@@ -22,20 +22,20 @@ static bool dock_handle_mouse_click(int mouse_x, int mouse_y);
  */
 static void draw_windowborder() {
     draw_windowbox(WINDOW_X, WINDOW_Y, WINDOW_WIDTH, WINDOW_HEIGHT, 
-                       VGA_COLOR_LIGHT_GREY,
-                       VGA_COLOR_LIGHT_GREY,
-                       VGA_COLOR_LIGHT_GREY);
+                       VGA_COLOUR_LIGHT_GREY,
+                       VGA_COLOUR_LIGHT_GREY,
+                       VGA_COLOUR_LIGHT_GREY);
     
-    draw_title(WINDOW_X, WINDOW_Y, WINDOW_WIDTH, 15, VGA_COLOR_BLUE);
+    draw_title(WINDOW_X, WINDOW_Y, WINDOW_WIDTH, 15, VGA_COLOUR_BLUE);
     /** @todo: Either remove the Welcome to MooseOS or replace it with something different */
-    draw_text(WINDOW_X + 5, WINDOW_Y + 3, "Welcome to MooseOS", VGA_COLOR_WHITE);
+    draw_text(WINDOW_X + 5, WINDOW_Y + 3, "Welcome to MooseOS", VGA_COLOUR_WHITE);
 }
 
 /**
  * Draw dock icons
  * @return nothing
  */
-static void dock_draw_icon(int x, int y, uint8_t bg_color, int app_index) {
+static void dock_draw_icon(int x, int y, uint8_t bg_colour, int app_index) {
     const uint8_t (*icon_bitmap)[16];
     
     switch (app_index) {
@@ -56,12 +56,12 @@ static void dock_draw_icon(int x, int y, uint8_t bg_color, int app_index) {
             uint8_t pixel = icon_bitmap[row][col];
             
             if (pixel == 0) {
-                if (bg_color == WINDOW_BACKGROUND) {
+                if (bg_colour == WINDOW_BACKGROUND) {
                     continue;
                 }
-                gui_set_pixel(x + col, y + row, bg_color);
+                gui_set_pixel(x + col, y + row, bg_colour);
             } else {
-                gui_set_pixel(x + col, y + row, icon_color_map[pixel]);
+                gui_set_pixel(x + col, y + row, icon_colour_map[pixel]);
             }
         }
     }
@@ -87,12 +87,12 @@ static void dock_draw_app(int app_index, const char* filename, int x, int y) {
     // Selection background
     if (is_selected) {
         // im blue
-        draw_rect(selection_x - 2, selection_y - 2, selection_width + 4, selection_height + 4, SELECTION_COLOR);
+        draw_rect(selection_x - 2, selection_y - 2, selection_width + 4, selection_height + 4, SELECTION_COLOUR);
     }
     
     // Icon background
-    // Either selection color or window background
-    uint8_t icon_bg = is_selected ? SELECTION_COLOR : WINDOW_BACKGROUND;
+    // Either selection colour or window background
+    uint8_t icon_bg = is_selected ? SELECTION_COLOUR : WINDOW_BACKGROUND;
     
     // Draw icon
     dock_draw_icon(x, y, icon_bg, app_index);
@@ -102,11 +102,11 @@ static void dock_draw_app(int app_index, const char* filename, int x, int y) {
     int text_y = y + ICON_SIZE + 2;
     
     // Text colour
-    // Either Selection color or File color
-    uint8_t text_color = is_selected ? SELECTION_TEXT_COLOR : FILE_TEXT_COLOR;
+    // Either Selection colour or File colour
+    uint8_t text_colour = is_selected ? SELECTION_TEXT_COLOUR : FILE_TEXT_COLOUR;
 
     // Draw text
-    draw_text(text_x, text_y, filename, text_color);
+    draw_text(text_x, text_y, filename, text_colour);
 }
 
 /**
@@ -209,11 +209,11 @@ static void draw_time() {
     int status_bar_y = WINDOW_Y + WINDOW_HEIGHT - status_bar_height - 8;
 
     // Status bar background
-    draw_rect(status_bar_x, status_bar_y, status_bar_width, status_bar_height, VGA_COLOR_LIGHT_GREY);
-    draw_line_horizontal(status_bar_x, status_bar_x + status_bar_width - 1, status_bar_y, VGA_COLOR_DARK_GREY);
+    draw_rect(status_bar_x, status_bar_y, status_bar_width, status_bar_height, VGA_COLOUR_LIGHT_GREY);
+    draw_line_horizontal(status_bar_x, status_bar_x + status_bar_width - 1, status_bar_y, VGA_COLOUR_DARK_GREY);
 
     // Draw status bar text
-    draw_text(status_bar_x + 5, status_bar_y + 3, time_str, VGA_COLOR_BLACK);
+    draw_text(status_bar_x + 5, status_bar_y + 3, time_str, VGA_COLOUR_BLACK);
 }
 
 /*
@@ -289,11 +289,11 @@ static void draw_time_forced() {
     int status_bar_y = WINDOW_Y + WINDOW_HEIGHT - status_bar_height - 8;
 
     // Status bar background
-    draw_rect(status_bar_x, status_bar_y, status_bar_width, status_bar_height, VGA_COLOR_LIGHT_GREY);
-    draw_line_horizontal(status_bar_x, status_bar_x + status_bar_width - 1, status_bar_y, VGA_COLOR_DARK_GREY);
+    draw_rect(status_bar_x, status_bar_y, status_bar_width, status_bar_height, VGA_COLOUR_LIGHT_GREY);
+    draw_line_horizontal(status_bar_x, status_bar_x + status_bar_width - 1, status_bar_y, VGA_COLOUR_DARK_GREY);
 
     // Draw status bar text
-    draw_text(status_bar_x + 5, status_bar_y + 3, time_str, VGA_COLOR_BLACK);
+    draw_text(status_bar_x + 5, status_bar_y + 3, time_str, VGA_COLOUR_BLACK);
 }
 
 /**
@@ -301,7 +301,7 @@ static void draw_time_forced() {
  */
 static void dock_draw_window() {
     // Clear screen
-    gui_clear(VGA_COLOR_LIGHT_GREY);
+    gui_clear(VGA_COLOUR_LIGHT_GREY);
 
     // Draw window border
     draw_windowborder();

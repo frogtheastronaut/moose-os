@@ -16,17 +16,17 @@ int current_selection = 0;
  */
 void draw_explorer() {
     gui_init();
-    gui_clear(VGA_COLOR_LIGHT_GREY);
+    gui_clear(VGA_COLOUR_LIGHT_GREY);
     
     draw_windowbox(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 
-                       VGA_COLOR_LIGHT_GREY,
-                       VGA_COLOR_LIGHT_GREY,
-                       VGA_COLOR_LIGHT_GREY);
+                       VGA_COLOUR_LIGHT_GREY,
+                       VGA_COLOUR_LIGHT_GREY,
+                       VGA_COLOUR_LIGHT_GREY);
     
     // Title bar
-    draw_title(0, 0, SCREEN_WIDTH, 20, VGA_COLOR_BLUE);
+    draw_title(0, 0, SCREEN_WIDTH, 20, VGA_COLOUR_BLUE);
     char path_text[64] = "File Explorer - ";
-    draw_text(10, 6, path_text, VGA_COLOR_WHITE);
+    draw_text(10, 6, path_text, VGA_COLOUR_WHITE);
 
     // Display cwd
     char full_path[128] = "";
@@ -55,7 +55,7 @@ void draw_explorer() {
     
     int path_x = 10 + get_textwidth(path_text);
     int available_width = SCREEN_WIDTH - path_x - 10; 
-    draw_text_scroll(path_x, 6, full_path, available_width, VGA_COLOR_WHITE, VGA_COLOR_BLUE);
+    draw_text_scroll(path_x, 6, full_path, available_width, VGA_COLOUR_WHITE, VGA_COLOUR_BLUE);
     
     int x_pos = 20;
     int y_pos = 30;
@@ -111,7 +111,7 @@ void draw_explorer() {
         strcat(status_text, " items");
     }
     
-    draw_text(15, SCREEN_HEIGHT - 15, status_text, VGA_COLOR_BLACK);
+    draw_text(15, SCREEN_HEIGHT - 15, status_text, VGA_COLOUR_BLACK);
     explorer_active = true;
     
     draw_cursor();
