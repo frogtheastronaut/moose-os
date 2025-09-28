@@ -24,7 +24,9 @@ jobs:
         run: make preclean
 
       - name: Build MooseOS ISO
-        run: make build-iso
+        run: |
+          echo "Include paths: $(ALL_INCLUDE_PATHS)"
+          make build-iso
 
       - name: Clean Build Artifacts
         run: make clean-all

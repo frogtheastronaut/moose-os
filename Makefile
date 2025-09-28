@@ -64,7 +64,7 @@ create-disk:
 	fi
 
 build-iso: build-elf
-	@echo "$(MAKE_PREFIX) Building ISO..."
+	@echo "$(MAKE_PREFIX) Building ISO..."	
 	@mkdir -p iso/boot/grub
 	@cp bin/MooseOS.elf iso/boot
 	@# Copy files over from boot/grub/grub.cfg
