@@ -22,7 +22,6 @@ jobs:
       - name: Build MooseOS
         run: |
           make build-iso
-
       - name: Clean Build Artifacts
         run: make clean-all
 
@@ -30,4 +29,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: MooseOS-binaries
-          path: bin/MooseOS.iso bin/MooseOS.elf
+          path: bin/**
