@@ -42,7 +42,7 @@ check-dependencies:
 
 build-elf: $(ASM_OBJ) $(OBJ)
 	@bash -c 'if [ "$(shell uname)" = "Linux" ]; then \
-		echo "$(MAKE_PREFIX) Detected Linux."; \
+		echo "Detected Linux."; \
 	fi'
 	@echo "$(MAKE_PREFIX) Building ELF..."
 	@$(LD) -m elf_i386 -T sys/link.ld -o bin/MooseOS.elf $(ASM_OBJ) $(OBJ)
