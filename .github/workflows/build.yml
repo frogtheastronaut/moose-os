@@ -22,7 +22,9 @@ jobs:
 
       - name: Pre-clean Build Artifacts
         run: make preclean
-
+      - name: Build MooseOS ELF
+        run: |
+          make build-elf
       - name: Build MooseOS ISO
         run: |
           make build-iso
