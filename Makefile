@@ -16,7 +16,7 @@ GCC = i386-elf-gcc
 LD = i386-elf-ld
 GRUB_MKRESCUE = i686-elf-grub-mkrescue
 else
-GCC = gcc
+GCC = gcc -m32
 LD = ld
 GRUB_MKRESCUE = grub-mkrescue
 endif
