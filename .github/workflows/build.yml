@@ -37,7 +37,7 @@ jobs:
         run: make clean-all
 
       - name: Upload ISO and ELF artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: MooseOS-binaries
           path: bin/MooseOS.iso bin/MooseOS.elf
