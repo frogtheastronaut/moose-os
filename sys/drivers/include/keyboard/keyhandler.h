@@ -1,3 +1,9 @@
+/*
+    MooseOS Keycode Handler
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
+*/
+
 #ifndef KEYHANDLER_H
 #define KEYHANDLER_H
 
@@ -9,22 +15,22 @@
 #include "libc/lib.h"
 #include "keyboard/scancode_map.h"
 
-// External variables from dock.c
+// external variables from dock.c
 extern bool dialog_active;
 extern bool explorer_active;
 extern bool editor_active;
 
-// External functions
+// external functions
 extern bool gui_handle_dialog_input(unsigned char key, char scancode);
 extern bool gui_handle_explorer_key(unsigned char key, char scancode);
 extern bool gui_handle_editor_key(unsigned char key, char scancode);
 extern bool dock_handle_key(unsigned char key, char scancode); 
-extern bool term_handlekey(unsigned char key, char scancode);
+extern bool terminal_handle_key(unsigned char key, char scancode);
 
-// Active states
+// active states
 extern bool dialog_active;
 extern bool explorer_active;
 extern bool editor_active;
-void processKey(unsigned char key, char scancode);
+void process_key(unsigned char key, char scancode);
 
-#endif
+#endif // KEYHANDLER_H

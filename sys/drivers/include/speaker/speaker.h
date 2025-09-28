@@ -1,6 +1,7 @@
-/**
-    Moose Operating System
-    Copyright (c) 2025 Ethan Zhang and Contributors.
+/*
+    MooseOS Speaker Driver
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
 */
 
 #ifndef SPEAKER_H
@@ -9,28 +10,28 @@
 #include "libc/lib.h"
 #include "pit/pit.h"
 
-// PC Speaker control port (Keyboard Controller port B)
+// speaker I/O port
 #define SPEAKER_PORT         0x61
 
-// Speaker control bits in port 0x61
-#define SPEAKER_GATE_BIT     0x01  // Bit 0: Enable PIT Timer 2 to drive speaker
-#define SPEAKER_DATA_BIT     0x02  // Bit 1: Direct speaker control (manual mode)
+// Speaker control bits
+#define SPEAKER_GATE_BIT     0x01  // bit 0: enable PIT Timer 2 to drive speaker
+#define SPEAKER_DATA_BIT     0x02  // bit 1: direct speaker control (manual mode)
 
-// PIT Channel 2 (PC Speaker) registers
+// PIT channel 2 ports and commands
 #define PIT_SPEAKER_CHANNEL  0x42  // Channel 2 data port
 #define PIT_SPEAKER_COMMAND  0x43  // Command register
 
-// PIT Channel 2 command byte for PC Speaker
-// Channel 2, Access mode: lobyte/hibyte, Mode 3 (square wave), Binary mode
+// PIT channel 2 command byte for PC Speaker
+// channel 2, access mode: lobyte/hibyte, mode 3 (square wave), binary mode
 #define PIT_SPEAKER_CMD      (PIT_CHANNEL_2_SEL | PIT_ACCESS_LOHI | PIT_MODE_3 | PIT_BINARY)
 
-// Frequency constants
-#define SPEAKER_BASE_FREQ    1193182  // PIT base frequency in Hz
-#define SPEAKER_MIN_FREQ     20       // Minimum audible frequency
-#define SPEAKER_MAX_FREQ     20000    // Maximum reasonable frequency
+// frequency constants
+#define SPEAKER_BASE_FREQ    1193182
+#define SPEAKER_MIN_FREQ     20
+#define SPEAKER_MAX_FREQ     20000
 
-// Common musical note frequencies (in Hz)
-// Concert pitch for those of you who don't understand music
+// note frequencies in Hz
+// tuned to concert pitch for those of you who understand music
 #define NOTE_C4              261
 #define NOTE_C_SHARP_4       277
 #define NOTE_D4              294
@@ -45,12 +46,12 @@
 #define NOTE_B4              494
 #define NOTE_C5              523
 
-// Beep types for convenience
+// conveniently convenient beep durations
 #define BEEP_SHORT           100   // 100ms
 #define BEEP_MEDIUM          250   // 250ms
 #define BEEP_LONG            500   // 500ms
 
-// Function declarations
+// function prototypes
 void speaker_init(void);
 void speaker_play_tone(uint32_t frequency);
 void speaker_stop(void);

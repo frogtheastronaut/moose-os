@@ -38,8 +38,7 @@ void task_start() {
             current_task = i;
             tasks[i].state = TASK_RUNNING;
             
-            // Jump to the first task - this will start the multitasking
-            // The task will call task_yield() which will trigger task_schedule()
+            // Jump to the first task
             asm volatile (
                 "movl %0, %%esp\n"
                 "jmp *%1\n"

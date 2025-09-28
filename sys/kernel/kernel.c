@@ -41,10 +41,10 @@ void init_filesys() {
     filesystem_init();
     
     // Try to mount existing filesystem from disk
-    int mount_result = fs_mount(0);
+    int mount_result = filesystem_mount(0);
     if (mount_result == 0) {
         // Mount succeeded, try to load existing filesystem data
-        int load_result = fs_load_from_disk();
+        int load_result = filesystem_load_from_disk();
         if (load_result == 0) {
             // Successfully loaded existing filesystem from disk
             return;
@@ -79,7 +79,7 @@ void init_filesys() {
 void kernel_handle_interrupts() {
     static uint32_t last_cursor_update = 0;
     if (key_pressed) {
-        processKey(keyboard_map_normal[(unsigned char)last_keycode], last_keycode);
+        process_key(keyboard_map_normal[(unsigned char)last_keycode], last_keycode);
         key_pressed = false;
     }
     

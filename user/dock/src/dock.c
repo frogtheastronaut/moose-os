@@ -135,7 +135,7 @@ static void draw_time() {
     static rtc_time last_time = {0};
     
     // Get current time using rtc.c
-    rtc_time current_time = rtc_gettime();
+    rtc_time current_time = rtc_get_time();
     
     // Only redraw if seconds actually changed to reduce unnecessary redraws
     if (current_time.seconds == last_time.seconds && 
@@ -224,7 +224,7 @@ static void draw_time_forced() {
     static rtc_time last_time = {0};
 
     // Get current time using rtc.c
-    rtc_time current_time = rtc_gettime();
+    rtc_time current_time = rtc_get_time();
 
     
     last_time = current_time;

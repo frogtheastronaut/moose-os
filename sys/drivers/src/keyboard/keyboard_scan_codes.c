@@ -1,10 +1,12 @@
 /*
-    MooseOS
-    Copyright (c) 2025 Ethan Zhang and Contributors.
+    MooseOS Keyboard Scan Codes
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
 */
 
 #include "keyboard/keyboard_scan_codes.h"
 
+// The following code is a modified version of the OSDev wiki keyboard layout
 unsigned char keyboard_map_normal[128] = {
     0,      // 0x00: (none)
     27,     // 0x01: ESC

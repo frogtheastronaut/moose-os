@@ -1,6 +1,7 @@
-/**
-    Moose Operating System
-    Copyright (c) 2025 Ethan Zhang and Contributors.
+/*
+    MooseOS RTC Driver
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
 */
 #ifndef RTC_H
 #define RTC_H
@@ -10,11 +11,11 @@
 typedef unsigned short uint16_t;
 typedef short int16_t;
 
-// Ports
+// CMOS I/O ports
 #define CMOS_REGISTER_A 0x70
 #define CMOS_REGISTER_B  0x71
 
-// Register Addresses
+// RTC register Addresses
 #define RTC_SECONDS     0x00
 #define RTC_MINUTES     0x02
 #define RTC_HOURS       0x04
@@ -25,7 +26,7 @@ typedef short int16_t;
 #define RTC_STATUS_B    0x0B
 #define RTC_STATUS_C    0x0C
 
-// this is rtc_time
+// RTC time
 typedef struct {
     uint8_t seconds;
     uint8_t minutes;
@@ -35,9 +36,11 @@ typedef struct {
     uint8_t year;
 } rtc_time;
 
-rtc_time rtc_gettime(void);
+// functions
+rtc_time rtc_get_time(void);
 void rtc_init(void);
 
+// external variables
 extern int timezone_offset;
 
-#endif
+#endif // RTC_H

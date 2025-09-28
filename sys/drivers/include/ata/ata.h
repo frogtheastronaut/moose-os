@@ -1,10 +1,16 @@
+/*
+    MooseOS ATA Driver
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
+*/
+
 #ifndef DISK_H
 #define DISK_H
 
 #include "io/io.h"
 #include <stdint.h>
 
-// ATA bit addresses.
+// ATA addresses
 #define ATA_PRIMARY_IO_BASE     0x1F0
 #define ATA_SECONDARY_IO_BASE   0x170
 #define ATA_PRIMARY_CTRL_BASE   0x3F6
@@ -45,43 +51,43 @@
 #define ATA_CMD_IDENTIFY          0xEC
 
 // ATA Status Register 
-#define ATA_SR_BSY     0x80    // Busy
-#define ATA_SR_DRDY    0x40    // Drive ready
-#define ATA_SR_DF      0x20    // Drive write fault
-#define ATA_SR_DSC     0x10    // Drive seek complete
-#define ATA_SR_DRQ     0x08    // Data request ready
-#define ATA_SR_CORR    0x04    // Corrected data
-#define ATA_SR_IDX     0x02    // Index
-#define ATA_SR_ERR     0x01    // Error
+#define ATA_SR_BSY     0x80    // busy
+#define ATA_SR_DRDY    0x40    // drive ready
+#define ATA_SR_DF      0x20    // drive write fault
+#define ATA_SR_DSC     0x10    // drive seek complete
+#define ATA_SR_DRQ     0x08    // data request ready
+#define ATA_SR_CORR    0x04    // corrected data
+#define ATA_SR_IDX     0x02    // index
+#define ATA_SR_ERR     0x01    // error!
 
-// ATA Error Register
-#define ATA_ER_BBK      0x80    // Bad sector
-#define ATA_ER_UNC      0x40    // Uncorrectable data
-#define ATA_ER_MC       0x20    // Media changed
+// ATA error registers
+#define ATA_ER_BBK      0x80    // bad sector
+#define ATA_ER_UNC      0x40    // uncorrectable data
+#define ATA_ER_MC       0x20    // media changed
 #define ATA_ER_IDNF     0x10    // ID mark not found
-#define ATA_ER_MCR      0x08    // Media change request
-#define ATA_ER_ABRT     0x04    // Command aborted
-#define ATA_ER_TK0NF    0x02    // Track 0 not found
-#define ATA_ER_AMNF     0x01    // No address mark
+#define ATA_ER_MCR      0x08    // media change request
+#define ATA_ER_ABRT     0x04    // command aborted
+#define ATA_ER_TK0NF    0x02    // track 0 not found
+#define ATA_ER_AMNF     0x01    // no address mark
 
-// Drive selection
+// drive selection
 #define ATA_MASTER     0x00
 #define ATA_SLAVE      0x01
 
-// Sector size
+// sector size
 #define SECTOR_SIZE    512
 
-// Structure for ATA device information
+// ATA device structure
 typedef struct {
     uint16_t base_io;
     uint16_t ctrl_io;
     uint8_t drive;      // 0 for master, 1 for slave
     uint8_t exists;     // 1 if drive exists, 0 if not
     uint32_t size;      // Size in sectors
-    char model[41];     // Model string (40 chars + null)
-} ata_device_t;
+    char model[41];     // drive identification string
+} ata_device;
 
-// Function prototypes
+// function prototypes
 void disk_init(void);
 int disk_read_sector(uint8_t drive, uint32_t lba, uint8_t *buffer);
 int disk_write_sector(uint8_t drive, uint32_t lba, uint8_t *buffer);
@@ -90,14 +96,14 @@ int disk_write_sectors(uint8_t drive, uint32_t lba, uint8_t sector_count, uint8_
 int disk_force_flush(uint8_t drive);
 uint8_t ata_read_status(uint16_t base_io);
 void ata_write_command(uint16_t base_io, uint8_t cmd);
-// Return codes: 0=success, -1=error, -2=timeout
+// return codes: 0=success, -1=error, -2=timeout
 int ata_wait_ready(uint16_t base_io);
 int ata_wait_drq(uint16_t base_io);
 void ata_select_drive(uint16_t base_io, uint8_t drive);
 int ata_identify(uint8_t drive, uint16_t *buffer);
 void ata_soft_reset(uint16_t ctrl_io);
 
-// Global variables
-extern ata_device_t ata_devices[4]; // Primary master/slave, Secondary master/slave
+// external variables
+extern ata_device ata_devices[4]; // primary master/slave, secondary master/slave
 
-#endif
+#endif // DISK_H

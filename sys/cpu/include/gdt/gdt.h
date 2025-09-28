@@ -1,9 +1,7 @@
 /*
-    Moose Operating System
-    Copyright (c) 2025 Ethan Zhang and Contributors.
-    
-    Header file for ../src/GDT.c
-    
+    MooseOS GDT System
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
 */
 
 #ifndef GDT_H
@@ -42,13 +40,13 @@ typedef struct TSS_entry {
 
 extern TSS_entry tss;
 
-// External functions
+// external functions
 // GDT flush defined  in gdt.asm
 extern void gdt_flush(unsigned int gdt_ptr);
 extern void tss_flush(unsigned short tss_segment_selector);
 
-// Function prototypes
+// function prototypes
 void gdt_encode(int num, unsigned long base, unsigned long limit, unsigned char access, unsigned char gran);
 void gdt_init(void);
 
-#endif
+#endif // GDT_H

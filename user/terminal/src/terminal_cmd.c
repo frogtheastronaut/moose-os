@@ -150,7 +150,7 @@ void term_exec_cmd(const char* cmd) {
     }
     // show time/date
     else if (strEqual(cmd, "time")) {
-        rtc_time local_time = rtc_gettime();
+        rtc_time local_time = rtc_get_time();
         char time_line[CHARS_PER_LINE + 1];
         char date_line[CHARS_PER_LINE + 1];
         
@@ -257,7 +257,7 @@ void term_exec_cmd(const char* cmd) {
     
     else if (strEqual(cmd, "diskinfo")) {
         char info_buffer[512];
-        if (fs_get_disk_info(info_buffer, sizeof(info_buffer)) == 0) {
+        if (filesystem_get_disk_info(info_buffer, sizeof(info_buffer)) == 0) {
             char *line_start = info_buffer;
             char *line_end;
             
@@ -287,7 +287,7 @@ void term_exec_cmd(const char* cmd) {
     
     else if (strEqual(cmd, "memstats")) {
         char stats_buffer[512];
-        if (filesys_get_memory_stats(stats_buffer, sizeof(stats_buffer)) == 0) {
+        if (filesystem_get_memory_stats(stats_buffer, sizeof(stats_buffer)) == 0) {
             char *line_start = stats_buffer;
             char *line_end;
             
@@ -317,11 +317,11 @@ void term_exec_cmd(const char* cmd) {
 
     // save - save current filesystem to disk
     else if (strEqual(cmd, "save")) {
-        if (filesys_disk_status()) {
+        if (filesystem_disk_status()) {
             terminal_print("Saving filesystem to disk...");
             
             // First try to sync
-            int sync_result = filesys_sync();
+            int sync_result = filesystem_sync();
             if (sync_result != 0) {
                 char line[CHARS_PER_LINE + 1];
                 msnprintf(line, sizeof(line), "Sync failed with error: %d", sync_result);
@@ -336,7 +336,7 @@ void term_exec_cmd(const char* cmd) {
                 terminal_print("Filesystem data saved successfully");
                 
                 // Force cache flush
-                filesys_flush_cache();
+                filesystem_flush_cache();
                 terminal_print("Cache flushed to disk");
                 
                 terminal_print("=== SAVE COMPLETE ===");
@@ -352,8 +352,8 @@ void term_exec_cmd(const char* cmd) {
     
     // load - load filesystem from disk
     else if (strEqual(cmd, "load")) {
-        if (filesys_disk_status()) {
-            if (fs_load_from_disk() == 0) {
+        if (filesystem_disk_status()) {
+            if (filesystem_load_from_disk() == 0) {
                 terminal_print("Filesystem loaded from disk successfully");
             } else {
                 terminal_print_error("Failed to load filesystem from disk");
@@ -419,7 +419,7 @@ void term_exec_cmd(const char* cmd) {
         }
         
         // Test disk
-        extern ata_device_t ata_devices[4];
+        extern ata_device ata_devices[4];
         if (ata_devices[0].exists) {
             terminal_print("[PASS] Disk detected");
             

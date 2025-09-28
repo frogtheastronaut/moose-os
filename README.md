@@ -1,25 +1,27 @@
 <h1 align="center"><img src="./resources/moose-logo.png"/></h1>
 
-![GitHub License](https://img.shields.io/github/license/frogtheastronaut/moose-os)  ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/frogtheastronaut/moose-os/main) ![GitHub Repo stars](https://img.shields.io/github/stars/frogtheastronaut/moose-os) ![QEMU](https://img.shields.io/badge/runs%20with-QEMU-blue) ![ISO](https://img.shields.io/badge/build-bootable%20ISO-success) ![Build Status](https://github.com/frogtheastronaut/moose-os/actions/workflows/build.yml/badge.svg)
-
-
-
+![GitHub License](https://img.shields.io/github/license/frogtheastronaut/moose-os)  ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/frogtheastronaut/moose-os/main) ![Build Status](https://github.com/frogtheastronaut/moose-os/actions/workflows/build.yml/badge.svg)
 
 MOOSE is a 80s-style operating system, currently designed to run on virtual machines. \
 A detailed list of features can be found in the [README.txt file](./README.txt)
 
 ## Getting Started
 
-As of writing, these instructions assume you are running MacOS with Homebrew installed. Feel free to adjust these commands so they can work on your Operating System. We are using Linux binutils, so Linux users can skip some of the prequisites.
+These instructions assume you are running MacOS with Homebrew installed. Feel free to adjust these commands so they can work on your Operating System. 
+The Makefile will automatically adjust if you are running on Linux. Users on Linux
+only need to install `nasm`, `xorriso` and `mtools`.
+
+### Supported Virtual Machines
+Most, if not all, virtual machines should work but we currently recommend *QEMU*. We
+also support *Bochs*.
 
 ### Quick Start
 
-Don't want to read any more? Fair enough. Running this OS is easy. Just install QEMU
+Running this OS is relatively easy. Just install QEMU
 
 ```shell
 brew install qemu
 ```
-
 then run
 
 ```shell
@@ -76,6 +78,7 @@ And it should install. It also tells you if it can't find any dependancies.
 
 - [Make](https://www.gnu.org/software/make/) - Runs Makefiles.
 - [Homebrew](https://brew.sh/) - Install Dependencies
+- [GRUB](https://www.gnu.org/software/grub/) - Building ISO files.
 
 ## License
 

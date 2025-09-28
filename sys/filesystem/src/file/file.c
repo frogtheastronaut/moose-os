@@ -2,59 +2,13 @@
     MooseOS File System
     Copyright (c) 2025 Ethan Zhang and Contributors.
 */
-/*
-    ========================= OS THEORY =========================
-    If you haven't read other OS theory files, basically MooseOS is an educational OS, so comments at the top of each 
-    file will explain the relevant OS theory. This is so that users can learn about OS concepts while reading the code, 
-    and maybe even make their own OS some day. 
-    Usually, there are external websites that describe OS Theory excellently. They will be quoted, and a link
-    will be provided.
-
-    File systems are the operating system's method of ordering data on persistent storage devices like disks.
-    
-    The fundamental operations of any filesystem are:
-
-    - Tracking the available storage space
-    - Tracking which block or blocks of data belong to which files
-    - Creating new files
-    - Reading data from existing files into memory
-    - Updating the data in the files
-    - Deleting existing files
-    
-    MooseOS' FILE ALLOCATION:
-    In MooseOS, each file/directory has an inode with file metadata. File content is stored in single disk blocks (up to 512 bytes per file currently).
-    They are persistent as the inode table is saved on disk.
-
-    SUPERBLOCK
-    A superblock is a special block that contains metadata about the entire filesystem, such as:
-    - Total number of inodes
-    - Total number of data blocks
-    - Free inode count
-    - Free data block count
-    - Filesystem signature (to identify the filesystem type)
-    - Bitmaps for tracking used/free inodes and data blocks
-    
-    INODES:
-    The OSDev wiki describes inodes as follows:
-    "inodes (information nodes) are a crucial design element in most Unix file systems: 
-    Each file is made of data blocks (the sectors that contains your raw data bits), 
-    index blocks (containing pointers to data blocks so that you know which sector is the 
-    nth in the sequence), and one inode block.
-
-    "The inode is the root of the index blocks, and can also be the sole index block if the 
-    file is small enough. Moreover, as Unix file systems support hard links (the same file may 
-    appear several times in the directory tree), inodes are a natural place to store Metadata 
-    such as file size, owner, creation/access/modification times, locks, etc."
-
-    Source: https://wiki.osdev.org/File_Systems 
-*/
 
 // Includes
 #include "file/file.h"
 #include "file/file_alloc.h"
 
 // Current file count
-int fileCount = 0;
+int file_count = 0;
 
 // Buffer used for multiple purposes
 char buffer[256];
@@ -64,7 +18,7 @@ File* root;
 File* cwd;
 
 // Superblock
-superblock_t *superblock = NULL;
+file_superblock *superblock = NULL;
 
 // 1 if filesystem is mounted, 0 if not
 // Currently, it's not mounted
@@ -77,7 +31,7 @@ uint8_t boot_drive = 0;
 uint8_t disk_buffer[SECTOR_SIZE];
 
 // Cache
-superblock_t sb_cache;
+file_superblock sb_cache;
 
 /**
  * Set file content
@@ -92,7 +46,7 @@ int set_file_content(File* file, const char* content) {
         kfree(file->file.content);
     }
     
-    // Allocate new content (with null terminator)
+    // Allocate new content
     file->file.content = (char*)kmalloc(new_size + 1);
     if (!file->file.content) {
         file->file.content_size = 0;
@@ -123,7 +77,7 @@ int add_child_to_dir(File* dir, File* child) {
     // Initialize children array if first child
     if (!dir->folder.children) {
         /**
-         * @note We could make this bigger
+         * @todo We could make this bigger
          */
         dir->folder.capacity = 4; 
         dir->folder.children = (File**)kmalloc(dir->folder.capacity * sizeof(File*));
@@ -180,7 +134,7 @@ int remove_child_from_dir(File* dir, File* child) {
  * Check if file name in CWD
  * @return true if exists, false if not
  */
-bool name_in_CWD(const char* name, NodeType type) {
+bool name_in_CWD(const char* name, file_node type) {
     if (!cwd || cwd->type != FOLDER_NODE || !cwd->folder.children) return false;
     
     for (int i = 0; i < cwd->folder.childCount; i++) {
@@ -195,16 +149,16 @@ bool name_in_CWD(const char* name, NodeType type) {
 /**
  * Write inode to disk with bounds checking
  */
-int write_inode_to_disk(uint32_t inode_num, disk_inode_t *inode) {
+int write_inode_to_disk(uint32_t inode_num, disk_inode *inode) {
     if (inode_num == 0 || inode_num >= MAX_DISK_INODES) return -1;
     if (!inode) return -1;
     
     uint32_t sector = INODE_TABLE_SECTOR + (inode_num / INODES_PER_SECTOR);
     uint32_t inode_offset_in_sector = inode_num % INODES_PER_SECTOR;
-    uint32_t byte_offset = inode_offset_in_sector * sizeof(disk_inode_t);
+    uint32_t byte_offset = inode_offset_in_sector * sizeof(disk_inode);
     
     // Validate that inode fits in sector
-    if (byte_offset + sizeof(disk_inode_t) > SECTOR_SIZE) {
+    if (byte_offset + sizeof(disk_inode) > SECTOR_SIZE) {
         return -7; // Inode doesn't fit in sector
     }
     
@@ -216,7 +170,7 @@ int write_inode_to_disk(uint32_t inode_num, disk_inode_t *inode) {
     // Copy inode data safely
     uint8_t *src = (uint8_t*)inode;
     uint8_t *dst = disk_buffer + byte_offset;
-    for (uint32_t i = 0; i < sizeof(disk_inode_t); i++) {
+    for (uint32_t i = 0; i < sizeof(disk_inode); i++) {
         dst[i] = src[i];
     }
     
@@ -230,16 +184,16 @@ int write_inode_to_disk(uint32_t inode_num, disk_inode_t *inode) {
 /**
  * Read inode from disk with bounds checking
  */
-int read_inode_from_disk(uint32_t inode_num, disk_inode_t *inode) {
+int read_inode_from_disk(uint32_t inode_num, disk_inode *inode) {
     if (inode_num == 0 || inode_num >= MAX_DISK_INODES) return -1;
     if (!inode) return -1;
     
     uint32_t sector = INODE_TABLE_SECTOR + (inode_num / INODES_PER_SECTOR);
     uint32_t inode_offset_in_sector = inode_num % INODES_PER_SECTOR;
-    uint32_t byte_offset = inode_offset_in_sector * sizeof(disk_inode_t);
+    uint32_t byte_offset = inode_offset_in_sector * sizeof(disk_inode);
     
     // Validate that inode fits in sector
-    if (byte_offset + sizeof(disk_inode_t) > SECTOR_SIZE) {
+    if (byte_offset + sizeof(disk_inode) > SECTOR_SIZE) {
         return -7; // Inode doesn't fit in sector
     }
     
@@ -250,7 +204,7 @@ int read_inode_from_disk(uint32_t inode_num, disk_inode_t *inode) {
     // Copy inode data safely
     uint8_t *src = disk_buffer + byte_offset;
     uint8_t *dst = (uint8_t*)inode;
-    for (uint32_t i = 0; i < sizeof(disk_inode_t); i++) {
+    for (uint32_t i = 0; i < sizeof(disk_inode); i++) {
         dst[i] = src[i];
     }
     
@@ -260,11 +214,11 @@ int read_inode_from_disk(uint32_t inode_num, disk_inode_t *inode) {
 /**
  * Convert a memory File structure to disk inode format
  */
-static int memory_to_inode(File *memory_file, disk_inode_t *disk_inode, uint32_t inode_num, uint32_t parent_inode) {
+static int memory_to_inode(File *memory_file, disk_inode *disk_inode, uint32_t inode_num, uint32_t parent_inode) {
     if (!memory_file || !disk_inode) return -1;
     
     // Clear the disk inode
-    for (uint32_t i = 0; i < sizeof(disk_inode_t); i++) {
+    for (uint32_t i = 0; i < sizeof(disk_inode); i++) {
         ((uint8_t*)disk_inode)[i] = 0;
     }
     
@@ -335,7 +289,7 @@ static int memory_to_inode(File *memory_file, disk_inode_t *disk_inode, uint32_t
 int save_directory_recursive(File *dir, uint32_t dir_inode_num, uint32_t parent_inode) {
     if (!dir || dir->type != FOLDER_NODE) return -1;
     
-    disk_inode_t dir_disk_inode;
+    disk_inode dir_disk_inode;
     if (memory_to_inode(dir, &dir_disk_inode, dir_inode_num, parent_inode) != 0) {
         return -1;
     }
@@ -354,7 +308,7 @@ int save_directory_recursive(File *dir, uint32_t dir_inode_num, uint32_t parent_
         if (child_inode == 0) continue;
         
         if (child->type == FILE_NODE) {
-            disk_inode_t child_disk_inode;
+            disk_inode child_disk_inode;
             if (memory_to_inode(child, &child_disk_inode, child_inode, dir_inode_num) == 0) {
                 write_inode_to_disk(child_inode, &child_disk_inode);
                 dir_disk_inode.child_inodes[dir_disk_inode.child_count++] = child_inode;
@@ -376,7 +330,7 @@ int save_directory_recursive(File *dir, uint32_t dir_inode_num, uint32_t parent_
 /**
  * Convert disk inode to memory File structure
  */
-static File* convert_disk_to_memory_file(disk_inode_t *disk_inode) {
+static File* convert_disk_to_memory_file(disk_inode *disk_inode) {
     if (!disk_inode || disk_inode->signature != FILESYSTEM_SIGNATURE) return NULL;
     
     File *memory_file = file_alloc();
@@ -439,7 +393,7 @@ static File* convert_disk_to_memory_file(disk_inode_t *disk_inode) {
  * Recursively load directory tree from disk
  */
 int load_directory_recursive(uint32_t inode_num, File *parent) {
-    disk_inode_t disk_inode;
+    disk_inode disk_inode;
     if (read_inode_from_disk(inode_num, &disk_inode) != 0) {
         return -1;
     }

@@ -2,42 +2,9 @@
     MooseOS
     Copyright (c) 2025 Ethan Zhang and Contributors.
 */
-  
-/*
-    ============================== OS THEORY ==============================
-    If you haven't read other OS theory files, basically MooseOS is an educational OS, so comments at the top of each 
-    file will explain the relevant OS theory. This is so that users can learn about OS concepts while reading the code, 
-    and maybe even make their own OS some day. 
-    Usually, there are external websites that describe OS Theory excellently. They will be quoted, and a link
-    will be provided.
-
-    Paging is a system which allows each process to see a full virtual address space, 
-    without actually requiring the full amount of physical memory to be available or present.
-    This is good because if you don't have paging, two programs might be using the same
-    physical memory addresses, causing them to interfere with each other and leading to crashes or data corruption
-    
-    Paging is achieved through the use of the Memory Management Unit (MMU). On the x86, the MMU 
-    maps memory through a series of tables, two to be exact. They are the paging directory (PD), 
-    and the paging table (PT).
-
-    Both tables contain 1024 4-byte entries, making them 4 KiB each. In the page directory, each 
-    entry points to a page table. In the page table, each entry points to a 4 KiB physical page frame.
-    Additionally, each entry has bits controlling access protection and caching features of the structure 
-    to which it points. The entire system consisting of a page directory and page tables represents a linear 
-    4-GiB virtual memory map.
-    
-    MEMORY LAYOUT IN MooseOS:
-    - 0x00000000 - 0x00400000: Kernel space (4MB) - identity mapped
-    - 0x00400000+: Page tables and allocated memory
-    - 0x40000000+: User space (starts at 1GB)
-
-    Source: https://wiki.osdev.org/Paging
-    
-*/
 
 #include "paging/paging.h"
 
-// Static page directory and first page table - 4kb
 uint32_t page_directory[1024] __attribute__((aligned(4096)));
 uint32_t first_page_table[1024] __attribute__((aligned(4096)));
 
@@ -46,7 +13,7 @@ page_directory_t *kernel_directory = (page_directory_t*)page_directory;
 page_directory_t *current_directory = (page_directory_t*)page_directory;
 
 // Frame allocator globals
-static uint32_t next_frame = 0x00500000; // Start after kernel (5MB)
+static uint32_t next_frame = 0x00500000;
 static uint32_t frames_allocated = 0;
 
 // Assembly functions for CR3 register manipulation
@@ -77,34 +44,21 @@ void flush_tlb_entry(uint32_t virtual_addr) {
     asm volatile("invlpg (%0)" : : "r"(virtual_addr) : "memory");
 }
 
-/**
- * Initialise paging
- * The following code is largely credited to OSDev wiki
- */
 void paging_init(uint32_t memory_size) {
     // Create a blank page directory
     for (int i = 0; i < 1024; i++) {
-        // This sets the following flags to the pages:
-        //   Supervisor: Only kernel-mode can access them
-        //   Write Enabled: It can be both read from and written to
-        //   Not Present: The page table is not present
         page_directory[i] = 0x00000002;
     }
 
     // Create first page table
-    // We will fill all 1024 entries in the table, mapping 4 megabytes
     for (unsigned int i = 0; i < 1024; i++) {
-        // As the address is page aligned, it will always leave 12 bits zeroed.
-        // Those bits are used by the attributes
         // attributes: supervisor level, read/write, present.
         first_page_table[i] = (i * 0x1000) | 3;
     }
     
-    // Put the page table in the page directory
     // attributes: supervisor level, read/write, present
     page_directory[0] = ((unsigned int)first_page_table) | 3;
     
-    // Enable paging
     // Load page directory into CR3
     load_page_directory(page_directory);
     
@@ -114,7 +68,6 @@ void paging_init(uint32_t memory_size) {
 
 /**
  * @note enable_paging and disable_paging are not used.
- * 
  */
 void enable_paging(page_directory_t *dir) {
     current_directory = dir;

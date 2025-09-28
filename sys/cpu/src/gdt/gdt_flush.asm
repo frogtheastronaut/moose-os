@@ -1,9 +1,13 @@
+; MooseOS GDT and TSS flush system
+; Copyright (c) 2025 Ethan Zhang and Contributors.
+; All rights reserved.
+
 [bits 32]
 
 global gdt_flush
 global tss_flush
 
-; Flush the GDT 
+; flush gdt
 gdt_flush:
 	mov eax, [esp+4] 
 	lgdt [eax]      
@@ -18,7 +22,7 @@ gdt_flush:
 .flush:
 	ret
 
-; TSS flush
+; flush tss
 tss_flush:           
     mov   ax, [esp+4]
     ltr   ax

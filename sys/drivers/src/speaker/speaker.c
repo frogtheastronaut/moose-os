@@ -1,12 +1,27 @@
 /*
-    MooseOS 
-    Copyright (c) 2025 Ethan Zhang and Contributors.
+    MooseOS PC Speaker Driver
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
 */
+
+/**
+ * 
+ * @todo: there is no code that limits the speaker's
+ * amplitude or frequency. 
+ * users will be politely advised not to blast their
+ * ears off.
+ * no ears have been harmed yet. if you get harmed,
+ * please open a pull request and change the counter here:
+ * 
+ * ears_harmed = 0
+ * 
+ * we are not responsible for any hearing damage. thank you
+ */
 
 #include "speaker/speaker.h"
 #include "io/io.h"
 
-// Internal state tracking
+// internal state tracking variables
 static uint8_t speaker_initialized = 0;
 static uint8_t speaker_playing = 0;
 static uint8_t original_speaker_state = 0;
@@ -16,25 +31,26 @@ static uint8_t original_speaker_state = 0;
  */
 void speaker_init(void) {
     if (speaker_initialized) {
-        return; // Already initialised
+        return; // already initialised
     }
     
     original_speaker_state = inb(SPEAKER_PORT);
     
-    // Mute the speaker
+    // mute the speaker
     uint8_t current_state = inb(SPEAKER_PORT);
     outb(SPEAKER_PORT, current_state & ~(SPEAKER_GATE_BIT | SPEAKER_DATA_BIT));
     
-    // Configure PIT Channel 2 for square wave mode
+    // configure PIT Channel 2 for square wave mode
     outb(PIT_COMMAND, PIT_SPEAKER_CMD);
-    
+
+    // set the variables
     speaker_playing = 0;
     speaker_initialized = 1;
 }
 
 /**
- * Calculate the PIT divisor for a given frequency
- * @param frequency Desired frequency in Hz
+ * calculate the PIT divisor for a given frequency
+ * @param frequency desired frequency in Hz
  * @return PIT divisor value (clamped to valid range)
  */
 uint16_t speaker_calculate_divisor(uint32_t frequency) {
@@ -46,7 +62,7 @@ uint16_t speaker_calculate_divisor(uint32_t frequency) {
     
     uint32_t divisor = SPEAKER_BASE_FREQ / frequency;
     
-    // Clamp to 16-bit range
+    // clamp to 16-bit range
     if (divisor > 0xFFFF) {
         divisor = 0xFFFF;
     } else if (divisor < 1) {
@@ -57,8 +73,8 @@ uint16_t speaker_calculate_divisor(uint32_t frequency) {
 }
 
 /**
- * Set PIT Channel 2 frequency
- * @param divisor PIT divisor value (1-65535)
+ * set PIT Channel 2 frequency
+ * @param divisor PIT divisor value
  */
 void speaker_set_pit_frequency(uint16_t divisor) {
     outb(PIT_SPEAKER_CHANNEL, divisor & 0xFF); // Low byte
@@ -66,7 +82,7 @@ void speaker_set_pit_frequency(uint16_t divisor) {
 }
 
 /**
- * Enable speaker gate
+ * enable speaker gate
  */
 void speaker_enable_gate(void) {
     uint8_t current_state = inb(SPEAKER_PORT);
@@ -75,7 +91,7 @@ void speaker_enable_gate(void) {
 }
 
 /**
- * Disable speaker gate
+ * disable speaker gate
  */
 void speaker_disable_gate(void) {
     uint8_t current_state = inb(SPEAKER_PORT);
@@ -85,8 +101,8 @@ void speaker_disable_gate(void) {
 }
 
 /**
- * Play a tone at the specified frequency
- * @param frequency Frequency in Hz (20-20000 range recommended)
+ * play a tone at the specified frequency
+ * @param frequency frequency in Hz
  */
 void speaker_play_tone(uint32_t frequency) {
     if (!speaker_initialized) {
@@ -98,18 +114,18 @@ void speaker_play_tone(uint32_t frequency) {
     outb(PIT_COMMAND, PIT_SPEAKER_CMD);
     speaker_set_pit_frequency(divisor);
     
-    // Enable the speaker
+    // enable the speaker
     speaker_enable_gate();
 }
 
 /**
- * Stop playing sound and mute the speaker
+ * stop playing sound and mute the speaker
  */
 void speaker_stop(void) {
-    // First disconnect PIT from speaker
+    // disconnect PIT from speaker
     speaker_disable_gate();
-    
-    // Clear both bits
+
+    // clear both bits
     uint8_t current_state = inb(SPEAKER_PORT);
     outb(SPEAKER_PORT, current_state & ~(SPEAKER_GATE_BIT | SPEAKER_DATA_BIT));
     
@@ -117,7 +133,7 @@ void speaker_stop(void) {
 }
 
 /**
- * Check if the speaker is currently playing a tone
+ * check if the speaker is currently playing
  * @return 1 if playing, 0 if muted
  */
 uint8_t speaker_is_playing(void) {
@@ -126,7 +142,7 @@ uint8_t speaker_is_playing(void) {
 
 /**
  * Delay speaker
- * @param milliseconds Approximate milliseconds to wait
+ * @param milliseconds approximate milliseconds to wait
  * 
  * @todo there's got to be a better way to delay this speaker
  */
@@ -149,12 +165,12 @@ void speaker_beep(uint32_t frequency, uint32_t duration_ms) {
 }
 
 /**
- * The following code plays various beeps.
+ * the following code plays various beeps.
  * BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP
  * BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP BEEP
  * 
  * @todo ADD MORE BEEPS
- * Get it to play a tune?
+ * get it to play a tune?
  */
 void speaker_system_beep(void) {
     speaker_beep(1000, 200);

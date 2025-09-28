@@ -211,7 +211,7 @@ void draw_term() {
 /**
  * Handle terminal keyboard input
  */
-bool term_handlekey(unsigned char key, char scancode) {
+bool terminal_handle_key(unsigned char key, char scancode) {
     if (!terminal_active) return false;
     
     switch (scancode) {

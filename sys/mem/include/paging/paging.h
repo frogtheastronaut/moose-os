@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include "libc/lib.h"
 
-// Page size constants (4KB pages)
+// Page size constants
 #define PAGE_SIZE           4096
 #define PAGE_ENTRIES        1024
 #define PAGE_DIRECTORY_SIZE 1024
@@ -22,13 +22,13 @@
 #define PAGE_ACCESSED   0x020   // Page has been accessed
 #define PAGE_DIRTY      0x040   // Page has been written to
 
-// Memory layout constants
+// Memory layout
 #define KERNEL_START        0x00100000  // 1MB - where kernel is loaded
 #define KERNEL_END          0x00400000  // 4MB - end of kernel space
 #define USER_START          0x40000000  // 1GB - start of user space
 #define PAGE_TABLE_START    0x00400000  // 4MB - where page tables begin
 
-// Helper macros
+// Macros
 #define PAGE_ALIGN_DOWN(addr)   ((addr) & ~(PAGE_SIZE - 1))
 #define PAGE_ALIGN_UP(addr)     (((addr) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
 #define GET_PAGE_INDEX(addr)    (((addr) >> 12) & 0x3FF)

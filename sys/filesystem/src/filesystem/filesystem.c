@@ -5,9 +5,9 @@
  */
 static void auto_save_filesystem(void) {
     if (filesystem_mounted && superblock) {
-        filesys_sync();
+        filesystem_sync();
         filesystem_save_to_disk();
-        filesys_flush_cache();
+        filesystem_flush_cache();
     }
 }
 
@@ -217,7 +217,7 @@ int filesystem_format(uint8_t drive) {
     superblock->inode_bitmap[1 / 8] |= (1 << (1 % 8));
     
     // Write superblock to disk with bounds checking
-    if (sizeof(superblock_t) > SECTOR_SIZE) {
+    if (sizeof(file_superblock) > SECTOR_SIZE) {
         return -8; // Superblock too large for sector
     }
     
@@ -227,7 +227,7 @@ int filesystem_format(uint8_t drive) {
     }
     
     // Copy superblock 
-    for (uint32_t i = 0; i < sizeof(superblock_t); i++) {
+    for (uint32_t i = 0; i < sizeof(file_superblock); i++) {
         disk_buffer[i] = ((uint8_t*)superblock)[i];
     }
     
@@ -247,10 +247,10 @@ int filesystem_format(uint8_t drive) {
     }
     
     // Create root directory inode
-    disk_inode_t root_inode;
+    disk_inode root_inode;
     
     // Clear the structure first
-    for (int i = 0; i < sizeof(disk_inode_t); i++) {
+    for (int i = 0; i < sizeof(disk_inode); i++) {
         ((uint8_t*)&root_inode)[i] = 0;
     }
     
@@ -287,7 +287,7 @@ int filesystem_format(uint8_t drive) {
 /**
  * Mount filesystem from disk
  */
-int fs_mount(uint8_t drive) {
+int filesystem_mount(uint8_t drive) {
     // Read superblock
     if (disk_read_sector(drive, SUPERBLOCK_SECTOR, disk_buffer) != 0) {
         return -1;
@@ -295,7 +295,7 @@ int fs_mount(uint8_t drive) {
     
     // Copy superblock data
     superblock = &sb_cache;
-    for (uint32_t i = 0; i < sizeof(superblock_t); i++) {
+    for (uint32_t i = 0; i < sizeof(file_superblock); i++) {
         ((uint8_t*)superblock)[i] = disk_buffer[i];
     }
     
@@ -313,11 +313,11 @@ int fs_mount(uint8_t drive) {
 /**
  * Sync filesystem to disk 
  */
-int filesys_sync(void) {
+int filesystem_sync(void) {
     if (!filesystem_mounted || !superblock) return -1;
     
     // Write superblock to disk with bounds checking
-    if (sizeof(superblock_t) > SECTOR_SIZE) {
+    if (sizeof(file_superblock) > SECTOR_SIZE) {
         return -8; // Superblock too large for sector
     }
     
@@ -327,7 +327,7 @@ int filesys_sync(void) {
     }
     
     // Copy superblock
-    for (uint32_t i = 0; i < sizeof(superblock_t); i++) {
+    for (uint32_t i = 0; i < sizeof(file_superblock); i++) {
         disk_buffer[i] = ((uint8_t*)superblock)[i];
     }
     
@@ -355,14 +355,14 @@ int filesystem_save_to_disk(void) {
     }
     
     // Sync superblock
-    return filesys_sync();
+    return filesystem_sync();
 }
 
 
 /**
  * Load filesystem from disk to memory
  */
-int fs_load_from_disk(void) {
+int filesystem_load_from_disk(void) {
     if (!filesystem_mounted || !superblock) return -1;
     
     // Clear current in-memory filesystem and free all allocated files
@@ -371,10 +371,10 @@ int fs_load_from_disk(void) {
         root = NULL;
         cwd = NULL;
     }
-    fileCount = 0;
+    file_count = 0;
     
     // Load root directory
-    disk_inode_t root_disk_inode;
+    disk_inode root_disk_inode;
     if (read_inode_from_disk(1, &root_disk_inode) != 0) {
         return -1;
     }
@@ -412,7 +412,7 @@ int fs_load_from_disk(void) {
  * 
  * This is more of a debug thing.
  */
-int fs_get_disk_info(char *info_buffer, int buffer_size) {
+int filesystem_get_disk_info(char *info_buffer, int buffer_size) {
     if (!info_buffer || buffer_size < 200) return -1;
     
     char temp[100];
@@ -492,18 +492,18 @@ int fs_get_disk_info(char *info_buffer, int buffer_size) {
 /**
  * Get disk status (1 = mounted, 0 = not mounted)
  */
-int filesys_disk_status(void) {
+int filesystem_disk_status(void) {
     return filesystem_mounted;
 }
 
 /**
  * Flush filesystem cache to disk
  */
-void filesys_flush_cache(void) {
+void filesystem_flush_cache(void) {
     // Check if filesystem is mounted
     if (filesystem_mounted) {
         // First sync the superblock
-        filesys_sync();
+        filesystem_sync();
         
         // Then save all filesystem data
         filesystem_save_to_disk();
@@ -521,7 +521,7 @@ void filesys_flush_cache(void) {
  * 
  * This function is currently being used by the terminal
  */
-int filesys_get_memory_stats(char *stats_buffer, int buffer_size) {
+int filesystem_get_memory_stats(char *stats_buffer, int buffer_size) {
     if (!stats_buffer || buffer_size < 200) return -1;
     
     char temp[50];
@@ -530,12 +530,12 @@ int filesys_get_memory_stats(char *stats_buffer, int buffer_size) {
     strcat(stats_buffer, "Filesystem Memory Statistics:\n");
     
     strcat(stats_buffer, "Active Files: ");
-    int2str(fileCount, temp, sizeof(temp));
+    int2str(file_count, temp, sizeof(temp));
     strcat(stats_buffer, temp);
     strcat(stats_buffer, "\n");
     
     // Calculate memory usage
-    int total_memory = fileCount * sizeof(File); // Base structures
+    int total_memory = file_count * sizeof(File); // Base structures
     int content_memory = 0;
     int children_memory = 0;
 
