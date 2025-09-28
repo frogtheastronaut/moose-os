@@ -25,7 +25,6 @@ jobs:
 
       - name: Build MooseOS ISO
         run: |
-          echo "Include paths: $(ALL_INCLUDE_PATHS)"
           make build-iso
 
       - name: Clean Build Artifacts

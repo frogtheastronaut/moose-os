@@ -44,6 +44,7 @@ build-elf: $(ASM_OBJ) $(OBJ)
 	@bash -c 'if [ "$(shell uname)" = "Linux" ]; then \
 		echo "$(MAKE_PREFIX) Detected Linux."; \
 	fi'
+	@echo "Include paths: $(ALL_INCLUDE_PATHS)"
 	@echo "$(MAKE_PREFIX) Building ELF..."
 	@$(LD) -m elf_i386 -T sys/link.ld -o bin/MooseOS.elf $(ASM_OBJ) $(OBJ)
 
