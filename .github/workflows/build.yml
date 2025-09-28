@@ -1,0 +1,43 @@
+name: MooseOS Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install NASM if missing
+        run: |
+          if ! command -v nasm >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y nasm
+          fi
+
+      - name: Install QEMU if missing
+        run: |
+          if ! command -v qemu-system-i386 >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y qemu-system-x86
+          fi
+
+      - name: Pre-clean Build Artifacts
+        run: make preclean
+
+      - name: Build MooseOS ISO
+        run: make build-iso
+
+      - name: Clean Build Artifacts
+        run: make clean-all
+
+      - name: Upload ISO and ELF artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: MooseOS-binaries
+          path: bin/MooseOS.iso bin/MooseOS.elf

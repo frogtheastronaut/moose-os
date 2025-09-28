@@ -11,13 +11,19 @@ NC = \033[0m
 MAKE_PREFIX = [$(RED)MAKE$(NC)]
 
 NASM = nasm
+ifeq ($(shell uname),Darwin)
 GCC = i386-elf-gcc
+LD = i386-elf-ld
+GRUB_MKRESCUE = i686-elf-grub-mkrescue
+else
+GCC = gcc
+LD = ld
+GRUB_MKRESCUE = grub-mkrescue
+endif
 INCLUDE_PATHS=$(shell find . -type d -name include)
 NESTED_INCLUDE_PATHS=$(shell find . -type d -path '*/include/*')
 ALL_INCLUDE_PATHS=$(INCLUDE_PATHS) $(NESTED_INCLUDE_PATHS)
 INCLUDES=$(addprefix -I,$(ALL_INCLUDE_PATHS))
-LD = i386-elf-ld
-GRUB_MKRESCUE = i686-elf-grub-mkrescue
 QEMU = qemu-system-i386
 
 SRC = $(shell find sys user -name "*.c" -type f)
@@ -26,15 +32,18 @@ OBJ = $(SRC:.c=.o)
 ASM_SRC = $(shell find sys user -name "*.asm" -type f)
 ASM_OBJ = $(ASM_SRC:.asm=.o)
 
-all: preclean check_dependancies build-run clean-all
+all: preclean check-dependencies build-run clean-all
 
-check_dependancies:
+check-dependencies:
 	@echo "$(MAKE_PREFIX) Running dependancy checker..."
 	@# Check if MacOS. If not, user must manually install dependancies
 	@bash -c 'if [ "$(shell uname)" = "Darwin" ]; then bash scripts/check_dependancy_mac.sh; else echo "User'\''s OS is not MacOS. Skipping dependancy checker."; fi'
 	
 
 build-elf: $(ASM_OBJ) $(OBJ)
+	@bash -c 'if [ "$(shell uname)" = "Linux" ]; then \
+		echo "$(MAKE_PREFIX) Detected Linux."; \
+	fi'
 	@echo "$(MAKE_PREFIX) Building ELF..."
 	@$(LD) -m elf_i386 -T sys/link.ld -o bin/MooseOS.elf $(ASM_OBJ) $(OBJ)
 

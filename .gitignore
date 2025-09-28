@@ -18,3 +18,7 @@ bin/moose_disk.img
 
 # macOS malloc testing
 */*.dylib
+
+# Binaries will be built in runtime
+bin/MooseOS.elf
+bin/MooseOS.iso
