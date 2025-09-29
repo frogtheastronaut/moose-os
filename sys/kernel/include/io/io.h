@@ -1,7 +1,7 @@
 /*
     MooseOS I/O port operations
     Copyright (c) 2025 Ethan Zhang
-    All rights reserved
+    Licensed under the MIT license. See license file for details
 */
 
 #ifndef IO_H_

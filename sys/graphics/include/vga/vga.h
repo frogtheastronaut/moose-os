@@ -1,7 +1,7 @@
 /*
     MooseOS VGA code
     Copyright (c) 2025 Ethan Zhang
-    All rights reserved
+    Licensed under the MIT license. See license file for details
 */
 #ifndef I386_VGA_H
 #define I386_VGA_H

@@ -1,7 +1,7 @@
 /*
     MooseOS Mouse GUI code
     Copyright (c) 2025 Ethan Zhang
-    All rights reserved
+    Licensed under the MIT license. See license file for details
 */
 #ifndef MOUSE_GUI_H
 #define MOUSE_GUI_H

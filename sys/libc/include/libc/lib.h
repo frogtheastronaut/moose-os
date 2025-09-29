@@ -1,6 +1,16 @@
+/*
+    MooseOS LIBC Header
+    Copyright (c) 2025 Ethan Zhang
+    Licensed under the MIT license. See license file for details
+*/
 #ifndef LIB_H_
 #define LIB_H_
 
+/**
+ * This file contains all the header files for the libc library.
+ * Including this file will include all the necessary headers for using the libc library.
+ * @todo remove this and include only the necessary headers in each file.
+ */
 #include "string/string.h"
 #include "stdio/stdio.h"
 #include "stdlib/stdlib.h"

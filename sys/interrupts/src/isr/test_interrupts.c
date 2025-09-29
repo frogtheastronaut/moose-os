@@ -1,7 +1,7 @@
 /**
  * MooseOS Interrupt Service Routine test code
  * Copyright (c) 2025 Ethan Zhang
- * All rights reserved
+ * Licensed under the MIT license. See license file for details
  *
  * @warning These functions intentionally cause exceptions. For testing purposes only
 */

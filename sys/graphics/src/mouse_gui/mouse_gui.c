@@ -1,7 +1,7 @@
 /*
     MooseOS GUI text code
     Copyright (c) 2025 Ethan Zhang
-    All rights reserved
+    Licensed under the MIT license. See license file for details
 */
 
 #include "mouse_gui/mouse_gui.h"

@@ -1,7 +1,7 @@
 /*
     MooseOS Scancode Map
     Copyright (c) 2025 Ethan Zhang
-    All rights reserved
+    Licensed under the MIT license. See license file for details
 */
 #ifndef KEYDEF_H
 #define KEYDEF_H

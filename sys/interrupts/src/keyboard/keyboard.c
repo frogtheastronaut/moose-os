@@ -1,7 +1,7 @@
 /*
     MooseOS Keyboard interrupt handler code
     Copyright (c) 2025 Ethan Zhang
-    All rights reserved
+    Licensed under the MIT license. See license file for details
 */
 
 #include "keyboard/keyboard.h"

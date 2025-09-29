@@ -1,7 +1,7 @@
 /*
     MooseOS Filesystem implementation
     Copyright (c) 2025 Ethan Zhang
-    All rights reserved
+    Licensed under the MIT license. See license file for details
 */
 
 #ifndef FILESYSTEM_H

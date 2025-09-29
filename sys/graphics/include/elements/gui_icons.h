@@ -1,7 +1,7 @@
 /*
     MooseOS GUI Icons
     Copyright (c) 2025 Ethan Zhang
-    All rights reserved
+    Licensed under the MIT license. See license file for details
 */
 #ifndef GUI_ICONS_H
 #define GUI_ICONS_H

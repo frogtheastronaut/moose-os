@@ -1,6 +1,6 @@
 ; MooseOS GDT and TSS flush system
 ; Copyright (c) 2025 Ethan Zhang and Contributors.
-; All rights reserved.
+; Licensed under the MIT license. See license file for details.
 
 [bits 32]
 
