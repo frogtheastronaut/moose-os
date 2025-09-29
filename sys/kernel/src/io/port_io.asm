@@ -1,13 +1,13 @@
 global read_port
 global write_port
 
-; IO PORTS - READ PORT
+; read port
 read_port:
 	mov edx, [esp + 4]
 	in al, dx	
 	ret
 
-; IO PORTS - WRITE PORT
+; write port
 write_port:
 	mov   edx, [esp + 4]    
 	mov   al, [esp + 4 + 4]  

@@ -46,13 +46,6 @@ static void initialise_all_entries(void)
     /* IDT entry of mouse interrupt (IRQ12) */
     mouse_address = (unsigned long)mouse_handler;
     idt_set_entry(0x2C, mouse_address, KERNEL_CODE_SEGMENT_OFFSET, INTERRUPT_GATE);
-
-    /* IDT entry of page fault interrupt (exception 14) */
-    /**
-     * @todo do we need this? we have an ISR for page fault interrupt handling
-     */
-    unsigned long page_fault_address = (unsigned long)page_fault_handler_asm;
-    idt_set_entry(14, page_fault_address, KERNEL_CODE_SEGMENT_OFFSET, INTERRUPT_GATE);
 }
 /**
  * initialize the Interrupt Descriptor Table

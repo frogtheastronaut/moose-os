@@ -317,19 +317,3 @@ void kfree_aligned(void *ptr) {
     // In a real implementation, you'd maintain a free list
     frames_allocated--;
 }
-
-void page_fault_handler(uint32_t error_code, uint32_t virtual_addr) {
-    // Just halt on page fault
-    asm volatile("hlt");
-}
-
-void page_fault_handler_main(uint32_t error_code) {
-
-    // Get the virtual address that caused the page fault
-    uint32_t faulting_address;
-    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
-
-    // Call the main page fault handler
-    page_fault_handler(error_code, faulting_address);
-
-}

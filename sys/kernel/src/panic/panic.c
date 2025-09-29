@@ -1,3 +1,9 @@
+/*
+    MooseOS Panic code
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
+*/
+
 #include "panic/panic.h"
 #include "vga/vga.h"
 #include "gui/gui.h"
@@ -11,9 +17,9 @@ void panic(const char* message) {
 	draw_text(10, 50, "KERNEL PANIC", VGA_COLOUR_WHITE);
 	draw_text(10, 70, message, VGA_COLOUR_WHITE);
 	draw_text(10, 100, "System halted. Please restart.", VGA_COLOUR_WHITE);
-	debugf("[MOOSE] PANIC!");
+	debugf("[MOOSE] PANIC!\n");
 	
-	// Halt the CPU indefinitely
+	// halt the CPU
 	while (1) {
 		asm volatile("hlt");
 	}

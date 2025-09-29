@@ -48,9 +48,11 @@ build-elf: $(ASM_OBJ) $(OBJ)
 	@$(LD) -m elf_i386 -T sys/link.ld -o bin/MooseOS.elf $(ASM_OBJ) $(OBJ)
 
 %.o: %.c
+	@echo "$(MAKE_PREFIX) GCC: Compiling $<..."
 	@$(GCC) -c $< -o $@ -nostdlib -ffreestanding -O2 $(INCLUDES)
 
 %.o: %.asm
+	@echo "$(MAKE_PREFIX) NASM: Assembling $<..."
 	@$(NASM) -f elf32 $< -o $@
 
 
