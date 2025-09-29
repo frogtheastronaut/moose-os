@@ -13,10 +13,10 @@
 #define MAX_PART_LEN 32
 
 // string function prototypes
-void copyStr(char* dest, const char* src);
-int strEqual(const char* a, const char* b);
+void strcpy(char* dest, const char* src);
+int strcmp(const char* a, const char* b);
 size_t strlen(const char* str);
-int split_string(const char *input, char delimiter, char output[MAX_PARTS][MAX_PART_LEN]);
+int strtok(const char *input, char delimiter, char output[MAX_PARTS][MAX_PART_LEN]);
 char* strcat(char* dest, const char* src);
 const char* strip_whitespace(const char* str);
 

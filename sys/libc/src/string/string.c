@@ -1,11 +1,13 @@
 /*
-    Copyright (c) 2025 Ethan Zhang and Contributors.
+    MooseOS String.h implementation - string and memory operations
+    Copyright (c) 2025 Ethan Zhang
+    Licensed under the MIT license. See license file for details
 */
 
 #include "string/string.h"
 
-// Copy string from src to dest
-void copyStr(char* dest, const char* src) {
+// copy string from src to dest
+void strcpy(char* dest, const char* src) {
     int i = 0;
     while (src[i] && i < MAX_NAME_LEN - 1) {
         dest[i] = src[i];
@@ -14,8 +16,13 @@ void copyStr(char* dest, const char* src) {
     dest[i] = '\0';
 }
 
-// Check if two strings are equal
-int strEqual(const char* a, const char* b) {
+// check if two strings are equal
+/**
+ * @note this is different from standard strcmp, which returns
+ *       <0, 0, >0 for less than, equal, greater than respectively
+ *       this function returns 1 for equal, 0 for not equal
+ */
+int strcmp(const char* a, const char* b) {
     int i = 0;
     while (a[i] && b[i]) {
         if (a[i] != b[i]) return 0;
@@ -24,7 +31,7 @@ int strEqual(const char* a, const char* b) {
     return a[i] == b[i];
 }
 
-// Get length of string
+// get length of string
 size_t strlen(const char* str) {
     size_t len = 0;
     while (str[len])
@@ -32,8 +39,8 @@ size_t strlen(const char* str) {
     return len;
 }
 
-// Split string by delimiter
-int split_string(const char *input, char delimiter, char output[MAX_PARTS][MAX_PART_LEN]) {
+// split string by delimiter
+int strtok(const char *input, char delimiter, char output[MAX_PARTS][MAX_PART_LEN]) {
     int part = 0;   
     int i = 0;      
     int j = 0;       
@@ -57,7 +64,7 @@ int split_string(const char *input, char delimiter, char output[MAX_PARTS][MAX_P
     return part + 1; // returns number of parts found
 }
 
-// Concatenate strings
+// concat strings
 char* strcat(char* dest, const char* src) {
     int dest_len = 0;
     while (dest[dest_len] != '\0') {
@@ -75,7 +82,7 @@ char* strcat(char* dest, const char* src) {
     return dest;
 }
 
-// Strip whitespace from string
+// strip whitespace from string
 const char* strip_whitespace(const char* str) {
     static char trimmed[MAX_NAME_LEN];
     int start = 0;
@@ -105,7 +112,7 @@ const char* strip_whitespace(const char* str) {
     return trimmed;
 }
 
-// Memory copy function
+// memory copy function
 void* memcpy(void* dest, const void* src, size_t n) {
     char* d = (char*)dest;
     const char* s = (const char*)src;
@@ -115,7 +122,7 @@ void* memcpy(void* dest, const void* src, size_t n) {
     return dest;
 }
 
-// Memory set function
+// memset function
 void* memset(void* ptr, int value, size_t n) {
     unsigned char* p = (unsigned char*)ptr;
     for (size_t i = 0; i < n; i++) {

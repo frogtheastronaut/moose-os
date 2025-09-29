@@ -31,26 +31,26 @@ void draw_explorer() {
     // Display cwd
     char full_path[128] = "";
     if (cwd == root) {
-        copyStr(full_path, "/");
+        strcpy(full_path, "/");
     } else {
         File* node = cwd;
         
-        copyStr(full_path, node->name);
+        strcpy(full_path, node->name);
         node = node->parent;
         
         while (node != NULL && node != root) {
             char temp[128] = "";
-            copyStr(temp, node->name);
+            strcpy(temp, node->name);
             strcat(temp, "/");
             strcat(temp, full_path);
-            copyStr(full_path, temp);
+            strcpy(full_path, temp);
             
             node = node->parent;
         }
         
         char temp[128] = "/";
         strcat(temp, full_path);
-        copyStr(full_path, temp);
+        strcpy(full_path, temp);
     }
     
     int path_x = 10 + draw_text_width(path_text);
@@ -100,10 +100,10 @@ void draw_explorer() {
 
     // Item count
     char count_str[16]; 
-    int2str(cwd->folder.childCount, count_str, sizeof(count_str));
+    int_to_str(cwd->folder.childCount, count_str, sizeof(count_str));
     
     char status_text[32] = "";
-    copyStr(status_text, count_str);
+    strcpy(status_text, count_str);
     
     if (cwd->folder.childCount == 1) {
         strcat(status_text, " item");

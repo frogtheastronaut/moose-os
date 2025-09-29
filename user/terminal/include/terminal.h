@@ -51,8 +51,8 @@
 #endif
 
 // External functions
-extern void copyStr(char* dest, const char* src);
-extern int strEqual(const char* a, const char* b);
+extern void strcpy(char* dest, const char* src);
+extern int strcmp(const char* a, const char* b);
 extern int msnprintf(char *buffer, int size, const char *format, ...);
 extern char* strcat(char* dest, const char* src);
 extern const char* strip_whitespace(const char* str);

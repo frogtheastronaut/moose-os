@@ -1,11 +1,13 @@
 /*
-    Copyright (c) 2025 Ethan Zhang and Contributors.
+    MooseOS Standard Library 
+    Copyright (c) 2025 Ethan Zhang
+    Licensed under the MIT license. See license file for details
 */
 
 #include "stdlib/stdlib.h"
 
-// Convert integer to string
-int int2str(int num, char* buffer, int buffer_size) {
+// convert integer to string
+int int_to_str(int num, char* buffer, int buffer_size) {
     if (buffer_size <= 1) {
         if (buffer_size == 1) buffer[0] = '\0';
         return 0;
@@ -48,7 +50,7 @@ int int2str(int num, char* buffer, int buffer_size) {
     return i;
 }
 
-// Convert string to integer
+// convert string to integer
 int atoi(const char* str) {
     if (!str) return 0;
     
@@ -56,12 +58,12 @@ int atoi(const char* str) {
     int sign = 1;
     int i = 0;
     
-    // Skip leading whitespace
+    // skip leading whitespace
     while (str[i] == ' ' || str[i] == '\t' || str[i] == '\n') {
         i++;
     }
     
-    // Check for sign
+    // check for sign
     if (str[i] == '-') {
         sign = -1;
         i++;
@@ -69,11 +71,12 @@ int atoi(const char* str) {
         i++;
     }
     
-    // Convert digits
+    // convert digits
     while (str[i] >= '0' && str[i] <= '9') {
         result = result * 10 + (str[i] - '0');
         i++;
     }
     
+    // apply sign
     return result * sign;
 }

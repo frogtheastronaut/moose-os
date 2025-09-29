@@ -66,7 +66,7 @@ void editor_draw() {
         if (line_length == 0) {
             // Draw line number
             char line_num[8];
-            int2str(line + 1, line_num, sizeof(line_num));
+            int_to_str(line + 1, line_num, sizeof(line_num));
             draw_text(10, y_pos, line_num, VGA_COLOUR_DARK_GREY);
 
             // Draw cursor if it's on this empty line
@@ -86,7 +86,7 @@ void editor_draw() {
         while (line_continues && screen_lines_used < max_lines) {
             if (line_start_col == 0) {
                 char line_num[8];
-                int2str(line + 1, line_num, sizeof(line_num));
+                int_to_str(line + 1, line_num, sizeof(line_num));
                 draw_text(10, y_pos, line_num, VGA_COLOUR_DARK_GREY);
             }
             
@@ -165,9 +165,9 @@ void editor_draw() {
     // Show cursor/line info and scroll position
     char status[64] = "Line: ";
     char line_str[8], col_str[8], scroll_str[8];
-    int2str(editor_cursor_line + 1, line_str, sizeof(line_str));
-    int2str(editor_cursor_col + 1, col_str, sizeof(col_str));
-    int2str(editor_scroll_line + 1, scroll_str, sizeof(scroll_str));
+    int_to_str(editor_cursor_line + 1, line_str, sizeof(line_str));
+    int_to_str(editor_cursor_col + 1, col_str, sizeof(col_str));
+    int_to_str(editor_scroll_line + 1, scroll_str, sizeof(scroll_str));
     
     strcat(status, line_str);
     strcat(status, ", Col: ");
@@ -183,7 +183,7 @@ void editor_draw() {
  */
 void editor_open(const char* filename) {
     // Copy filename
-    copyStr(editor_filename, filename);
+    strcpy(editor_filename, filename);
 
     // Get content
     char* content = get_file_content(filename);

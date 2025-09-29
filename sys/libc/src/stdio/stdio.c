@@ -1,5 +1,7 @@
 /*
-    Copyright (c) 2025 Ethan Zhang and Contributors.
+    MooseOS Stdio code
+    Copyright (c) 2025 Ethan Zhang
+    Licensed under the MIT license. See license file for details
 */
 
 #include "stdio/stdio.h"
@@ -22,7 +24,7 @@ int msnprintf(char *buffer, int size, const char *format, ...) {
     while (*fmt_ptr && written < size - 1) {
         if (*fmt_ptr == '%' && *(fmt_ptr + 1) == 's') {
             const char *str = va_arg(args, const char *);
-            if (str) {  // Check for NULL pointer
+            if (str) {  // check for NULL pointer
                 while (*str && written < size - 1) {
                     *buf_ptr++ = *str++;
                     written++;
@@ -94,9 +96,9 @@ int msnprintf(char *buffer, int size, const char *format, ...) {
         } else if (*fmt_ptr == '%' && fmt_ptr[1] == '0' && 
                    (fmt_ptr[3] == 'x' || fmt_ptr[3] == 'X' || 
                     fmt_ptr[4] == 'x' || fmt_ptr[4] == 'X')) {
-            // Handle padded hex like %08X or %06X
+            // handle padded hex like %08X or %06X
             int width = 0;
-            int fmt_len = 2;  // Start after %0
+            int fmt_len = 2;  // start after %0
             
             // Parse width
             while (fmt_ptr[fmt_len] >= '0' && fmt_ptr[fmt_len] <= '9') {
@@ -190,7 +192,7 @@ int msnprintf(char *buffer, int size, const char *format, ...) {
         }
     }
     
-    *buf_ptr = '\0';  // Always null terminate
+    *buf_ptr = '\0';  // null terminate
     va_end(args);
     return written;
 }

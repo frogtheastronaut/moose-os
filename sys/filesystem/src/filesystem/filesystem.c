@@ -27,7 +27,7 @@ void filesystem_init() {
         debugf("[FS] Failed to allocate root directory\n");
         return;
     }
-    copyStr(root->name, "/"); // root is /
+    strcpy(root->name, "/"); // root is /
 
     // initialise root
     root->type = FOLDER_NODE;
@@ -64,7 +64,7 @@ int filesystem_make_file(const char* name, const char* content) {
         return -1;
     }
     
-    copyStr(node->name, name);
+    strcpy(node->name, name);
     node->type = FILE_NODE;
     
     // set content
@@ -107,7 +107,7 @@ int filesystem_make_dir(const char* name) {
         return -1;
     }
     
-    copyStr(node->name, name);
+    strcpy(node->name, name);
     node->type = FOLDER_NODE;
     
     // initialize directory structure
@@ -134,7 +134,7 @@ int filesystem_make_dir(const char* name) {
  */
 int filesystem_change_dir(const char* name) {
     // .. means to go back to parent folder
-    if (strEqual(name, "..")) {
+    if (strcmp(name, "..")) {
         if (cwd->parent != NULL) cwd = cwd->parent;
         return 0;
     }
@@ -147,7 +147,7 @@ int filesystem_change_dir(const char* name) {
     // change cwd to folder
     for (int i = 0; i < cwd->folder.childCount; i++) {
         File* child = cwd->folder.children[i];
-        if (child && child->type == FOLDER_NODE && strEqual(child->name, name)) {
+        if (child && child->type == FOLDER_NODE && strcmp(child->name, name)) {
             cwd = child;
             return 0;
         }
@@ -167,7 +167,7 @@ int filesystem_remove(const char* name) {
     }
     for (int i = 0; i < cwd->folder.childCount; i++) {
         File* child = cwd->folder.children[i];
-        if (child && child->type == FILE_NODE && strEqual(child->name, name)) {
+        if (child && child->type == FILE_NODE && strcmp(child->name, name)) {
             // remove from directory
             if (remove_child_from_dir(cwd, child) == 0) {
                 // free the file memory
@@ -194,7 +194,7 @@ int filesystem_remove_dir(const char* name) {
     
     for (int i = 0; i < cwd->folder.childCount; i++) {
         File* child = cwd->folder.children[i];
-        if (child && child->type == FOLDER_NODE && strEqual(child->name, name)) {
+        if (child && child->type == FOLDER_NODE && strcmp(child->name, name)) {
             if (child->folder.childCount > 0) {
                 debugf("[FS] Directory not empty\n");
                 return -2; // directory not empty
@@ -226,7 +226,7 @@ int filesystem_edit_file(const char* name, const char* new_content) {
     
     for (int i = 0; i < cwd->folder.childCount; i++) {
         File* child = cwd->folder.children[i];
-        if (child && child->type == FILE_NODE && strEqual(child->name, name)) {
+        if (child && child->type == FILE_NODE && strcmp(child->name, name)) {
             // set new content
             if (set_file_content(child, new_content) == 0) {
                 // successfully set content
@@ -313,7 +313,7 @@ int filesystem_format(uint8_t drive) {
     root_inode.size = 0;
     root_inode.parent_inode = 0;
     root_inode.child_count = 0;
-    copyStr(root_inode.name, "/");
+    strcpy(root_inode.name, "/");
     
     for (int i = 0; i < 12; i++) {
         root_inode.data_blocks[i] = 0;
@@ -455,7 +455,7 @@ int filesystem_load_from_disk(void) {
     root = file_alloc();
     if (!root) return -1;
     
-    copyStr(root->name, "/");
+    strcpy(root->name, "/");
     root->type = FOLDER_NODE;
     root->parent = NULL;
     root->folder.childCount = 0;
@@ -608,7 +608,7 @@ int filesystem_get_memory_stats(char *stats_buffer, int buffer_size) {
     strcat(stats_buffer, "Filesystem Memory Statistics:\n");
     
     strcat(stats_buffer, "Active Files: ");
-    int2str(file_count, temp, sizeof(temp));
+    int_to_str(file_count, temp, sizeof(temp));
     strcat(stats_buffer, temp);
     strcat(stats_buffer, "\n");
     
@@ -621,12 +621,12 @@ int filesystem_get_memory_stats(char *stats_buffer, int buffer_size) {
      * @todo make this print the exact amount of bytes the disk is using.
      */
     strcat(stats_buffer, "Base Structures: ");
-    int2str(total_memory, temp, sizeof(temp));
+    int_to_str(total_memory, temp, sizeof(temp));
     strcat(stats_buffer, temp);
     strcat(stats_buffer, " bytes\n");
     
     strcat(stats_buffer, "Per-File Base Size: ");
-    int2str(sizeof(File), temp, sizeof(temp));
+    int_to_str(sizeof(File), temp, sizeof(temp));
     strcat(stats_buffer, temp);
     strcat(stats_buffer, " bytes\n");
     
@@ -642,7 +642,7 @@ char* get_file_content(const char* filename) {
         if (!cwd->folder.children[i]) continue;
         
         File* child = cwd->folder.children[i];
-        if (child->type == FILE_NODE && strEqual(child->name, filename)) {
+        if (child->type == FILE_NODE && strcmp(child->name, filename)) {
             return child->file.content;
         }
     }

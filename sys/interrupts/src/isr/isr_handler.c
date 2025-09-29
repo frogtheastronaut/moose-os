@@ -27,13 +27,13 @@ void isr_handler(void* stack_ptr) {
     }
     
     debugf(" (Vector: ");
-    int2str(vector, buffer, sizeof(buffer));
+    int_to_str(vector, buffer, sizeof(buffer));
     debugf(buffer);
     debugf(")");
 
     if (error_code != 0) {
         debugf(" | Error code: ");
-        int2str(error_code, buffer, sizeof(buffer));
+        int_to_str(error_code, buffer, sizeof(buffer));
         debugf(buffer);
     }
     debugf("\n");

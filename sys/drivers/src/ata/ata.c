@@ -253,7 +253,7 @@ void disk_init(void) {
     ata_devices[0].base_io = 0x1F0;
     ata_devices[0].ctrl_io = 0x3F6;
     ata_devices[0].size = 20480; // 10mb
-    copyStr(ata_devices[0].model, "QEMU");
+    strcpy(ata_devices[0].model, "QEMU");
 }
 
 /**

@@ -160,7 +160,7 @@ bool name_in_cwd(const char* name, file_node type) {
 
     for (int i = 0; i < cwd->folder.childCount; i++) {
         File* child = cwd->folder.children[i];
-        if (child && child->type == type && strEqual(child->name, name)) {
+        if (child && child->type == type && strcmp(child->name, name)) {
             return true;
         }
     }
@@ -392,7 +392,7 @@ static File* convert_disk_to_memory_file(disk_inode *disk_inode) {
     }
 
     // copy basic information
-    copyStr(memory_file->name, disk_inode->name);
+    strcpy(memory_file->name, disk_inode->name);
     memory_file->type = disk_inode->type;
     
     if (disk_inode->type == FILE_NODE) {

@@ -25,7 +25,7 @@ void term_exec_cmd(const char* cmd) {
     /**
      * @todo: Double check this
      */
-    if (strEqual(cmd, "help")) {
+    if (strcmp(cmd, "help")) {
         terminal_print("Welcome to the MooseOS Terminal");
         terminal_print("ls - List files");
         terminal_print("cd <dir> - Change directory");
@@ -42,7 +42,7 @@ void term_exec_cmd(const char* cmd) {
         terminal_print("clear - Clear terminal");
     }
     // ls
-    else if (strEqual(cmd, "ls")) {
+    else if (strcmp(cmd, "ls")) {
         if (cwd->folder.childCount == 0 || !cwd->folder.children) {
             terminal_print("Directory is empty.");
         } else {
@@ -63,7 +63,7 @@ void term_exec_cmd(const char* cmd) {
     // cd
     else if (cmd[0] == 'c' && cmd[1] == 'd' && cmd[2] == ' ') {
         const char* dirname = cmd + 3;
-        if (strEqual(dirname, "..")) {
+        if (strcmp(dirname, "..")) {
             if (cwd->parent) {
                 cwd = cwd->parent;
                 char line[CHARS_PER_LINE + 1];
@@ -72,7 +72,7 @@ void term_exec_cmd(const char* cmd) {
             } else {
                 terminal_print_error("Already at root");
             }
-        } else if (strEqual(dirname, "/")) {
+        } else if (strcmp(dirname, "/")) {
             cwd = root;
             terminal_print("Changed to /");
         } else {
@@ -80,7 +80,7 @@ void term_exec_cmd(const char* cmd) {
             if (cwd->folder.children) {
                 for (int i = 0; i < cwd->folder.childCount; i++) {
                     File* child = cwd->folder.children[i];
-                    if (child && child->type == FOLDER_NODE && strEqual(child->name, dirname)) {
+                    if (child && child->type == FOLDER_NODE && strcmp(child->name, dirname)) {
                         cwd = child;
                         char line[CHARS_PER_LINE + 1];
                         msnprintf(line, sizeof(line), "Changed to %s", dirname);
@@ -128,7 +128,7 @@ void term_exec_cmd(const char* cmd) {
         if (cwd->folder.children) {
             for (int i = 0; i < cwd->folder.childCount; i++) {
                 File* child = cwd->folder.children[i];
-                if (child && child->type == FILE_NODE && strEqual(child->name, filename)) {
+                if (child && child->type == FILE_NODE && strcmp(child->name, filename)) {
                     found = true;
                     if (child->file.content && child->file.content_size > 0) {
                         // Print content directly - wrapping will be handled automatically
@@ -145,11 +145,11 @@ void term_exec_cmd(const char* cmd) {
         }
     }
     // clear term
-    else if (strEqual(cmd, "clear")) {
+    else if (strcmp(cmd, "clear")) {
         clear_terminal();
     }
     // show time/date
-    else if (strEqual(cmd, "time")) {
+    else if (strcmp(cmd, "time")) {
         rtc_time local_time = rtc_get_time();
         char time_line[CHARS_PER_LINE + 1];
         char date_line[CHARS_PER_LINE + 1];
@@ -255,7 +255,7 @@ void term_exec_cmd(const char* cmd) {
         }
     }
     
-    else if (strEqual(cmd, "diskinfo")) {
+    else if (strcmp(cmd, "diskinfo")) {
         char info_buffer[512];
         if (filesystem_get_disk_info(info_buffer, sizeof(info_buffer)) == 0) {
             char *line_start = info_buffer;
@@ -285,7 +285,7 @@ void term_exec_cmd(const char* cmd) {
         }
     }
     
-    else if (strEqual(cmd, "memstats")) {
+    else if (strcmp(cmd, "memstats")) {
         char stats_buffer[512];
         if (filesystem_get_memory_stats(stats_buffer, sizeof(stats_buffer)) == 0) {
             char *line_start = stats_buffer;
@@ -316,7 +316,7 @@ void term_exec_cmd(const char* cmd) {
     }
 
     // save - save current filesystem to disk
-    else if (strEqual(cmd, "save")) {
+    else if (strcmp(cmd, "save")) {
         if (filesystem_disk_status()) {
             terminal_print("Saving filesystem to disk...");
             
@@ -351,7 +351,7 @@ void term_exec_cmd(const char* cmd) {
     }
     
     // load - load filesystem from disk
-    else if (strEqual(cmd, "load")) {
+    else if (strcmp(cmd, "load")) {
         if (filesystem_disk_status()) {
             if (filesystem_load_from_disk() == 0) {
                 terminal_print("Filesystem loaded from disk successfully");
@@ -364,7 +364,7 @@ void term_exec_cmd(const char* cmd) {
     }
     
     // systest - system test (compact version)
-    else if (strEqual(cmd, "systest")) {
+    else if (strcmp(cmd, "systest")) {
         terminal_print("=== System Test ===");
         
         char line[CHARS_PER_LINE + 1];
@@ -452,7 +452,7 @@ void term_exec_cmd(const char* cmd) {
     }
     
     // Audio commands
-    else if (strEqual(cmd, "beep")) {
+    else if (strcmp(cmd, "beep")) {
         terminal_print("Playing system beep...");
         speaker_system_beep();
         terminal_print("Beep complete");

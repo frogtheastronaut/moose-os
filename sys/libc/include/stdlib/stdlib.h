@@ -7,7 +7,7 @@
 #define STDLIB_H_
 
 // function prototypes
-int int2str(int num, char* buffer, int buffer_size);
+int int_to_str(int num, char* buffer, int buffer_size);
 int atoi(const char* str);
 
 #endif // STDLIB_H_
