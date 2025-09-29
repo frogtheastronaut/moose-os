@@ -1,5 +1,5 @@
 /*
-    MooseOS GUI text code
+    MooseOS VGA graphics code
     Copyright (c) 2025 Ethan Zhang
     All rights reserved
 */
@@ -15,7 +15,7 @@ void vga_set_palette_colour(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
 
 void vga_get_palette_colour(uint8_t index, uint8_t* r, uint8_t* g, uint8_t* b) {
     outb(VGA_DAC_READ_INDEX, index);
-    *r = inb(VGA_DAC_DATA) << 2;  // Convert back to 8-bit
+    *r = inb(VGA_DAC_DATA) << 2;  // convert back to 8-bit
     *g = inb(VGA_DAC_DATA) << 2;
     *b = inb(VGA_DAC_DATA) << 2;
 }

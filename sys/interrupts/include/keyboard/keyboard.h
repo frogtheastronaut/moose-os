@@ -1,3 +1,9 @@
+/*
+    MooseOS Keyboard code
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
+*/
+
 #ifndef KEYBOARD_H
 #define KEYBOARD_H
 
@@ -10,4 +16,4 @@
 extern volatile bool key_pressed;
 extern volatile char last_keycode;
 
-#endif
+#endif // KEYBOARD_H

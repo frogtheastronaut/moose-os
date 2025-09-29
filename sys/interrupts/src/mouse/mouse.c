@@ -1,12 +1,13 @@
 /*
-    MooseOS
-    Copyright (c) 2025 Ethan Zhang and Contributors.
+    MooseOS Mouse interrupt handler code
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
 */
 
 #include "mouse/mouse.h"
 
 // mouse state
-static mouse_state_t mouse_state = {0, 0, 0, 0, 0, 320, 240}; // Start at center of 640x480 screen
+static mouse_state mouse_states = {0, 0, 0, 0, 0, 320, 240}; // Start at center of 640x480 screen
 static unsigned char mouse_cycle = 0;
 static signed char mouse_byte[3];
 
@@ -43,7 +44,7 @@ void mouse_init(void) {
     mouse_cycle = 0;
 }
 
-// Handle interrupts
+// handle interrupts
 void mouse_handler_main(void) {
 
     unsigned char status = read_port(MOUSE_STATUS);
@@ -89,47 +90,47 @@ void mouse_handler_main(void) {
             mouse_cycle = 0;
 
             // update mouse state
-            mouse_state.left_button = mouse_byte[0] & 0x01;
-            mouse_state.right_button = (mouse_byte[0] & 0x02) >> 1;
-            mouse_state.middle_button = (mouse_byte[0] & 0x04) >> 2;
+            mouse_states.left_button = mouse_byte[0] & 0x01;
+            mouse_states.right_button = (mouse_byte[0] & 0x02) >> 1;
+            mouse_states.middle_button = (mouse_byte[0] & 0x04) >> 2;
 
             // calculate movement
-            mouse_state.x_movement = mouse_byte[1];
-            mouse_state.y_movement = mouse_byte[2];
+            mouse_states.x_movement = mouse_byte[1];
+            mouse_states.y_movement = mouse_byte[2];
             
             if (mouse_byte[0] & 0x10) {
-                mouse_state.x_movement |= 0xFFFFFF00;
+                mouse_states.x_movement |= 0xFFFFFF00;
             }
             if (mouse_byte[0] & 0x20) {
-                mouse_state.y_movement |= 0xFFFFFF00;
+                mouse_states.y_movement |= 0xFFFFFF00;
             }
 
             #define MAX_MOUSE_SPEED 5
-            if (mouse_state.x_movement > MAX_MOUSE_SPEED) mouse_state.x_movement = MAX_MOUSE_SPEED;
-            if (mouse_state.x_movement < -MAX_MOUSE_SPEED) mouse_state.x_movement = -MAX_MOUSE_SPEED;
-            if (mouse_state.y_movement > MAX_MOUSE_SPEED) mouse_state.y_movement = MAX_MOUSE_SPEED;
-            if (mouse_state.y_movement < -MAX_MOUSE_SPEED) mouse_state.y_movement = -MAX_MOUSE_SPEED;
+            if (mouse_states.x_movement > MAX_MOUSE_SPEED) mouse_states.x_movement = MAX_MOUSE_SPEED;
+            if (mouse_states.x_movement < -MAX_MOUSE_SPEED) mouse_states.x_movement = -MAX_MOUSE_SPEED;
+            if (mouse_states.y_movement > MAX_MOUSE_SPEED) mouse_states.y_movement = MAX_MOUSE_SPEED;
+            if (mouse_states.y_movement < -MAX_MOUSE_SPEED) mouse_states.y_movement = -MAX_MOUSE_SPEED;
 
             // update position
-            mouse_state.x_position += mouse_state.x_movement;
-            mouse_state.y_position -= mouse_state.y_movement;
+            mouse_states.x_position += mouse_states.x_movement;
+            mouse_states.y_position -= mouse_states.y_movement;
 
             // keep mouse within bounds
-            if (mouse_state.x_position < 0) mouse_state.x_position = 0;
-            if (mouse_state.x_position >= 640) mouse_state.x_position = 639;
-            if (mouse_state.y_position < 0) mouse_state.y_position = 0;
-            if (mouse_state.y_position >= 480) mouse_state.y_position = 479;
-            
+            if (mouse_states.x_position < 0) mouse_states.x_position = 0;
+            if (mouse_states.x_position >= 640) mouse_states.x_position = 639;
+            if (mouse_states.y_position < 0) mouse_states.y_position = 0;
+            if (mouse_states.y_position >= 480) mouse_states.y_position = 479;
+
             break;
             
         default:
-            // invalid, reset
+            // invalid; reset
             mouse_cycle = 0;
             break;
     }
 }
 
 // get mouse state
-mouse_state_t* get_mouse_state(void) {
-    return &mouse_state;
+mouse_state* get_mouse_state(void) {
+    return &mouse_states;
 }

@@ -1,3 +1,9 @@
+/*
+    MooseOS ISR code
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
+*/
+
 #ifndef ISR_H
 #define ISR_H
 
@@ -5,16 +11,16 @@
 
 #define ISR_EXCEPTION_AMOUNT 32
 
-// Stubs
+// stubs
 extern void (*const isr_stubs[ISR_EXCEPTION_AMOUNT])(void);
 
-// Handler
+// handler
 extern void isr_handler(void* stack);
 
-// Error messages
+// error messages
 extern const char* exception_messages[ISR_EXCEPTION_AMOUNT];
 
-// ISR Initialisation code
+// ISR initialisation code
 extern void isr_init(void);
 
 // ISRs
@@ -51,4 +57,4 @@ extern void _isr29();
 extern void _isr30();
 extern void _isr31();
 
-#endif
+#endif // ISR_H

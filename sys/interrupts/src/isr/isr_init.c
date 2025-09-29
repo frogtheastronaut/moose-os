@@ -1,8 +1,18 @@
+/*
+    MooseOS Interrupt Service Routine code
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
+*/
+
 #include "isr/isr.h"
 #include "idt/idt.h"
 #include <stddef.h>
 #include <stdint.h>
 
+// list of error messages
+/**
+ * @todo move them into a header file
+ */
 const char *exception_messages[] = {
     "Division By Zero",
     "Debug",
@@ -38,6 +48,7 @@ const char *exception_messages[] = {
     "Reserved"
 };
 
+// initialise all exception ISRs
 void isr_init(void) {
     for (size_t i = 0; i < ISR_EXCEPTION_AMOUNT; i++) {
         idt_set_entry(

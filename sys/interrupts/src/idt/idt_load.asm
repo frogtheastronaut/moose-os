@@ -2,6 +2,7 @@
 
 global idt_load
 
+; load the idt
 idt_load:
     push ebp
     mov ebp, esp

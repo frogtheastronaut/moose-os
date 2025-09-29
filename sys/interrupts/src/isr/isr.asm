@@ -1,5 +1,6 @@
 [bits 32]
 
+; These are all the ISRs
 global _isr0
 global _isr1
 global _isr2

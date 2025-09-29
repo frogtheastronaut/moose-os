@@ -67,7 +67,7 @@ void update_mouse(void) {
         return;
     }
     
-    mouse_state_t* mouse = get_mouse_state();
+    mouse_state* mouse = get_mouse_state();
     if (!mouse) return;
     
     int cursor_x = (mouse->x_position * SCREEN_WIDTH) / 640;

@@ -1,10 +1,9 @@
-/*
-    MooseOS
-    Copyright (c) 2025 Ethan Zhang and Contributors.
-    
-    Interrupt Service Routine (ISR) Test Functions
-    These functions deliberately trigger various types of interrupts and exceptions
-    to test the ISR handlers and panic system.
+/**
+ * MooseOS Interrupt Service Routine test code
+ * Copyright (c) 2025 Ethan Zhang
+ * All rights reserved
+ *
+ * @warning These functions intentionally cause exceptions. For testing purposes only
 */
 
 #include "isr/test_interrupts.h"

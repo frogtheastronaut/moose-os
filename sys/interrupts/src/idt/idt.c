@@ -1,6 +1,7 @@
 /*
-    Moose Operating System
-    Copyright (c) 2025 Ethan Zhang and Contributors.
+    MooseOS Interrupt Descriptor Table code
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
 */
 
 #include "idt/idt.h"
@@ -14,6 +15,7 @@ struct idt_descriptor_t idt_descriptor;
 // IDT entry table
 struct IDT_entry IDT[IDT_SIZE];
 
+// set an entry in the IDT
 void idt_set_entry(unsigned char num, unsigned long base, unsigned short selector, unsigned char flags)
 {
     IDT[num].offset_lowerbits = base & 0xFFFF;
@@ -23,6 +25,10 @@ void idt_set_entry(unsigned char num, unsigned long base, unsigned short selecto
     IDT[num].offset_higherbits = (base >> 16) & 0xFFFF;
 }
 
+// initialise all entries in the IDT
+/**
+ * @todo add more entries once we get more interrupts (syscalls etc.)
+ */
 static void initialise_all_entries(void)
 {
     unsigned long keyboard_address;
@@ -42,11 +48,14 @@ static void initialise_all_entries(void)
     idt_set_entry(0x2C, mouse_address, KERNEL_CODE_SEGMENT_OFFSET, INTERRUPT_GATE);
 
     /* IDT entry of page fault interrupt (exception 14) */
+    /**
+     * @todo do we need this? we have an ISR for page fault interrupt handling
+     */
     unsigned long page_fault_address = (unsigned long)page_fault_handler_asm;
     idt_set_entry(14, page_fault_address, KERNEL_CODE_SEGMENT_OFFSET, INTERRUPT_GATE);
 }
 /**
- * Initialize the Interrupt Descriptor Table
+ * initialize the Interrupt Descriptor Table
  */
 void idt_init(void)
 {

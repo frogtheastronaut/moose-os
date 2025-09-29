@@ -1,11 +1,19 @@
+/*
+    MooseOS Keyboard interrupt handler code
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
+*/
+
 #include "keyboard/keyboard.h"
 
+// initialise keyboard
 void keyboard_init(void)
 {
 	write_port(0x21 , 0xF9);
 	write_port(0xA1 , 0xEF);  
 }
 
+// called by assembly file
 void keyboard_handler_main(void)
 {
 

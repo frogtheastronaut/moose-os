@@ -3,39 +3,40 @@ extern mouse_handler_main
 
 KERNEL_DATA_SEG equ 0x10
 
+; mouse handler
 mouse_handler:
-    ; Save all registers
+    ; save all registers
     pusha
     
-    ; Save segment registers
+    ; save segment registers
     push ds
     push es
     push fs
     push gs
     
-    ; Set up kernel data segments
+    ; set up kernel data segments
     mov ax, KERNEL_DATA_SEG
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
     
-    ; Call the C handler
+    ; call the C handler
     call mouse_handler_main
     
-    ; Send End of Interrupt to both PICs (IRQ12 is on slave PIC)
+    ; send EOI to both PICs (IRQ12 is on slave PIC)
     mov al, 0x20
-    out 0xA0, al  ; Send EOI to slave PIC
-    out 0x20, al  ; Send EOI to master PIC
+    out 0xA0, al  ; send EOI to slave PIC
+    out 0x20, al  ; send EOI to master PIC
     
-    ; Restore segment registers
+    ; restore segment registers
     pop gs
     pop fs
     pop es
     pop ds
     
-    ; Restore all registers
+    ; restore all registers
     popa
     
-    ; Return from interrupt
+    ; return from interrupt
     iretd                       

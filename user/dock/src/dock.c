@@ -638,7 +638,7 @@ bool dock_handle_mouse() {
         return false;
     }
     
-    mouse_state_t* mouse = get_mouse_state();
+    mouse_state* mouse = get_mouse_state();
     if (!mouse) {
         return false;
     }

@@ -1,7 +1,9 @@
 /*
-	MooseOS
-	Copyright (c) 2025 Ethan Zhang
+    MooseOS IDT code
+    Copyright (c) 2025 Ethan Zhang
+    All rights reserved
 */
+
 #ifndef IDT_H
 #define IDT_H
 
@@ -9,7 +11,6 @@
 #include "gdt/gdt.h"
 #include "paging/paging.h"
 
-// defines
 #define IDT_SIZE 256
 #define INTERRUPT_GATE 0x8e
 #define KERNEL_CODE_SEGMENT_OFFSET 0x08
@@ -51,4 +52,4 @@ void idt_init(void);
 void keyboard_init(void);
 void idt_set_entry(unsigned char num, unsigned long base, unsigned short selector, unsigned char flags);
 
-#endif
+#endif // IDT_H

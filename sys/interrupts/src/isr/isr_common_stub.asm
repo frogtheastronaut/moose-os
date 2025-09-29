@@ -5,6 +5,8 @@ KERNEL_DATA_SEG equ 0x10
 extern isr_handler
 
 global isr_common_stub
+
+; ISR stub
 isr_common_stub:
     pusha
 

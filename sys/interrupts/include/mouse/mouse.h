@@ -1,7 +1,9 @@
 /*
-    MooseOS Mouse Support
+    MooseOS Mouse interrupt code
     Copyright (c) 2025 Ethan Zhang
+    All rights reserved
 */
+
 #ifndef MOUSE_H
 #define MOUSE_H
 
@@ -14,10 +16,10 @@ typedef struct {
     int y_movement;
     int x_position;
     int y_position;
-} mouse_state_t;
-mouse_state_t* get_mouse_state(void);
+} mouse_state;
+mouse_state* get_mouse_state(void);
 
-// defs
+// mouse port definitions
 #define MOUSE_PORT   0x60
 #define MOUSE_STATUS 0x64
 #define MOUSE_ABIT   0x02
@@ -27,10 +29,11 @@ mouse_state_t* get_mouse_state(void);
 #define MOUSE_V_BIT  0x08
 
 extern bool dock_is_active(void);
+
 // extern functions from boot.asm
 extern char read_port(unsigned short port);
 extern void write_port(unsigned short port, unsigned char data);
 
 void mouse_init(void);
 
-#endif
+#endif // MOUSE_H
