@@ -1,18 +1,20 @@
 /*
-    MooseOS
-    Copyright (c) 2025 Ethan Zhang and Contributors.
+    MooseOS Multitasking system
+    Copyright (c) 2025 Ethan Zhang
+    Licensed under the MIT license. See license file for details
 */
+
 #include "task/task.h"
+#include "print/debug.h"
 
 static task tasks[MAX_TASKS];
 static int current_task = -1;
 static int num_tasks = 0;
 
-// Simple task registry
 static task_func registered_tasks[MAX_TASKS];
 static int registered_task_count = 0;
 
-// Global tick counter
+// global tick counter
 volatile uint32_t ticks = 0;
 
 void task_init() {
@@ -23,22 +25,25 @@ void task_init() {
     num_tasks = 0;
 }
 
-// Tick handler
+// tick handler
 void task_tick() {
     ticks++;
     task_schedule();
 }
 
 void task_start() {
-    if (num_tasks == 0) return;
+    if (num_tasks == 0) {
+        debugf("[TASK] No tasks to run!\n");
+        return;
+    }
     
-    // Find the first ready task and start it
+    // find the first ready task and start it
     for (int i = 0; i < num_tasks; ++i) {
         if (tasks[i].state == TASK_READY) {
             current_task = i;
             tasks[i].state = TASK_RUNNING;
             
-            // Jump to the first task
+            // jump to the first task with assembly
             asm volatile (
                 "movl %0, %%esp\n"
                 "jmp *%1\n"
@@ -51,13 +56,17 @@ void task_start() {
     }
 }
 
+// create a new task
 int task_create(void (*entry)(void)) {
-    if (num_tasks >= MAX_TASKS) return -1;
+    if (num_tasks >= MAX_TASKS) {
+        debugf("[TASK] Max task limit reached!\n");
+        return -1;
+    }
     int id = num_tasks++;
     tasks[id].entry = entry;
     tasks[id].state = TASK_READY;
     
-    // Set up the task's stack
+    // set up the task's stack
     uint32_t* stack_top = (uint32_t*)(tasks[id].stack + STACK_SIZE);
     
     *(--stack_top) = (uint32_t)(uintptr_t)entry;
@@ -76,20 +85,23 @@ void task_yield() {
 }
 
 void task_schedule() {
-    if (num_tasks == 0) return; // No tasks to schedule
+    if (num_tasks == 0) {
+        debugf("[TASK] No tasks to schedule!\n");
+        return; // no tasks to schedule
+    }
     
     int prev_task = current_task;
     int next = (current_task + 1) % num_tasks;
     
-    // Find next ready task
+    // find next ready task
     for (int i = 0; i < num_tasks; ++i) {
         if (tasks[next].state == TASK_READY) {
-            // Mark previous task as ready
+            // mark previous task as ready
             if (prev_task != -1 && tasks[prev_task].state == TASK_RUNNING) {
                 tasks[prev_task].state = TASK_READY;
             }
             
-            // Switch to next task
+            // switch to next task
             current_task = next;
             tasks[current_task].state = TASK_RUNNING;
             
@@ -103,7 +115,7 @@ void task_schedule() {
     }
 }
 
-// Register task
+// register task
 void register_task(task_func task) {
     if (registered_task_count < MAX_TASKS) {
         registered_tasks[registered_task_count] = task;
