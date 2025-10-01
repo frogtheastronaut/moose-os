@@ -473,7 +473,8 @@ int filesystem_load_from_disk(void) {
 }
 
 /**
- * Get disk information as a formatted string
+ * get disk information
+ * @returns string
  * 
  * @note this is implemented wierdly. However, we must focus on other stuff
  * because such is life.

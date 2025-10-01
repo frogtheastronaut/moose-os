@@ -7,8 +7,8 @@
 #define LIB_H_
 
 /**
- * This file contains all the header files for the libc library.
- * Including this file will include all the necessary headers for using the libc library.
+ * this file contains all the header files for the libc library.
+ * including this file will include all the necessary headers for using the libc library.
  * @todo remove this and include only the necessary headers in each file.
  */
 #include "string/string.h"

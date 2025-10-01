@@ -117,7 +117,7 @@ void kernel_main(void)
      */
     debugf("[MOOSE]: QEMU Environment Detected\n");
     /** 
-     * We would now initialise every. Single. Thing.
+     * we would now initialise every. single. thing.
      * @note: initialisation order is important.
      */
     vga_init_custom_palette();

@@ -220,7 +220,7 @@ void editor_open(const char* filename) {
 }
 
 /**
- * Calculate which screen line the cursor is on
+ * calculate which screen line the cursor is on
  */
 int calculate_cursor_screen_line() {
     int screen_line = 0;

@@ -15,8 +15,8 @@ static int current_line = 0;
 bool terminal_active = false;
 
 /**
- * Clear the terminal
- * Used in the terminal `clear` function
+ * clear the terminal
+ * used by the terminal clear command
  */
 void clear_terminal() {
     for (int i = 0; i < MAX_LINES; i++) {
@@ -28,7 +28,7 @@ void clear_terminal() {
 }
 
 /**
- * Add a line to the terminal
+ * add a line to the terminal
  */
 static void terminal_add_line(const char* text, uint8_t colour) {
     if (current_line >= MAX_LINES) {
@@ -55,7 +55,7 @@ static void terminal_add_line(const char* text, uint8_t colour) {
 }
 
 /**
- * Wrap text and add multiple lines to terminal if needed
+ * wrap text and add multiple lines to terminal if needed
  */
 void terminal_add_wrapped_text(const char* text, uint8_t colour) {
     if (!text) return;

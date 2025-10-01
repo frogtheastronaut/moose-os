@@ -13,7 +13,7 @@ static uint8_t speaker_playing = 0;
 static uint8_t original_speaker_state = 0;
 
 /**
- * Initialise the PC Speaker system
+ * initialise the PC Speaker system
  */
 void speaker_init(void) {
     if (speaker_initialized) {
@@ -127,7 +127,7 @@ uint8_t speaker_is_playing(void) {
 }
 
 /**
- * Delay speaker
+ * delay speaker
  * @param milliseconds approximate milliseconds to wait
  * 
  * @todo there's got to be a better way to delay this speaker
@@ -140,7 +140,7 @@ static void speaker_delay(uint32_t milliseconds) {
 }
 
 /**
- * Play a beep sound at the specified frequency for a duration
+ * play a beep sound at the specified frequency for a duration
  * @param frequency Frequency in Hz
  * @param duration_ms Duration in milliseconds
  */

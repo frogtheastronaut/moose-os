@@ -245,7 +245,7 @@ void disk_init(void) {
     }
     
     /**
-     * Set up primary master 
+     * set up primary master
      * @note Currently only works on QEMU
      */
     ata_devices[0].exists = 1;

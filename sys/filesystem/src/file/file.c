@@ -168,7 +168,7 @@ bool name_in_cwd(const char* name, file_node type) {
 }
 
 /**
- * Write inode to disk with bounds checking
+ * write inode to disk
  */
 int write_inode_to_disk(uint32_t inode_num, disk_inode *inode) {
     if (inode_num == 0 || inode_num >= MAX_DISK_INODES) {
