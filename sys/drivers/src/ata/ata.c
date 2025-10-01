@@ -329,7 +329,7 @@ int disk_write_sector(uint8_t drive, uint32_t lba, uint8_t *buffer) {
         return -5;
     }
     
-    // Check for errors
+    // check for errors
     status = inb(base_io + ATA_REG_STATUS);
     if (status & ATA_SR_ERR) {
         debugf("[ATA] Write error\n");

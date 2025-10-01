@@ -357,10 +357,10 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
                     File* child = cwd->folder.children[actual_index];
                     
                     if (child->type == FOLDER_NODE) {
-                        // Delete folder
+                        // delete folder
                         filesystem_remove_dir(child->name);
                     } else {
-                        // Delete file
+                        // delete file
                         filesystem_remove(child->name);
                     }
                     

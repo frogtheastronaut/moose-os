@@ -44,7 +44,7 @@ static void terminal_add_line(const char* text, uint8_t colour) {
         current_line = MAX_LINES - 1;
     }
     
-    // New line
+    // new line
     int i = 0;
     while (i < CHARS_PER_LINE && text[i] != '\0') {
         terminal_lines[current_line][i] = text[i];
@@ -65,7 +65,7 @@ void terminal_add_wrapped_text(const char* text, uint8_t colour) {
     int pos = 0;
     
     for (int i = 0; i <= text_len; i++) {
-        // If we hit end of string or newline, flush current line
+        // if we hit end of string or newline, flush current line
         if (text[i] == '\0' || text[i] == '\n') {
             line_buffer[pos] = '\0';
             if (pos > 0) {
@@ -75,7 +75,7 @@ void terminal_add_wrapped_text(const char* text, uint8_t colour) {
             continue;
         }
         
-        // If line is getting too long, wrap it
+        // if line is getting too long, wrap it
         if (pos >= CHARS_PER_LINE) {
             line_buffer[pos] = '\0';
             terminal_add_line(line_buffer, colour);
@@ -87,21 +87,21 @@ void terminal_add_wrapped_text(const char* text, uint8_t colour) {
 }
 
 /**
- * Print text with wrapping
+ * print text with wrapping
  */
 void terminal_print(const char* text) {
     terminal_add_wrapped_text(text, TERM_TEXT_COLOUR);
 }
 
 /**
- * Print error message with wrapping
+ * print error message with wrapping
  */
 void terminal_print_error(const char* text) {
     terminal_add_wrapped_text(text, TERM_ERROR_COLOUR);
 }
 
 /**
- * Get current working directory name
+ * get current working directory name
  */
 const char* get_cwd() {
     if (cwd == root) {
@@ -113,7 +113,7 @@ const char* get_cwd() {
 }
 
 /**
- * Draw terminal window
+ * draw terminal window
  */
 static void terminal_draw_win() {
     gui_clear(VGA_COLOUR_LIGHT_GREY);
@@ -121,13 +121,13 @@ static void terminal_draw_win() {
 }
 
 /**
- * Draw terminal content
+ * draw terminal content
  */
 static void term_draw_content() {
     int y_pos = TERM_AREA_Y + FONT_SPACING;
     int visible_lines = (TERMINAL_HEIGHT - 35) / FONT_HEIGHT;
     
-    // Ensure we don't show more lines than we have stored
+    // ensure we don't show more lines than we have stored
     if (visible_lines > MAX_LINES) {
         visible_lines = MAX_LINES;
     } 
@@ -147,7 +147,7 @@ static void term_draw_content() {
     int cursor_x = TERM_AREA_X + FONT_SPACING + draw_text_width(prompt);
 
     /**
-     * Currently, the cursor is a _
+     * currently, the cursor is a _
      * 
      * @todo: add different types of cursors. This is low priority.
      */
@@ -156,30 +156,30 @@ static void term_draw_content() {
 }
 
 /**
- * Optimized function to only redraw the prompt line (much faster for typing)
+ * only redraw the prompt
  */
 static void term_redraw_prompt_only() {
-    // Calculate prompt line position
+    // calculate prompt line position
     int y_pos = TERM_AREA_Y + FONT_SPACING;
     int visible_lines = (TERMINAL_HEIGHT - 35) / FONT_HEIGHT;
     
-    // Ensure we don't show more lines than we have stored
+    // ensure we don't show more lines than we have stored
     if (visible_lines > MAX_LINES) {
         visible_lines = MAX_LINES;
     }
     int start_line = (current_line > visible_lines) ? current_line - visible_lines : 0;
     
-    // Skip to prompt line position
+    // skip to prompt line position
     for (int i = start_line; i < current_line; i++) {
         if (terminal_lines[i][0] != '\0') {
             y_pos += FONT_HEIGHT;
         }
     }
     
-    // Clear the prompt line area (overwrite with background colour)
+    // clear the prompt line area (overwrite with background colour)
     draw_rect(TERM_AREA_X + FONT_SPACING, y_pos, TERMINAL_WIDTH - (2 * FONT_SPACING), FONT_HEIGHT, TERM_BG_COLOUR);
     
-    // Redraw only the prompt and cursor
+    // redraw only the prompt and cursor
     char prompt[CHARS_PER_LINE + 1];
     msnprintf(prompt, sizeof(prompt), "%s# %s", get_cwd(), command_buffer); 
     draw_text(TERM_AREA_X + FONT_SPACING, y_pos, prompt, TERM_PROMPT_COLOUR);
@@ -191,14 +191,14 @@ static void term_redraw_prompt_only() {
 
 
 /**
- * Draw terminal
+ * draw terminal
  */
 void draw_term() {
-    // Always ensure background is drawn first
+    // draw background
     gui_clear(VGA_COLOUR_LIGHT_GREY);
     draw_rect(TERM_AREA_X, TERM_AREA_Y, TERMINAL_WIDTH, TERMINAL_HEIGHT, TERM_BG_COLOUR);
     
-    // Set terminal state
+    // set active states
     terminal_active = true;
     dialog_active = false;
     explorer_active = false;
@@ -209,7 +209,7 @@ void draw_term() {
 }
 
 /**
- * Handle terminal keyboard input
+ * handle terminal keyboard input
  */
 bool terminal_handle_key(unsigned char key, char scancode) {
     if (!terminal_active) return false;
@@ -221,40 +221,39 @@ bool terminal_handle_key(unsigned char key, char scancode) {
             return true;
             
         case ENTER_KEY_CODE:
-            // Enter key executes commands
+            // enter key executes commands
             term_exec_cmd(command_buffer);
             command_buffer[0] = '\0';
             command_pos = 0;
-            draw_term(); // Full redraw needed after command execution
+            draw_term();
             return true;
             
         case BS_KEY_CODE:
             if (command_pos > 0) {
                 command_pos--;
                 command_buffer[command_pos] = '\0';
-                term_redraw_prompt_only(); // Only redraw the prompt line
+                term_redraw_prompt_only();
             }
             return true;
             
         default:
-            // Printable characters
             if (key >= 32 && key < 127 && command_pos < MAX_COMMAND_LEN) {
                 command_buffer[command_pos] = key;
                 command_pos++;
                 command_buffer[command_pos] = '\0';
-                term_redraw_prompt_only(); // Only redraw the prompt line
+                term_redraw_prompt_only();
                 return true; 
             } 
     }
 }
 
 /**
- * Initialize terminal
+ * initialize terminal
  */
 void term_init() {
     clear_terminal();
     
-    // Draw the background immediately when initializing
+    // draw background
     gui_clear(VGA_COLOUR_LIGHT_GREY);
     draw_rect(TERM_AREA_X, TERM_AREA_Y, TERMINAL_WIDTH, TERMINAL_HEIGHT, TERM_BG_COLOUR);
     
@@ -262,19 +261,18 @@ void term_init() {
     terminal_print("Type 'help' for available commands");
     terminal_print("Press [ESC] to exit");
     
-    // Ensure the terminal is ready to be drawn
     draw_term();
 }
 
 /**
- * Check if terminal is active
+ * check if terminal is active
  */
 bool term_isactive() {
     return terminal_active;
 }
 
 /**
- * Open terminal
+ * open terminal
  */
 void gui_open_terminal() {
     term_init();

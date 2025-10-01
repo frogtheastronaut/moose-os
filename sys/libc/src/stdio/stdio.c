@@ -100,7 +100,7 @@ int msnprintf(char *buffer, int size, const char *format, ...) {
             int width = 0;
             int fmt_len = 2;  // start after %0
             
-            // Parse width
+            // parse width
             while (fmt_ptr[fmt_len] >= '0' && fmt_ptr[fmt_len] <= '9') {
                 width = width * 10 + (fmt_ptr[fmt_len] - '0');
                 fmt_len++;
@@ -133,15 +133,15 @@ int msnprintf(char *buffer, int size, const char *format, ...) {
                 }
             }
             
-            // Add leading zeros if needed
+            // add leading zeros if needed
             int padding = width - temp_len;
             while (padding > 0 && written < size - 1) {
                 *buf_ptr++ = '0';
                 written++;
                 padding--;
             }
-            
-            // Output the hex digits
+
+            // output the hex digits
             for (int i = 0; i < temp_len && written < size - 1; i++) {
                 *buf_ptr++ = temp[i];
                 written++;

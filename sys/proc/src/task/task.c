@@ -105,7 +105,7 @@ void task_schedule() {
             current_task = next;
             tasks[current_task].state = TASK_RUNNING;
             
-            // Perform task switch if we have a previous task
+            // perform task switch if we have a previous task
             if (prev_task != -1 && prev_task != current_task) {
                 task_switch(&tasks[prev_task].stack_ptr, tasks[current_task].stack_ptr);
             }

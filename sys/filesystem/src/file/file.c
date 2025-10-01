@@ -309,7 +309,7 @@ static int memory_to_inode(File *memory_file, disk_inode *disk_inode, uint32_t i
                 
                 // write content to disk
                 if (disk_write_sector(boot_drive, data_block, content_buffer) != 0) {
-                    // Failed to write content, free the block
+                    // failed to write content, free the block
                     debugf("[FILE] Failed to write file content to disk block\n");
                     debugf("[FILE] Freeing allocated data block...");
                     free_data_block(data_block);
@@ -431,14 +431,14 @@ static File* convert_disk_to_memory_file(disk_inode *disk_inode) {
                 memory_file->file.content_capacity = 0;
             }
         } else {
-            // Empty file
+            // empty file
             debugf("[FILE] File has no content\n");
             memory_file->file.content = NULL;
             memory_file->file.content_size = 0;
             memory_file->file.content_capacity = 0;
         }
     } else {
-        // For directories - initialize empty
+        // initialise empty
         debugf("[FILE] Empty directory\n");
         memory_file->folder.children = NULL;
         memory_file->folder.childCount = 0;

@@ -307,7 +307,7 @@ void *kmalloc_aligned(uint32_t size) {
     // align size to page boundary
     size = PAGE_ALIGN_UP(size);
     
-    // For simplicity, allocate from our frame allocator
+    // allocate from frame allocator
     uint32_t frame = next_frame;
     next_frame += size;
     frames_allocated++;

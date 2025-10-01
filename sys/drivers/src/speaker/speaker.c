@@ -81,7 +81,7 @@ void speaker_enable_gate(void) {
  */
 void speaker_disable_gate(void) {
     uint8_t current_state = inb(SPEAKER_PORT);
-    // Clear gate bit (bit 0)
+    // clear gate bit (bit 0)
     outb(SPEAKER_PORT, current_state & ~SPEAKER_GATE_BIT);
     speaker_playing = 0;
 }

@@ -52,7 +52,7 @@ void mouse_handler_main(void) {
     write_port(0xA0, 0x20); 
     write_port(0x20, 0x20); 
     
-    // Safety checks
+    // safety checks
     if (!(status & MOUSE_BBIT)) {
         return; // no data
     }

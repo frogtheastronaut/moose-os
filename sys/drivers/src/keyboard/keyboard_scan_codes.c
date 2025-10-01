@@ -6,7 +6,6 @@
 
 #include "keyboard/keyboard_scan_codes.h"
 
-// The following code is a modified version of the OSDev wiki keyboard layout
 unsigned char keyboard_map_normal[128] = {
     0,      // 0x00: (none)
     27,     // 0x01: ESC
@@ -138,7 +137,7 @@ unsigned char keyboard_map_normal[128] = {
     0       // 0x7F: (unused)
 };
 
-// Shifted (shift, no caps)
+// shifted (shift, no caps)
 unsigned char keyboard_map_shift[128] = {
     0,  27, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b', /* 0x0E: Backspace */
     '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',   /* 0x1C: Enter */
@@ -150,7 +149,7 @@ unsigned char keyboard_map_shift[128] = {
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 };
 
-// Caps Lock (caps, no shift)
+// caps lock (caps, no shift)
 unsigned char keyboard_map_caps[128] = {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', /* 0x0E: Backspace */
     '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\n',   /* 0x1C: Enter */

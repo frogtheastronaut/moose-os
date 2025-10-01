@@ -126,7 +126,7 @@ void editor_draw() {
                     editor_cursor_col < line_start_col + chars_that_fit) {
                     int cursor_col_in_segment = editor_cursor_col - line_start_col;
                     
-                    // Calculate cursor position
+                    // calculate cursor position
                     for (int i = 0; i < cursor_col_in_segment && i < chars_to_draw; i++) {
                         cursor_x += char_widths[(unsigned char)line_buffer[i]] + 1;
                     }

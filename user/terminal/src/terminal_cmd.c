@@ -15,7 +15,7 @@ void term_exec_cmd(const char* cmd) {
     // strip whitespace
     cmd = strip_whitespace(cmd);
     
-    // Add command to history
+    // add command to history
     char prompt_line[CHARS_PER_LINE + 1];
     msnprintf(prompt_line, sizeof(prompt_line), "%s# %s", get_cwd(), cmd); 
     terminal_add_wrapped_text(prompt_line, TERM_PROMPT_COLOUR);
@@ -362,7 +362,7 @@ void term_exec_cmd(const char* cmd) {
         
         char line[CHARS_PER_LINE + 1];
         
-        // Test interrupts
+        // test interrupts
         uint32_t eflags;
         asm volatile("pushf; pop %0" : "=r"(eflags));
         if (eflags & 0x200) {
@@ -371,7 +371,7 @@ void term_exec_cmd(const char* cmd) {
             terminal_print("[FAIL] Interrupts disabled");
         }
         
-        // Test paging - show real-time activity
+        // test paging
         uint32_t cr0;
         asm volatile("mov %%cr0, %0" : "=r"(cr0));
         if (cr0 & 0x80000000) {
@@ -400,7 +400,7 @@ void term_exec_cmd(const char* cmd) {
             terminal_print("[FAIL] Real mode");
         }
         
-        // Test memory
+         // test memory
         uint32_t *test_addr = (uint32_t*)0x100000;
         uint32_t orig = *test_addr;
         *test_addr = 0xDEADBEEF;
@@ -411,7 +411,7 @@ void term_exec_cmd(const char* cmd) {
             terminal_print("[FAIL] Memory access failed");
         }
         
-        // Test disk
+       // test disk
         extern ata_device ata_devices[4];
         if (ata_devices[0].exists) {
             terminal_print("[PASS] Disk detected");
