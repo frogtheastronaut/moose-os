@@ -1,13 +1,13 @@
-/**
- * This is the system MOOSE font
- *
- * @todo: Add other fonts. This is not an immediate priority.
- */
+/*
+    MooseOS System font
+    Copyright (c) 2025 Ethan Zhang
+    Licensed under the MIT license. See license file for details
+*/
 
 #include "fontdef/fontdef.h"
 
 const uint8_t system_font[256][8] = {
-    // Space 
+    // space 
     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
     
     [35] = {0x14, 0x14, 0x7F, 0x14, 0x7F, 0x14, 0x14, 0x00},  // #
@@ -83,7 +83,7 @@ const uint8_t system_font[256][8] = {
     [121] = {0x00, 0x00, 0x44, 0x44, 0x44, 0x3C, 0x04, 0x38},  // y
     [122] = {0x00, 0x00, 0x7C, 0x08, 0x10, 0x20, 0x7C, 0x00},  // z
     
-    [32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},   // Space
+    [32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},   // space
     [58] = {0x00, 0x00, 0x08, 0x00, 0x00, 0x08, 0x00, 0x00},   // :
     [59] = {0x00, 0x00, 0x08, 0x00, 0x00, 0x08, 0x08, 0x10},   // ;
     [33] = {0x08, 0x08, 0x08, 0x08, 0x08, 0x00, 0x08, 0x00},   // !
@@ -111,7 +111,7 @@ const uint8_t system_font[256][8] = {
     [91] = {0x1C, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1C, 0x00},   // [
     [93] = {0x38, 0x08, 0x08, 0x08, 0x08, 0x08, 0x38, 0x00},   // ]
     [124] = {0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x00},  // |
-    [92] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x00},   // \ (backslash)
+    [92] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x00},   // backslash
     [58] = {0x00, 0x00, 0x08, 0x00, 0x00, 0x08, 0x00, 0x00},   // :
     [34] = {0x24, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},   // "
     [96] = {0x10, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},   // `
@@ -122,14 +122,15 @@ const uint8_t system_font[256][8] = {
 
 };
 
+// font character widths
 const uint8_t char_widths[256] = {
-    // Default width (for undefined characters)
+    // default width
     [0 ... 255] = 6,
     
-    // Space
+    // space
     [32] = 4,
     
-    // Punctuation
+    // punctuation
     [33] = 3, // !
     [34] = 5, // "
     [35] = 6, // #
@@ -153,7 +154,7 @@ const uint8_t char_widths[256] = {
     [63] = 6, // ?
     [64] = 7, // @
     [91] = 4, // [
-    [92] = 5, // \ (backslash)
+    [92] = 5, // backslash
     [93] = 4, // ]
     [94] = 6, // ^
     [95] = 6, // _
@@ -163,11 +164,11 @@ const uint8_t char_widths[256] = {
     [125] = 5, // }
     [126] = 6, // ~
     
-    // Numbers
+    // numbers
     [47] = 5, // /
     [48 ... 57] = 6, // 0-9
     
-    // Uppercase letters
+    // uppercase letters
     [65] = 6, // A
     [66] = 6, // B
     [67] = 6, // C
@@ -195,7 +196,7 @@ const uint8_t char_widths[256] = {
     [89] = 8, // Y
     [90] = 6, // Z
 
-    // Lowercase letters
+    // lowercase letters
     [97] = 6,  // a
     [98] = 6,  // b
     [99] = 5,  // c

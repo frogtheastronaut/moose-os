@@ -1,25 +1,21 @@
 /*
-    Moose Operating System
-    Copyright (c) 2025 Ethan Zhang and Contributors.
-
-    Header file for ../explorer.c
+    MooseOS Explorer code
+    Copyright (c) 2025 Ethan Zhang
+    Licensed under the MIT license. See license file for details
 */
 #ifndef EXPLROR_H
 #define EXPLROR_H
 
-// Includes
 #include "gui/gui.h"
 #include "editor.h"
 #include "dock.h"
 #include "heap/heap.h"
 
-// External functions
 extern void draw_cursor(void);
 
-// Current selection for files/folders
+// current selection for files/folders
 extern int current_selection;
 
-// Function prototypes
 bool explorer_handle_mouse(void);
 
 #endif

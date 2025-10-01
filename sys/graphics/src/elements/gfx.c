@@ -121,7 +121,7 @@ void draw_3dbox(int x, int y, int width, int height,
 }
 
 // draw a window box
-void draw_windowbox(int x, int y, int width, int height,
+void draw_window_box(int x, int y, int width, int height,
                         uint8_t outer_colour,
                         uint8_t inner_colour,
                         uint8_t face_colour) {
@@ -146,7 +146,7 @@ void draw_dialog(const char* title, const char* prompt) {
     int y = (SCREEN_HEIGHT - height) / 2;
     
     draw_rect(x + 4, y + 4, width, height, VGA_COLOUR_DARK_GREY); 
-    draw_windowbox(x, y, width, height,
+    draw_window_box(x, y, width, height,
                       VGA_COLOUR_BLACK,
                       VGA_COLOUR_WHITE,
                       VGA_COLOUR_LIGHT_GREY);

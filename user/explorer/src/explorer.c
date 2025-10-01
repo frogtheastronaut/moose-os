@@ -1,34 +1,32 @@
-/**
- * Moose Operating System
- * Copyright (c) 2025 Ethan Zhang and Contributors.
- * 
- * @todo: If we ever make it so we can change the folder/file icon size, 
- *        we would need to update this code. We wouldn't be considering this as an immediate priority.
- */
+/*
+    MooseOS Explorer code
+    Copyright (c) 2025 Ethan Zhang
+    Licensed under the MIT license. See license file for details
+*/
 
 #include "explorer.h"
 
-// Current selection for files/folders
+// current selection for files/folders
 int current_selection = 0;
 
 /**
- * Draw file explorer
+ * draw file explorer
  */
 void draw_explorer() {
     gui_init();
     gui_clear(VGA_COLOUR_LIGHT_GREY);
     
-    draw_windowbox(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 
+    draw_window_box(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 
                        VGA_COLOUR_LIGHT_GREY,
                        VGA_COLOUR_LIGHT_GREY,
                        VGA_COLOUR_LIGHT_GREY);
     
-    // Title bar
+    // title bar
     draw_title(0, 0, SCREEN_WIDTH, 20, VGA_COLOUR_BLUE);
     char path_text[64] = "File Explorer - ";
     draw_text(10, 6, path_text, VGA_COLOUR_WHITE);
 
-    // Display cwd
+    // display working directory
     char full_path[128] = "";
     if (cwd == root) {
         strcpy(full_path, "/");
@@ -72,16 +70,16 @@ void draw_explorer() {
         }
     }
     
-    // draw files and folders - check for null children array
+    // draw files and folders
     if (cwd->folder.children) {
         for (int i = 0; i < cwd->folder.childCount && displayed_count < 16; i++) { // 4 rows of 4 items each
-            if (!cwd->folder.children[i]) continue; // Skip null children
+            if (!cwd->folder.children[i]) continue; // skip if no children
             
             File* child = cwd->folder.children[i];
 
             int selection_index = i;
             if (cwd != root) {
-                selection_index = i + 1;  // +1 bc of ".." folder 
+                selection_index = i + 1;  // +1 because of ".." folder
             }
             
             draw_file(x_pos, y_pos, child->name, 
@@ -98,7 +96,7 @@ void draw_explorer() {
         }
     }
 
-    // Item count
+    // item count
     char count_str[16]; 
     int_to_str(cwd->folder.childCount, count_str, sizeof(count_str));
     
@@ -116,18 +114,19 @@ void draw_explorer() {
     
     draw_cursor();
 }
+
 /**
- * Create an item
+ * create an item
  */
 void dialog_create_item() {
     if (dialog_input[0] != '\0') {
         int previous_item_count = cwd->folder.childCount;
         
         if (dialog_type == 0) {
-            // Create directory
+            // create directory
             filesystem_make_dir(dialog_input);
         } else {
-            // Create file
+            // create file
             filesystem_make_file(dialog_input, "");
         }
         
@@ -147,14 +146,14 @@ void dialog_create_item() {
                 current_selection = 0;
             }
         } else {
-            // Reset if item creation failed/no new item created
+            // reset if item creation failed/no new item created
             current_selection = 0;
         }
         draw_explorer();
     }
 }
 /**
- * Handle keyboard input for dialog
+ * handle keyboard input for dialog
  */
 bool gui_handle_dialog_input(unsigned char key, char scancode) {
     if (!dialog_active) return false;
@@ -163,10 +162,10 @@ bool gui_handle_dialog_input(unsigned char key, char scancode) {
         dialog_active = false;
         
         if (dialog_type == DIALOG_TYPE_NEW_FILE) {
-            dock_mkopen_file();
+            dock_create_open_file();
         } else {
             dialog_create_item();
-            draw_explorer();  // Redraw
+            draw_explorer();  // redraw
         }
         
         dialog_input[0] = '\0';
@@ -257,7 +256,7 @@ bool gui_handle_dialog_input(unsigned char key, char scancode) {
     return false;
 }
 /*
- * Handle explorer key inputs
+ * handle explorer key inputs
  */
 bool gui_handle_explorer_key(unsigned char key, char scancode) {
     if (dialog_active) {
@@ -268,12 +267,12 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
     
     int items_per_row = 4;
     int total_items = cwd->folder.childCount;
-    if (cwd != root) total_items++; // Account for ".." folder
+    if (cwd != root) total_items++; // account for ".." folder
     
-    // Update previous selection
+    // update previous selection
     int previous_selection = current_selection;
-    
-    // Process key input
+
+    // process key input
     switch (scancode) {
         case ARROW_UP_KEY:
             if (current_selection >= items_per_row) {
@@ -338,7 +337,7 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
 
         case 0x21:
             dialog_active = true;
-            dialog_type = 1; // File
+            dialog_type = 1; // file
             dialog_input[0] = '\0';
             dialog_input_pos = 0;
             draw_dialog("Create File", "Enter file name:");
@@ -380,12 +379,12 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
             break;
 
         case ESC_KEY_CODE:
-            // Return to dock
+            // return to dock
             dock_return();
             return true;
             
         default:
-            // Not a handleable key
+            // not a handleable key
             return false;
     }
     
@@ -398,7 +397,7 @@ bool gui_handle_explorer_key(unsigned char key, char scancode) {
 }
 
 /**
- * Handle editor input
+ * handle editor input
  */
 bool gui_handle_editor_key(unsigned char key, char scancode) {
     if (!editor_active) return false;
@@ -540,7 +539,7 @@ bool gui_handle_editor_key(unsigned char key, char scancode) {
 }
 
 /**
- * Handle mouse clicks in the explorer
+ * handle mouse clicks in the explorer
  */
 static bool explorer_handle_click(int mouse_x, int mouse_y) {
     if (!explorer_active || dialog_active) {
@@ -596,7 +595,7 @@ static bool explorer_handle_click(int mouse_x, int mouse_y) {
 }
 
 /**
- * Handle mouse input for file explorer
+ * handle mouse input for file explorer
  */
 bool explorer_handle_mouse() {
     static bool last_left_state = false;

@@ -1,20 +1,20 @@
-/**
-    Moose Operating System
-    Copyright (c) 2025 Ethan Zhang and Contributors.
-
-    Header file for ../images.c
+/*
+    MooseOS Icon bitmaps
+    Copyright (c) 2025 Ethan Zhang
+    Licensed under the MIT license. See license file for details
 */
-#ifndef IMAGES_H
-#define IMAGES_H
+#ifndef ICONS_H
+#define ICONS_H
 
 #include <stdint.h>
 #include "vga/vga.h"
 
-// Images in .c file
 extern const uint8_t folder_icon[16][16];
 extern const uint8_t file_icon[16][16];
 extern const uint8_t terminal_icon[16][16];
 extern const uint8_t cursor_icon[8][8];
+
+// colour map for said icons
 extern const uint8_t icon_colour_map[];
 
-#endif
+#endif // ICONS_H

@@ -1,12 +1,12 @@
-/**
- * Moose Operating System
- * Copyright (c) 2025 Ethan Zhang and Contributors.
- * @todo: Simplify the logic
- */
+/*
+    MooseOS Editor code
+    Copyright (c) 2025 Ethan Zhang
+    Licensed under the MIT license. See license file for details
+*/
 
 #include "editor.h"
 
-// Editor variables
+// editor variables
 char editor_content[MAX_CONTENT] = "";
 char editor_filename[MAX_NAME_LEN] = "";
 int editor_cursor_pos = 0;
@@ -16,31 +16,29 @@ int editor_cursor_col = 0;
 bool editor_modified = false;
 
 /**
- * Draw editor
+ * draw editor
  */
 void editor_draw() {
-    // Clear screen
+    // clear screen
     draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, VGA_COLOUR_LIGHT_GREY);
     
-    // Title bar
+    // draw title bar
     draw_title(0, 0, SCREEN_WIDTH, 15, VGA_COLOUR_BLUE);
-    
-    // Label on title bar
     char label[] = "Text Editor - ";
     draw_text(10, 6, label, VGA_COLOUR_WHITE);
     
-    // File name, scroll if too big
+    // file name, scroll if too big
     int label_width = draw_text_width(label);
     int filename_x = 10 + label_width;
     int max_filename_width = SCREEN_WIDTH - filename_x - 10;
     draw_text_scroll(filename_x, 6, editor_filename, max_filename_width, VGA_COLOUR_WHITE, VGA_COLOUR_BLUE);
 
 
-    // Draw numbers area (line numbers)
+    // draw line numbers
     draw_rect(0, 20, EDITOR_LINE_NUM_WIDTH, SCREEN_HEIGHT - 20, VGA_COLOUR_LIGHT_GREY);
     draw_line_vertical(EDITOR_LINE_NUM_WIDTH, 20, SCREEN_HEIGHT, VGA_COLOUR_DARK_GREY);
 
-    // Draw content with scrolling
+    // draw content with scrolling
     int y_pos = EDITOR_START_Y + 5;
     int max_lines = EDITOR_LINES_VISIBLE;
     int total_lines = count_lines(editor_content);
@@ -51,27 +49,27 @@ void editor_draw() {
         editor_scroll_line = total_lines - 1;
         if (editor_scroll_line < 0) editor_scroll_line = 0;
     }
-    // Ensure visibility
+    // ensure visibility
     editor_cursor_visible();
 
-    // Draw visible lines with wrapping
+    // draw visible lines
     int visible_line_count = 0;
     int screen_lines_used = 0;  
     
     for (int line = editor_scroll_line; line < total_lines && screen_lines_used < max_lines; line++) {
-        // Get line content
+        // get line content
         const char* line_start = get_line_start(editor_content, line);
         int line_length = len_line(line_start);
         
         if (line_length == 0) {
-            // Draw line number
+            // draw line number
             char line_num[8];
             int_to_str(line + 1, line_num, sizeof(line_num));
             draw_text(10, y_pos, line_num, VGA_COLOUR_DARK_GREY);
 
-            // Draw cursor if it's on this empty line
+            // draw cursor if it's on this empty line
             if (line == editor_cursor_line && editor_cursor_col == 0) {
-                int cursor_x = EDITOR_LINE_NUM_WIDTH + 5; // Start after line numbers
+                int cursor_x = EDITOR_LINE_NUM_WIDTH + 5; // start after line numbers
                 draw_line_vertical(cursor_x, y_pos, y_pos + 8, VGA_COLOUR_BLUE);
             }
             
@@ -118,12 +116,12 @@ void editor_draw() {
             }
             line_buffer[chars_to_draw] = '\0';
             
-            // Draw line content - start after line numbers
+            // draw line content
             draw_text(EDITOR_LINE_NUM_WIDTH + 5, y_pos, line_buffer, VGA_COLOUR_BLACK);
 
-            // Draw cursor if it's on this line segment
+            // draw cursor if it's on this line segment
             if (line == editor_cursor_line) {
-                int cursor_x = EDITOR_LINE_NUM_WIDTH + 5; // Start after line numbers
+                int cursor_x = EDITOR_LINE_NUM_WIDTH + 5; // start after line numbers
                 if (editor_cursor_col >= line_start_col && 
                     editor_cursor_col < line_start_col + chars_that_fit) {
                     int cursor_col_in_segment = editor_cursor_col - line_start_col;
@@ -135,7 +133,8 @@ void editor_draw() {
                     
                     draw_line_vertical(cursor_x, y_pos, y_pos + 8, VGA_COLOUR_BLUE);
                 }
-                // If cursor is at the end of the line, we move the cursor to the next line
+                // if cursor is at the end of the line, 
+                // we move the cursor to the next line
                 else if (editor_cursor_col == line_start_col + chars_that_fit && 
                          line_start_col + chars_that_fit >= line_length) {
                     for (int i = 0; i < chars_to_draw; i++) {
@@ -159,10 +158,10 @@ void editor_draw() {
         }
     }
 
-    // Draw status bar
+    // draw status bar
     draw_rect(0, 190, SCREEN_WIDTH, 10, VGA_COLOUR_DARK_GREY);
 
-    // Show cursor/line info and scroll position
+    // show cursor/line info and scroll position
     char status[64] = "Line: ";
     char line_str[8], col_str[8], scroll_str[8];
     int_to_str(editor_cursor_line + 1, line_str, sizeof(line_str));
@@ -172,42 +171,42 @@ void editor_draw() {
     strcat(status, line_str);
     strcat(status, ", Col: ");
     strcat(status, col_str);
-    
-    draw_text(5, SCREEN_HEIGHT - 8, status, VGA_COLOUR_WHITE); // Bottom of screen
+
+    draw_text(5, SCREEN_HEIGHT - 8, status, VGA_COLOUR_WHITE); // bottom of screen
 }
 
 
 
 /**
- * Open text editor
+ * open text editor
  */
 void editor_open(const char* filename) {
-    // Copy filename
+    // copy filename
     strcpy(editor_filename, filename);
 
-    // Get content
+    // get content
     char* content = get_file_content(filename);
     if (content) {
-        // Copy content to buffer
+        // copy content to buffer
         int i = 0;
         while (content[i] && i < MAX_CONTENT - 1) {
             editor_content[i] = content[i];
             i++;
         }
-        // End file
+        // end file
         editor_content[i] = '\0';
     } else {
-        // File is empty
+        // file is empty, end file
         editor_content[0] = '\0';
     }
 
-    // Reset editor state
+    // reset editor state
     editor_cursor_pos = 0;
     editor_scroll_line = 0;
     cursorpos2linecol(editor_cursor_pos, &editor_cursor_line, &editor_cursor_col);
     editor_modified = false;
 
-    // Activate editor, deactivate explorer, etc.
+    // activate editor, deactivate other apps
     editor_active = true;
     explorer_active = false;
     terminal_active = false;
@@ -215,7 +214,8 @@ void editor_open(const char* filename) {
 
     extern void gui_clear_mouse(void);
     gui_clear_mouse();
-    // Draw editor
+
+    // draw editor
     editor_draw();
 }
 
@@ -224,7 +224,7 @@ void editor_open(const char* filename) {
  */
 int calculate_cursor_screen_line() {
     int screen_line = 0;
-    int editor_width = EDITOR_WIDTH - EDITOR_LINE_NUM_WIDTH - 10; // Proportional width
+    int editor_width = EDITOR_WIDTH - EDITOR_LINE_NUM_WIDTH - 10;
     
     for (int line = 0; line < editor_cursor_line; line++) {
         const char* line_start = get_line_start(editor_content, line);
@@ -298,12 +298,12 @@ int calculate_cursor_screen_line() {
 }
 
 /**
- * Calculate total screen lines used by content
+ * calculate total screen lines used by content
  */
 int calculate_total_screen_lines() {
     int screen_lines = 0;
     int total_lines = count_lines(editor_content);
-    int editor_width = EDITOR_WIDTH - EDITOR_LINE_NUM_WIDTH - 10; // Proportional width
+    int editor_width = EDITOR_WIDTH - EDITOR_LINE_NUM_WIDTH - 10; 
     
     for (int line = 0; line < total_lines; line++) {
         const char* line_start = get_line_start(editor_content, line);
@@ -342,10 +342,10 @@ int calculate_total_screen_lines() {
 }
 
 /**
- * Ensure cursor is visible
+ * ensure cursor is visible
  */
 void editor_cursor_visible() {
-    // Don't scroll if we're at the very beginning
+    // don't scroll if we're at the very beginning
     if (editor_cursor_line == 0 && editor_cursor_col == 0 && editor_scroll_line == 0) {
         return;
     }
@@ -390,7 +390,7 @@ void editor_cursor_visible() {
     }
     
     if (cursor_screen_line < scroll_screen_line) {
-        // Cursor is above visible area, scroll up
+        // cursor is above visible area, scroll up
         while (cursor_screen_line < scroll_screen_line && editor_scroll_line > 0) {
             editor_scroll_line--;
             scroll_screen_line = 0;
@@ -428,7 +428,7 @@ void editor_cursor_visible() {
             }
         }
     } else if (cursor_screen_line >= scroll_screen_line + max_lines) {
-        // Cursor is below visible area, scroll down
+        // cursor is below visible area, scroll down
         while (cursor_screen_line >= scroll_screen_line + max_lines) {
             editor_scroll_line++;
             scroll_screen_line = 0;
@@ -477,43 +477,43 @@ void editor_cursor_visible() {
     }
 }
 
-// Convert a cursor position to the line column
+// convert a cursor position to the line column
 void cursorpos2linecol(int pos, int* line, int* col) {
     *line = 0;  // Reset to 0
     *col = 0;   // Reset to 0
     
-    // Bounds check
+    // bounds check
     if (pos < 0) pos = 0;
     if (pos > strlen(editor_content)) pos = strlen(editor_content);
     
     for (int i = 0; i < pos && editor_content[i]; i++) {
         if (editor_content[i] == '\n') {
             (*line)++;
-            *col = 0;  // Reset column on new line
+            *col = 0;  // reset column on new line
         } else {
             (*col)++;
         }
     }
 }
 
-// Convert a line column to cursor position
+// convert a line column to cursor position
 int linecol2cursorpos(int line, int col) {
     int pos = 0;
     int current_line = 0;
     
-    // Bounds check
+    // bounds check
     if (line < 0) line = 0;
     if (col < 0) col = 0;
     
-    // Find the start of the target line
+    // find the start of the target line
     while (current_line < line && editor_content[pos]) {
         if (editor_content[pos] == '\n') {
             current_line++;
         }
         pos++;
     }
-    
-    // Move to the target column within the line
+
+    // move to the target column within the line
     int current_col = 0;
     while (current_col < col && editor_content[pos] && editor_content[pos] != '\n') {
         pos++;

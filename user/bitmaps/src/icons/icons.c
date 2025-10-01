@@ -1,12 +1,14 @@
-/**
- * Bitmap images for GUI elements
- * 
- * @todo: Add custom icons. Maybe some code that turns a png into a bitmap?
- * 
- */
+/*
+    MooseOS Icons
+    Copyright (c) 2025 Ethan Zhang
+    Licensed under the MIT license. See license file for details
+*/
 
 #include "icons/icons.h"
 
+/**
+ * @todo add custom icons, maybe load them from PNG files?
+ */
 const uint8_t folder_icon[16][16] = {
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -76,10 +78,10 @@ const uint8_t cursor_icon[8][8] = {
 };
 
 const uint8_t icon_colour_map[] = {
-    VGA_COLOUR_LIGHT_GREY,  // 0 = background (using light grey instead of transparent)
+    VGA_COLOUR_LIGHT_GREY,  // 0 = background
     VGA_COLOUR_BLACK,       // 1 = outline
     VGA_COLOUR_DARK_GREY,   // 2 = shadow
-    VGA_COLOUR_LIGHT_CYAN,  // 3 = folder colour (using light blue)
+    VGA_COLOUR_LIGHT_CYAN,  // 3 = folder colour
     VGA_COLOUR_RED,         // 4 = accent colour
     VGA_COLOUR_GREEN,       // 5 = alternate colour
     VGA_COLOUR_BLUE,        // 6 = another accent colour

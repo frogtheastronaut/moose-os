@@ -1,5 +1,5 @@
 /*
-    MooseOS QEMU detection 
+    MooseOS QEMU detection code
     Copyright (c) 2025 Ethan Zhang
     Licensed under the MIT license. See license file for details
 */

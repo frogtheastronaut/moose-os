@@ -117,7 +117,7 @@ const char* get_cwd() {
  */
 static void terminal_draw_win() {
     gui_clear(VGA_COLOUR_LIGHT_GREY);
-    draw_rect(TERM_AREA_X, TERM_AREA_Y, TERM_AREA_WIDTH, TERM_AREA_HEIGHT, TERM_BG_COLOUR);
+    draw_rect(TERM_AREA_X, TERM_AREA_Y, TERMINAL_WIDTH, TERMINAL_HEIGHT, TERM_BG_COLOUR);
 }
 
 /**
@@ -125,7 +125,7 @@ static void terminal_draw_win() {
  */
 static void term_draw_content() {
     int y_pos = TERM_AREA_Y + FONT_SPACING;
-    int visible_lines = (TERM_AREA_HEIGHT - 35) / FONT_HEIGHT;
+    int visible_lines = (TERMINAL_HEIGHT - 35) / FONT_HEIGHT;
     
     // Ensure we don't show more lines than we have stored
     if (visible_lines > MAX_LINES) {
@@ -161,7 +161,7 @@ static void term_draw_content() {
 static void term_redraw_prompt_only() {
     // Calculate prompt line position
     int y_pos = TERM_AREA_Y + FONT_SPACING;
-    int visible_lines = (TERM_AREA_HEIGHT - 35) / FONT_HEIGHT;
+    int visible_lines = (TERMINAL_HEIGHT - 35) / FONT_HEIGHT;
     
     // Ensure we don't show more lines than we have stored
     if (visible_lines > MAX_LINES) {
@@ -177,7 +177,7 @@ static void term_redraw_prompt_only() {
     }
     
     // Clear the prompt line area (overwrite with background colour)
-    draw_rect(TERM_AREA_X + FONT_SPACING, y_pos, TERM_AREA_WIDTH - (2 * FONT_SPACING), FONT_HEIGHT, TERM_BG_COLOUR);
+    draw_rect(TERM_AREA_X + FONT_SPACING, y_pos, TERMINAL_WIDTH - (2 * FONT_SPACING), FONT_HEIGHT, TERM_BG_COLOUR);
     
     // Redraw only the prompt and cursor
     char prompt[CHARS_PER_LINE + 1];
@@ -196,7 +196,7 @@ static void term_redraw_prompt_only() {
 void draw_term() {
     // Always ensure background is drawn first
     gui_clear(VGA_COLOUR_LIGHT_GREY);
-    draw_rect(TERM_AREA_X, TERM_AREA_Y, TERM_AREA_WIDTH, TERM_AREA_HEIGHT, TERM_BG_COLOUR);
+    draw_rect(TERM_AREA_X, TERM_AREA_Y, TERMINAL_WIDTH, TERMINAL_HEIGHT, TERM_BG_COLOUR);
     
     // Set terminal state
     terminal_active = true;
@@ -256,7 +256,7 @@ void term_init() {
     
     // Draw the background immediately when initializing
     gui_clear(VGA_COLOUR_LIGHT_GREY);
-    draw_rect(TERM_AREA_X, TERM_AREA_Y, TERM_AREA_WIDTH, TERM_AREA_HEIGHT, TERM_BG_COLOUR);
+    draw_rect(TERM_AREA_X, TERM_AREA_Y, TERMINAL_WIDTH, TERMINAL_HEIGHT, TERM_BG_COLOUR);
     
     terminal_print("Welcome to MooseOS Terminal");
     terminal_print("Type 'help' for available commands");

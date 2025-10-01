@@ -73,7 +73,7 @@ extern bool editor_modified;
 void update_mouse(void);
 void gui_update_mouse(void);
 void draw_cursor(void);
-void draw_windowbox(int x, int y, int width, int height, uint8_t outer_colour, uint8_t inner_colour, uint8_t face_colour);
+void draw_window_box(int x, int y, int width, int height, uint8_t outer_colour, uint8_t inner_colour, uint8_t face_colour);
 void draw_title(int x, int y, int width, int title_height, uint8_t title_colour);
 void gui_set_pixel(int x, int y, uint8_t colour);
 void draw_line_horizontal(int x1, int x2, int y, uint8_t colour);

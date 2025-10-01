@@ -1,19 +1,21 @@
-/**
- * Execute a command
- * 
- * @todo: Add tokenization + other features commonly found in a shell.
- *        This is high priority.
- */
+/*
+    MooseOS Terminal command execution code
+    Copyright (c) 2025 Ethan Zhang
+    Licensed under the MIT license. See license file for details
+*/
 
 #include "terminal_cmd.h"
 #include "speaker/speaker.h"
 #include "stdlib/stdlib.h"
 
+/**
+ * @todo this function is extremely inefficient and very long
+ */
 void term_exec_cmd(const char* cmd) {
-    // Strip whitespace
+    // strip whitespace
     cmd = strip_whitespace(cmd);
     
-    // Add cmd to history
+    // Add command to history
     char prompt_line[CHARS_PER_LINE + 1];
     msnprintf(prompt_line, sizeof(prompt_line), "%s# %s", get_cwd(), cmd); 
     terminal_add_wrapped_text(prompt_line, TERM_PROMPT_COLOUR);
@@ -21,9 +23,8 @@ void term_exec_cmd(const char* cmd) {
     if (strlen(cmd) == 0) {
         return; // empty
     }
-    // help
     /**
-     * @todo: Double check this
+     * @todo: double check this
      */
     if (strcmp(cmd, "help")) {
         terminal_print("Welcome to the MooseOS Terminal");
@@ -36,7 +37,7 @@ void term_exec_cmd(const char* cmd) {
         terminal_print("memstats - Show memory statistics");
         terminal_print("save - Save current filesystem to disk");
         terminal_print("load - Load filesystem from disk");
-        terminal_print("systest - Run system tests (disk, paging, interrupts)");
+        terminal_print("systest - Run system tests");
         terminal_print("beep - Play system beep");
         terminal_print("help - Show this help");
         terminal_print("clear - Clear terminal");
@@ -123,7 +124,7 @@ void term_exec_cmd(const char* cmd) {
     else if (cmd[0] == 'c' && cmd[1] == 'a' && cmd[2] == 't' && cmd[3] == ' ') {
         const char* filename = cmd + 4;
         
-        // Search for the file in current directory
+        // search for the file in current directory
         bool found = false;
         if (cwd->folder.children) {
             for (int i = 0; i < cwd->folder.childCount; i++) {
@@ -131,7 +132,6 @@ void term_exec_cmd(const char* cmd) {
                 if (child && child->type == FILE_NODE && strcmp(child->name, filename)) {
                     found = true;
                     if (child->file.content && child->file.content_size > 0) {
-                        // Print content directly - wrapping will be handled automatically
                         terminal_print(child->file.content);
                     } else {
                         terminal_print("File is empty");
@@ -144,7 +144,7 @@ void term_exec_cmd(const char* cmd) {
             terminal_print_error("File not found");
         }
     }
-    // clear term
+    // clear terminal
     else if (strcmp(cmd, "clear")) {
         clear_terminal();
     }
@@ -182,7 +182,6 @@ void term_exec_cmd(const char* cmd) {
         }
         sec_str[2] = '\0';
         
-        // Format date (DD/MM/YYYY)
         char month_str[3], day_str[3], year_str[5];
         if (local_time.month < 10) {
             month_str[0] = '0';
@@ -202,7 +201,6 @@ void term_exec_cmd(const char* cmd) {
         }
         day_str[2] = '\0';
 
-        // Year
         year_str[0] = '2';
         year_str[1] = '0';
         if (local_time.year < 10) {
@@ -219,7 +217,8 @@ void term_exec_cmd(const char* cmd) {
         msnprintf(date_line, sizeof(date_line), "Date: %s/%s/%s", day_str, month_str, year_str);
         terminal_print(date_line);
     }
-    // settimezone - set UTC+X
+
+    // set the time zone offset
     else if (cmd[0] == 's' && cmd[1] == 'e' && cmd[2] == 't' && cmd[3] == 't' && cmd[4] == 'i' && 
              cmd[5] == 'm' && cmd[6] == 'e' && cmd[7] == 'z' && cmd[8] == 'o' && cmd[9] == 'n' && 
              cmd[10] == 'e' && cmd[11] == ' ') {
@@ -254,7 +253,7 @@ void term_exec_cmd(const char* cmd) {
             terminal_print_error("Usage: settimezone <hours>");
         }
     }
-    
+    // show disk info
     else if (strcmp(cmd, "diskinfo")) {
         char info_buffer[512];
         if (filesystem_get_disk_info(info_buffer, sizeof(info_buffer)) == 0) {
@@ -263,18 +262,15 @@ void term_exec_cmd(const char* cmd) {
             
             while (*line_start) {
                 line_end = line_start;
-                // Find end of line or end of string
                 while (*line_end && *line_end != '\n') {
                     line_end++;
                 }
                 
-                // Create null-terminated line
                 char temp_char = *line_end;
                 *line_end = '\0';
                 terminal_print(line_start);
                 *line_end = temp_char;
                 
-                // Move to next line
                 if (*line_end == '\n') {
                     line_end++;
                 }
@@ -293,18 +289,15 @@ void term_exec_cmd(const char* cmd) {
             
             while (*line_start) {
                 line_end = line_start;
-                // Find end of line or end of string
                 while (*line_end && *line_end != '\n') {
                     line_end++;
                 }
                 
-                // Create null-terminated line
                 char temp_char = *line_end;
                 *line_end = '\0';
                 terminal_print(line_start);
                 *line_end = temp_char;
                 
-                // Move to next line
                 if (*line_end == '\n') {
                     line_end++;
                 }
@@ -320,7 +313,7 @@ void term_exec_cmd(const char* cmd) {
         if (filesystem_disk_status()) {
             terminal_print("Saving filesystem to disk...");
             
-            // First try to sync
+            // first try to sync
             int sync_result = filesystem_sync();
             if (sync_result != 0) {
                 char line[CHARS_PER_LINE + 1];
@@ -330,12 +323,12 @@ void term_exec_cmd(const char* cmd) {
                 terminal_print("Superblock synced successfully");
             }
             
-            // Then save filesystem data
+            // save filesystem data
             int save_result = filesystem_save_to_disk();
             if (save_result == 0) {
                 terminal_print("Filesystem data saved successfully");
                 
-                // Force cache flush
+                // force cache flush
                 filesystem_flush_cache();
                 terminal_print("Cache flushed to disk");
                 
@@ -350,7 +343,7 @@ void term_exec_cmd(const char* cmd) {
         }
     }
     
-    // load - load filesystem from disk
+    // load filesystem from disk
     else if (strcmp(cmd, "load")) {
         if (filesystem_disk_status()) {
             if (filesystem_load_from_disk() == 0) {
@@ -363,7 +356,7 @@ void term_exec_cmd(const char* cmd) {
         }
     }
     
-    // systest - system test (compact version)
+    // systest
     else if (strcmp(cmd, "systest")) {
         terminal_print("=== System Test ===");
         
@@ -382,13 +375,13 @@ void term_exec_cmd(const char* cmd) {
         uint32_t cr0;
         asm volatile("mov %%cr0, %0" : "=r"(cr0));
         if (cr0 & 0x80000000) {
-            // Get current page directory
+            // get current page directory
             uint32_t cr3;
             asm volatile("mov %%cr3, %0" : "=r"(cr3));
             msnprintf(line, sizeof(line), "[PASS] Paging active @0x%08X", cr3);
             terminal_print(line);
             
-            // Show live memory translation
+            // show live memory translation
             uint32_t virt_addr = 0x100000; // 1MB mark
             uint32_t *page_dir = (uint32_t*)(cr3 & 0xFFFFF000);
             uint32_t pde_index = virt_addr >> 22;
@@ -447,18 +440,16 @@ void term_exec_cmd(const char* cmd) {
             terminal_print("[FAIL] No disk found");
         }
         
-        // Summary
         terminal_print("=== Test Complete ===");
     }
     
-    // Audio commands
+    // audio commands
     else if (strcmp(cmd, "beep")) {
         terminal_print("Playing system beep...");
         speaker_system_beep();
         terminal_print("Beep complete");
     }
     
-    // tone <frequency> - Play custom frequency
     else if (cmd[0] == 't' && cmd[1] == 'o' && cmd[2] == 'n' && cmd[3] == 'e' && cmd[4] == ' ') {
         const char* freq_str = cmd + 5;
         if (strlen(freq_str) > 0) {
@@ -480,7 +471,7 @@ void term_exec_cmd(const char* cmd) {
         }
     }
     
-    // Unknown command
+    // unknown command
     else {
         char line[CHARS_PER_LINE + 1];
         msnprintf(line, sizeof(line), "Unknown command: %s", cmd);

@@ -18,7 +18,7 @@ void draw_3dbox(int x, int y, int width, int height,
                 uint8_t face_colour, 
                 uint8_t highlight_colour, 
                 uint8_t shadow_colour);
-void draw_windowbox(int x, int y, int width, int height,
+void draw_window_box(int x, int y, int width, int height,
                     uint8_t outer_colour,
                     uint8_t inner_colour,
                     uint8_t face_colour);
