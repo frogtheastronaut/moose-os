@@ -635,8 +635,11 @@ void filesystem_flush_cache(void) {
         /**
          * @todo are we sure we want to do this?
          * this may ruin the physical disk
+         * 
+         * EDIT: this todo is now fixed. however, we will keep this
+         * here in case we need an emergency force flush.
          */
-        disk_force_flush(boot_drive);
+        // disk_force_flush(boot_drive);
     }
 }
 
