@@ -88,6 +88,56 @@ int filesystem_make_file(const char* name, const char* content) {
 }
 
 /**
+ * create a file with binary content
+ * @param name the name of the file to create
+ * @param data binary data pointer
+ * @param size size of the binary data
+ * @returns 0 on success, negative error code on failure.
+ */
+int filesystem_make_file_binary(const char* name, const char* data, size_t size) {
+    if (!name || strlen(name) == 0 || strlen(name) >= MAX_NAME_LEN) {
+        debugf("[FS] Invalid file name - too long/empty\n");
+        return -2; // invalid name - too long/empty
+    }
+    if (!data) {
+        debugf("[FS] Invalid file data - NULL\n");
+        return -3; // data is NULL
+    }
+    if (name_in_cwd(name, FILE_NODE)) {
+        debugf("[FS] Duplicate file name\n");
+        return -4; // duplicate file name
+    }
+
+    File* node = file_alloc();
+    if (!node) {
+        debugf("[FS] Failed to allocate file node\n");
+        return -1;
+    }
+    
+    strcpy(node->name, name);
+    node->type = FILE_NODE;
+    
+    // set binary content
+    if (set_file_content_binary(node, data, size) != 0) {
+        file_free(node);
+        debugf("[FS] Failed to allocate file content\n");
+        return -1; // failed to allocate content
+    }
+    
+    // add to current directory
+    if (add_child_to_dir(cwd, node) != 0) {
+        file_free(node);
+        debugf("[FS] Failed to add file to current directory\n");
+        return -1;
+    }
+
+    // auto-save to disk after creating file
+    auto_save_filesystem();
+
+    return 0;
+}
+
+/**
  * create directory
  * @return 0 on success, negative on failure
  */

@@ -125,6 +125,7 @@ File* file_alloc(void);
 void file_free(File* file);
 int filesystem_make_dir(const char* name);
 int filesystem_make_file(const char* name, const char* content);
+int filesystem_make_file_binary(const char* name, const char* data, size_t size);
 int filesystem_change_dir(const char* name);
 int filesystem_remove(const char* name);
 int filesystem_remove_dir(const char* name);
@@ -134,6 +135,7 @@ void filesystem_init(void);
 // internal helper functions (used by filesystem.c)
 bool name_in_cwd(const char* name, file_node type);
 int set_file_content(File* file, const char* content);
+int set_file_content_binary(File* file, const char* data, size_t size);
 int add_child_to_dir(File* dir, File* child);
 int remove_child_from_dir(File* dir, File* child);
 int save_directory_recursive(File *dir, uint32_t dir_inode_num, uint32_t parent_inode);

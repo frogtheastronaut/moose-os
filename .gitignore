@@ -18,3 +18,5 @@ bin/moose_disk.img
 
 # macOS malloc testing
 */*.dylib
+
+programs/*.elf

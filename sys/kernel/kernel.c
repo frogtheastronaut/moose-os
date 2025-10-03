@@ -23,6 +23,7 @@
 #include "isr/test_interrupts.h"
 #include "isr/isr.h"
 #include "test_interrupts.h"
+#include "uploader.h"
 
 // external variables
 extern bool explorer_active;
@@ -157,6 +158,12 @@ void kernel_main(void)
     task_init();
     
     debugf("[MOOSE]: Multitasking initialised\n");
+    if (install_uploaded_program("App") == 0) {
+        debugf("[MOOSE]: Uploaded program installed\n");
+    } else {
+        debugf("[MOOSE]: No ELF program found\n");
+    }
+    
 
     // register interrupts
     register_task(kernel_handle_interrupts);

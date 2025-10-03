@@ -72,6 +72,44 @@ int set_file_content(File* file, const char* content) {
 }
 
 /**
+ * set file content with binary data
+ * @param file the file to set content for
+ * @param data binary data pointer
+ * @param size size of the binary data
+ * @returns 0 on success, -1 on failure.
+ */
+int set_file_content_binary(File* file, const char* data, size_t size) {
+    if (!file || file->type != FILE_NODE || !data) {
+        debugf("[FILE] Invalid file or data\n");
+        return -1;
+    }
+    
+    // free old content
+    if (file->file.content) {
+        kfree(file->file.content);
+    }
+    
+    // allocate new content (no null terminator needed for binary)
+    file->file.content = (char*)kmalloc(size);
+    if (!file->file.content) {
+        file->file.content_size = 0;
+        file->file.content_capacity = 0;
+        debugf("[FILE] Out of memory allocating file content\n");
+        return -1; // out of memory
+    }
+    
+    // copy binary data over
+    for (size_t i = 0; i < size; i++) {
+        file->file.content[i] = data[i];
+    }
+    
+    file->file.content_size = size;
+    file->file.content_capacity = size;
+    
+    return 0; // success
+}
+
+/**
  * add child to directory
  * @returns 0 on success, -1 on failure.
  */
