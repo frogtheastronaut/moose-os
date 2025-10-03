@@ -12,6 +12,7 @@
 
 # Storage files
 bin/moose_disk.img
+bin/moose_disk.img.lock
 
 # Linting config
 .markdownlint.json
