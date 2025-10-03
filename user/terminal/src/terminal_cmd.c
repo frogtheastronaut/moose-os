@@ -7,6 +7,7 @@
 #include "terminal_cmd.h"
 #include "speaker/speaker.h"
 #include "stdlib/stdlib.h"
+#include "elf/elf.h"
 
 /**
  * @todo this function is extremely inefficient and very long
@@ -27,6 +28,11 @@ void term_exec_cmd(const char* cmd) {
      * @todo: double check this
      */
     if (strcmp(cmd, "help")) {
+        /**
+         * @todo now that we have more commands,
+         * simplify this command to only print
+         * the most useful ones
+         */
         terminal_print("Welcome to the MooseOS Terminal");
         terminal_print("ls - List files");
         terminal_print("cd <dir> - Change directory");
@@ -39,6 +45,7 @@ void term_exec_cmd(const char* cmd) {
         terminal_print("load - Load filesystem from disk");
         terminal_print("systest - Run system tests");
         terminal_print("beep - Play system beep");
+        terminal_print("elf <file> - Validate ELF file format");
         terminal_print("help - Show this help");
         terminal_print("clear - Clear terminal");
     }
@@ -468,6 +475,49 @@ void term_exec_cmd(const char* cmd) {
             }
         } else {
             terminal_print_error("Usage: tone <frequency>");
+        }
+    }
+    // load ELF files
+    else if (cmd[0] == 'e' && cmd[1] == 'l' && cmd[2] == 'f' && cmd[3] == ' ') {
+        const char* filename = cmd + 4;
+        
+        // search for the file in current directory
+        bool found = false;
+        if (cwd->folder.children) {
+            for (int i = 0; i < cwd->folder.childCount; i++) {
+                File* child = cwd->folder.children[i];
+                if (child && child->type == FILE_NODE && strcmp(child->name, filename)) {
+                    found = true;
+                    if (child->file.content && child->file.content_size > 0) {
+                        // parse the ELF file
+                        elf_load_info load_info;
+                        bool parse_result = elf_parse(child->file.content, &load_info);
+                        
+                        if (parse_result) {
+                            terminal_print("ELF file validation successful!");
+                            char line[CHARS_PER_LINE + 1];
+                            msnprintf(line, sizeof(line), "Entry point: 0x%x", (uint32_t)load_info.entry_point);
+                            terminal_print(line);
+                            msnprintf(line, sizeof(line), "Segments: %u", (uint32_t)load_info.segment_count);
+                            terminal_print(line);
+                            
+                            // free the allocated segments
+                            if (load_info.segments) {
+                                kfree(load_info.segments);
+                            }
+                        } else {
+                            terminal_print_error("ELF file validation failed!");
+                            terminal_print("Check debug output for details");
+                        }
+                    } else {
+                        terminal_print_error("File is empty");
+                    }
+                    break;
+                }
+            }
+        }
+        if (!found) {
+            terminal_print_error("File not found");
         }
     }
     
