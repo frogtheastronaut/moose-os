@@ -74,6 +74,58 @@ make
 
 And it should install. It also tells you if it can't find any dependancies.
 
+## Features
+Here is a list of features currently implemented
+in MooseOS. There will be more in the future.
+
+#### VGA Graphics
+320x200 256-colour graphics mode
+
+#### Desktop Interface
+Dock-based application launcher
+
+#### Keyboard and Mouse Support
+Supports PS/2 keyboard and mouse interrupts, and also
+displays mouse on screen
+
+#### IDT
+Full IDT with 32 exception handlers
+
+#### Applications
+Applications include: 
+- terminal emulator (capable of some commands)
+- a text editor
+- file explorer.
+
+#### Audio System
+Hertz-based tone generation through the PC speaker.
+
+#### ATA Disk I/O
+Supports writing to a .img file through ATA read/write
+operations.
+
+#### Real-time clock
+It syncs the time with the RTC at first, and then
+uses the Programmable Interval timer to update the time.
+
+#### ELF Program support
+Can load, parse and validate ELF32 executables.
+
+#### Memory Management
+Custom heap allocator (`kmalloc`, `kfree`, etc) and 
+4KBs of virtual memory with paging.
+
+#### Custom filesystem
+Custom filesystem with custom signature that you can
+write to a .img file.
+
+#### Kernel Panic system
+Crash and reporting once an interrupt is triggered.
+
+#### QEMU/Bochs Integration
+Currently guaranteed to work on QEMU. Most, if not all
+features work on Bochs though Bochs is pickier with errors. It also supports QEMU debug logging.
+
 ## Built With
 
 - [Make](https://www.gnu.org/software/make/) - Runs Makefiles.
