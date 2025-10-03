@@ -2,8 +2,7 @@
 
 ![GitHub License](https://img.shields.io/github/license/frogtheastronaut/moose-os)  ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/frogtheastronaut/moose-os/main) ![Build Status](https://github.com/frogtheastronaut/moose-os/actions/workflows/build.yml/badge.svg)
 
-MOOSE is a 80s-style operating system, currently designed to run on virtual machines. \
-A detailed list of features can be found in the [README.txt file](./README.txt)
+MOOSE is a 80s-style operating system. It can run on QEMU, Bochs, as well as real machines.
 
 ## Getting Started
 
@@ -56,8 +55,7 @@ brew install i686-elf-grub
 ```
 
 ### Building
-
-Since MOOSE has not yet been tested on a real device, here are the steps to install MOOSE on QEMU. Again, these instructions are for MacOS. Please adjust for your Operating System.
+#### QEMU
 
 First, clone the repository.
 
@@ -72,7 +70,12 @@ Then, just type
 make
 ```
 
-And it should install. It also tells you if it can't find any dependancies.
+And it should install and run QEMU. It also tells you if it can't find any dependancies.
+
+#### Real PC
+This OS was tested on a 2009 HP PC equipped with VGA graphics and PS/2 input devices. While not all features have been exhaustively verified, a large majority function as intended.
+
+BalenaEtcher was used to write the ISO to a USB, which boots and functions like a normal operating system.
 
 ## Features
 Here is a list of features currently implemented
