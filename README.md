@@ -129,6 +129,16 @@ Crash and reporting once an interrupt is triggered.
 Currently guaranteed to work on QEMU. Most, if not all
 features work on Bochs though Bochs is pickier with errors. It also supports QEMU debug logging.
 
+## Star History
+
+<a href="https://www.star-history.com/#frogtheastronaut/moose-os&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=frogtheastronaut/moose-os&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=frogtheastronaut/moose-os&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=frogtheastronaut/moose-os&type=date&legend=top-left" />
+ </picture>
+</a>
+
 ## Built With
 
 - [Make](https://www.gnu.org/software/make/) - Runs Makefiles.
